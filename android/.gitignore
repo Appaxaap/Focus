@@ -1,0 +1,47 @@
+# Flutter/Dart specific
+.dart_tool/
+.packages
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+.idea/
+.vscode/
+android/.gradle/
+android/local.properties
+android/key.properties
+*.iml
+
+# Android specific
+**/gradlew
+**/gradlew.bat
+**/gradle-wrapper.jar
+**/captures/
+**/.cxx/
+
+# iOS/macOS (optional, if you plan to support Apple later)
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+macos/Flutter/ephemeral/
+
+# Files you should never commit (security)
+**/*.jks
+**/*.keystore
+
+# Optional: Environment override files
+.env
+*.env
+
+# Build artifacts
+*.apk
+*.ipa
+
+# VS Code & IntelliJ config (optional, for cleaner repo)
+*.swp
+*.lock
+*.log
+*.tmp
+*.DS_Store
