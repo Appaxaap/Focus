@@ -45,12 +45,6 @@ It splits your tasks into four clear quadrants:
 
 ---
 
-## 📷 Screenshots
-
-> (Add screenshots to a `/screenshots` folder in your repo to display here)
-
----
-
 ## 🧰 Built With
 
 | Tech | Purpose |
