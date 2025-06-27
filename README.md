@@ -205,5 +205,3 @@ Let’s keep this simple, human, and helpful — together.
 
 > “What is important is seldom urgent and what is urgent is seldom important.”
 > — Dwight D. Eisenhower
-
-```
