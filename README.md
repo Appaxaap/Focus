@@ -4,8 +4,6 @@
   <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Logo" width="150" />
 </p><!-- Replace with your actual logo file path -->
 
-![Build Status](https://github.com/Appaxaap/Focus/actions/workflows/flutter.yml/badge.svg)  
-![Downloads](https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat-square)  
 ![Android](https://img.shields.io/badge/platform-Android-green?style=flat-square&logo=android)  
 ![Flutter](https://img.shields.io/badge/flutter-3.10.5-blue?style=flat-square&logo=flutter)  
 ![Version](https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat-square)  
