@@ -1,11 +1,22 @@
-# 🧭 Focus – Stay Productive, Not Just Busy
+<h1 align="center">🧭 Focus – Stay Productive, Not Just Busy</h1>
 
-![Downloads](https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat-square)
-![Android](https://img.shields.io/badge/platform-Android-green?style=flat-square&logo=android)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Logo" width="150" />
+</p><!-- Replace with your actual logo file path -->
+
+![Build Status](https://github.com/Appaxaap/Focus/actions/workflows/flutter.yml/badge.svg)  
+![Downloads](https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat-square)  
+![Android](https://img.shields.io/badge/platform-Android-green?style=flat-square&logo=android)  
+![Flutter](https://img.shields.io/badge/flutter-3.10.5-blue?style=flat-square&logo=flutter)  
+![Version](https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat-square)  
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
 
 A fully offline Eisenhower Matrix planner built with Flutter.  
 No distractions. No ads. No cloud. Just **you and your priorities**.
+
+
+![feature_graphics](https://github.com/user-attachments/assets/2ced335e-9bc7-45b2-8022-dd3079a7c77a)
+
 
 ---
 
@@ -73,7 +84,27 @@ flutter run
 > Works on Android. iOS coming later.
 
 ---
+## Screenshots 📱
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3129b7de-d6ca-48e6-b454-bb8bad2c2fa0" alt="Screenshot 1" width="300" />
+  <img src="https://github.com/user-attachments/assets/f7f7dafe-1a88-409e-a995-7ed660792815" alt="Screenshot 2" width="300" />
+  <img src="https://github.com/user-attachments/assets/cc7aeac3-c5fa-408b-92fd-8090979237d8" alt="Screenshot 3" width="300" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d1498880-d459-4cf6-ad9e-f2718bce4964" alt="Screenshot 7" width="300" />
+  <img src="https://github.com/user-attachments/assets/00189dab-eeec-453f-be9c-dd5b56640673" alt="Screenshot 8" width="300" />
+  <img src="https://github.com/user-attachments/assets/fb49fadb-2e0d-48f0-b325-707cfd49e97c" alt="Screenshot 9" width="300" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/79c70e9d-8f7b-457b-bb4c-e076dc995c7b" alt="Screenshot 4" width="300" />
+  <img src="https://github.com/user-attachments/assets/aeb6ef92-fedb-4c56-b45d-089e4f7459da" alt="Screenshot 5" width="300" />
+  <img src="https://github.com/user-attachments/assets/eb7fed94-07d5-44a0-b5f8-61e83185aa61" alt="Screenshot 6" width="300" />
+</p>
+
+---
 ## 🤔 What Makes It Different?
 
 * No signup or account needed
