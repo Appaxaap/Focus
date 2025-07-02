@@ -1,5 +1,9 @@
 # 🧭 Focus – Stay Productive, Not Just Busy
 
+![Downloads](https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat-square)
+![Android](https://img.shields.io/badge/platform-Android-green?style=flat-square&logo=android)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
+
 A fully offline Eisenhower Matrix planner built with Flutter.  
 No distractions. No ads. No cloud. Just **you and your priorities**.
 
