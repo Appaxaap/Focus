@@ -2,129 +2,121 @@
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Logo" width="150" />
-</p><!-- Replace with your actual logo file path -->
+</p>
 
-![Android](https://img.shields.io/badge/platform-Android-green?style=flat-square&logo=android)  
-![Flutter](https://img.shields.io/badge/flutter-3.10.5-blue?style=flat-square&logo=flutter)  
-![Version](https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat-square)  
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
+<p align="center">
+  <b>A fully offline Eisenhower Matrix planner built with Flutter</b><br>
+  <i>No distractions. No ads. No cloud. Just <b>you</b> and your priorities.</i>
+</p>
 
-A fully offline Eisenhower Matrix planner built with Flutter.  
-No distractions. No ads. No cloud. Just **you and your priorities**.
+<p align="center">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Android-green?style=flat-square&logo=android">
+  <img alt="Flutter" src="https://img.shields.io/badge/flutter-3.10.5-blue?style=flat-square&logo=flutter">
+  <img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat-square">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square">
+</p>
 
+---
 
 ![feature_graphics](https://github.com/user-attachments/assets/2ced335e-9bc7-45b2-8022-dd3079a7c77a)
-
 
 ---
 
 ## 🧠 Why I Built This
 
-I’ve tried dozens of productivity apps — most of them either lock features behind paywalls, require sign-ups, track your behavior, or worst of all… flood you with notifications.
+I’ve tried dozens of productivity apps — most lock features behind paywalls, require sign-ups, track behavior, or worst… flood you with notifications.
 
-**All I wanted was a simple, no-nonsense app** to organize my day using the Eisenhower Matrix — a method that actually works. So I built **Focus**:
+All I wanted was a **simple, focused app** to organize my day using the Eisenhower Matrix — a method that works.
 
-- Offline-first by default
-- No data collection
-- Works out of the box
-- Designed for clarity, not complexity
+So I built **Focus**:
+
+- 🌙 Offline-first by default  
+- 🔐 No data collection  
+- 🚀 Works out of the box  
+- 🧘 Designed for clarity, not complexity  
 
 ---
 
 ## 🚀 What is the Eisenhower Matrix?
 
-The Eisenhower Matrix is a timeless productivity method that helps you **stop reacting and start planning**.
-
-It splits your tasks into four clear quadrants:
+The Eisenhower Matrix helps you prioritize what matters most.
 
 | Urgent     | Not Urgent         |
 |------------|--------------------|
 | ✅ Important → Do now     | 🕒 Important → Plan it |
 | ❗ Not Important → Delegate | 🚫 Not Important → Eliminate |
 
-**Focus** brings this matrix to life in a calm, visual layout — right on your phone.
+Focus brings this framework to life — as a **clear, tactile layout** on your phone.
 
 ---
 
 ## ✨ What You Can Do with Focus
 
-- 📋 Add, edit, and move tasks across 4 quadrants
-- 🌗 Switch between light and dark mode (Material You)
-- ✅ Mark tasks as complete
-- 👁️ Show or hide completed tasks
-- 📋 View all tasks in list mode
-- 💾 Works entirely offline with local storage (Hive)
-- 🔐 No login, no sync, no tracking
+- 🧩 Drag-and-drop or add tasks to 4 quadrants
+- 🌗 Toggle Light & Dark Mode (Material You)
+- ✅ Mark tasks complete
+- 🔍 Show/hide completed tasks
+- 🗃 Switch to list view when needed
+- 🕐 Add due dates (for prioritization)
+- 📱 No account. No tracking. 100% offline
 
 ---
 
-## 🧰 Built With
+## 🤔 How Is Focus Different from Other Task Apps?
 
-| Tech | Purpose |
-|------|---------|
-| [Flutter](https://flutter.dev/) | Cross-platform UI |
-| [Hive](https://pub.dev/packages/hive) | Lightweight local database |
-| Material You | Dynamic, adaptive theming |
-| No Firebase | 100% local, zero dependencies |
+| Feature                     | ✅ Focus                     | ❌ Most Task Apps            |
+|----------------------------|-----------------------------|------------------------------|
+| Offline-first              | Yes                         | Rare                         |
+| Login Required             | No                          | Often Mandatory              |
+| Matrix Method              | Eisenhower (Quadrant)       | Checklist or Kanban          |
+| Ads or Subscriptions       | Never                       | Often                        |
+| Privacy & Data Ownership   | 100% Local (Hive)           | Cloud-stored, tracked        |
+| Simple by Design           | Minimal & purposeful        | Feature-heavy & cluttered    |
+| Internet Required          | Never                       | Yes                          |
 
----
-
-## 📦 How to Run the App
-
-### 📱 For Developers (Run from Source)
-```bash
-git clone https://github.com/Appaxaap/Focus.git
-cd Focus
-flutter pub get
-flutter run
-````
-
-> Works on Android. iOS coming later.
-
----
-## Screenshots 📱
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/3129b7de-d6ca-48e6-b454-bb8bad2c2fa0" alt="Screenshot 1" width="300" />
-  <img src="https://github.com/user-attachments/assets/f7f7dafe-1a88-409e-a995-7ed660792815" alt="Screenshot 2" width="300" />
-  <img src="https://github.com/user-attachments/assets/cc7aeac3-c5fa-408b-92fd-8090979237d8" alt="Screenshot 3" width="300" />
-</p>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/d1498880-d459-4cf6-ad9e-f2718bce4964" alt="Screenshot 7" width="300" />
-  <img src="https://github.com/user-attachments/assets/00189dab-eeec-453f-be9c-dd5b56640673" alt="Screenshot 8" width="300" />
-  <img src="https://github.com/user-attachments/assets/fb49fadb-2e0d-48f0-b325-707cfd49e97c" alt="Screenshot 9" width="300" />
-</p>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/79c70e9d-8f7b-457b-bb4c-e076dc995c7b" alt="Screenshot 4" width="300" />
-  <img src="https://github.com/user-attachments/assets/aeb6ef92-fedb-4c56-b45d-089e4f7459da" alt="Screenshot 5" width="300" />
-  <img src="https://github.com/user-attachments/assets/eb7fed94-07d5-44a0-b5f8-61e83185aa61" alt="Screenshot 6" width="300" />
-</p>
-
----
-## 🤔 What Makes It Different?
-
-* No signup or account needed
-* No push notifications
-* No backend, no Firebase
-* No ads, ever
-* No internet required
-* No overthinking — just plan and go
-
-It’s built around a simple idea:
-**Your mind deserves clarity, not clutter.**
+Focus is **not** for teams, calendars, or collaboration. It’s built for **you** — and how **you** work best.
 
 ---
 
 ## 💡 Who Is It For?
 
-* Indie makers and developers
-* Students and self-learners
-* Creatives who value deep work
-* Anyone tired of noisy task apps
+- 🎨 Creators & Makers
+- 🧠 Deep Work Devotees
+- 📚 Students & Solo Learners
+- 🧘‍♂️ Minimalist Productivity Seekers
 
-If you want something minimalist, private, and purposeful — this is for you.
+> If you value privacy, focus, and intention — this is your app.
+
+---
+
+## 📱 Screenshots
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3129b7de-d6ca-48e6-b454-bb8bad2c2fa0" width="300" />
+  <img src="https://github.com/user-attachments/assets/f7f7dafe-1a88-409e-a995-7ed660792815" width="300" />
+  <img src="https://github.com/user-attachments/assets/cc7aeac3-c5fa-408b-92fd-8090979237d8" width="300" />
+</p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d1498880-d459-4cf6-ad9e-f2718bce4964" width="300" />
+  <img src="https://github.com/user-attachments/assets/00189dab-eeec-453f-be9c-dd5b56640673" width="300" />
+  <img src="https://github.com/user-attachments/assets/fb49fadb-2e0d-48f0-b325-707cfd49e97c" width="300" />
+</p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/79c70e9d-8f7b-457b-bb4c-e076dc995c7b" width="300" />
+  <img src="https://github.com/user-attachments/assets/aeb6ef92-fedb-4c56-b45d-089e4f7459da" width="300" />
+  <img src="https://github.com/user-attachments/assets/eb7fed94-07d5-44a0-b5f8-61e83185aa61" width="300" />
+</p>
+
+---
+
+## 🧰 Tech Stack
+
+| Tech        | Purpose                     |
+|-------------|-----------------------------|
+| Flutter     | Cross-platform UI            |
+| Hive        | Local key-value DB           |
+| Provider    | Lightweight state management |
+| Material You| Dynamic theme customization  |
 
 ---
 
