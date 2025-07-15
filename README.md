@@ -191,6 +191,16 @@ DEALINGS IN THE SOFTWARE.
 
 ---
 
+## 📣 Spread the Word
+
+🔗 [**Check it out on Product Hunt 🚀**](https://www.producthunt.com/posts/focus-10?utm_source=other&utm_medium=social)  
+Join the launch, upvote if you love it, and share your thoughts!
+
+💬 [**Join the Telegram Community 📱**](https://t.me/+2BEvgW3Bs9piMDFl)  
+Stay updated, give feedback, and help shape future features.
+
+---
+
 ## 🙋 Who Made This?
 
 Hi, I’m **Basim Basheer** — Founder of [Codecx](https://codecx.ae), UX engineer, and Indie app builder.
