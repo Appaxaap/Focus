@@ -196,7 +196,7 @@ DEALINGS IN THE SOFTWARE.
 🔗 [**Check it out on Product Hunt 🚀**](https://www.producthunt.com/posts/focus-10?utm_source=other&utm_medium=social)  
 Join the launch, upvote if you love it, and share your thoughts!
 
-💬 [**Join the Telegram Community 📱**](https://t.me/+2BEvgW3Bs9piMDFl)  
+💬 [**Join the Telegram Community 📱**](https://t.me/+Cpyd0Us0sisxOWE1)  
 Stay updated, give feedback, and help shape future features.
 
 ---
