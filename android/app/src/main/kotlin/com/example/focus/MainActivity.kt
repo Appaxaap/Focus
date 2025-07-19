@@ -1,4 +1,4 @@
-package com.example.focus
+package com.codecx.focus
 
 import io.flutter.embedding.android.FlutterActivity
 

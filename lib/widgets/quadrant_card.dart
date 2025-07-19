@@ -3,26 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
-import '../providers/task_provider.dart';
+import '../screens/task_edit_screen.dart';
 import '../widgets/task_tile.dart';
 
 class QuadrantCard extends ConsumerWidget {
   final Quadrant quadrant;
   final List<Task> tasks;
 
-  const QuadrantCard({
-    super.key,
-    required this.quadrant,
-    required this.tasks,
-  });
+  const QuadrantCard({super.key, required this.quadrant, required this.tasks});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Use the tasks parameter that's already filtered and passed from the parent
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      child: tasks.isEmpty ? _buildEmptyState(context) : _buildTaskList(tasks),
+    return GestureDetector(
+      onTap: () => _navigateToAddTask(context, quadrant),
+      child: Container(
+        width: double.infinity,
+        height: double.infinity,
+        child:
+            tasks.isEmpty ? _buildEmptyState(context) : _buildTaskList(tasks),
+      ),
     );
   }
 
@@ -41,7 +40,7 @@ class QuadrantCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'No tasks yet',
+            'Tap to add task',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurface.withOpacity(0.5),
             ),
@@ -58,11 +57,17 @@ class QuadrantCard extends ConsumerWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final task = tasks[index];
-        return TaskTile(
-          task: task,
-          key: ValueKey(task.id), // Add key for better performance
-        );
+        return TaskTile(task: task, key: ValueKey(task.id));
       },
+    );
+  }
+
+  void _navigateToAddTask(BuildContext context, Quadrant quadrant) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TaskEditScreen(initialQuadrant: quadrant),
+      ),
     );
   }
 }

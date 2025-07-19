@@ -10,11 +10,7 @@ class TaskEditScreen extends ConsumerStatefulWidget {
   final Task? task;
   final Quadrant? initialQuadrant;
 
-  const TaskEditScreen({
-    super.key,
-    this.task,
-    this.initialQuadrant,
-  });
+  const TaskEditScreen({super.key, this.task, this.initialQuadrant});
 
   @override
   ConsumerState<TaskEditScreen> createState() => _TaskEditScreenState();
@@ -25,6 +21,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   late TextEditingController notesController;
   late Quadrant? selectedQuadrant;
   late DateTime? selectedDate;
+  late TimeOfDay? selectedTime;
 
   @override
   void initState() {
@@ -33,6 +30,11 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     notesController = TextEditingController(text: widget.task?.notes ?? '');
     selectedQuadrant = widget.task?.quadrant ?? widget.initialQuadrant;
     selectedDate = widget.task?.dueDate;
+    // Extract time from existing date if available
+    selectedTime =
+        widget.task?.dueDate != null
+            ? TimeOfDay.fromDateTime(widget.task!.dueDate!)
+            : null;
   }
 
   @override
@@ -117,7 +119,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            _buildTextField(controller: titleController, hint: 'Enter task title...'),
+            _buildTextField(
+              controller: titleController,
+              hint: 'Enter task title...',
+            ),
             const SizedBox(height: 24),
 
             // Priority Section
@@ -132,16 +137,16 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
             _buildQuadrantSelector(context),
             const SizedBox(height: 24),
 
-            // Due Date Section
+            // Due Date & Time Section
             Text(
-              'Due Date',
+              'Due Date & Time',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
-            _buildDateSelector(context),
+            _buildDateTimeSelector(context),
             const SizedBox(height: 24),
 
             // Notes Section
@@ -232,78 +237,77 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
-        children: Quadrant.values.map((quadrant) {
-          final info = quadrantInfo[quadrant]!;
-          final isSelected = selectedQuadrant == quadrant;
+        children:
+            Quadrant.values.map((quadrant) {
+              final info = quadrantInfo[quadrant]!;
+              final isSelected = selectedQuadrant == quadrant;
 
-          return InkWell(
-            onTap: () => setState(() => selectedQuadrant = quadrant),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
+              return InkWell(
+                onTap: () => setState(() => selectedQuadrant = quadrant),
                 borderRadius: BorderRadius.circular(12),
-                border: isSelected
-                    ? Border.all(color: info['color'], width: 1.5)
-                    : null,
-                color: isSelected
-                    ? info['color'].withOpacity(0.1)
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: info['color'],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        isSelected
+                            ? Border.all(color: info['color'], width: 1.5)
+                            : null,
+                    color: isSelected ? info['color'].withOpacity(0.1) : null,
                   ),
-                  const SizedBox(width: 16),
-                  Icon(
-                    info['icon'],
-                    color: info['color'],
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          info['title'],
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? info['color'] : colorScheme.onSurface,
-                          ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: info['color'],
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          info['subtitle'],
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                      ),
+                      const SizedBox(width: 16),
+                      Icon(info['icon'], color: info['color'], size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              info['title'],
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    isSelected
+                                        ? info['color']
+                                        : colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              info['subtitle'],
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      if (isSelected)
+                        Icon(
+                          Icons.check_circle,
+                          color: info['color'],
+                          size: 20,
+                        ),
+                    ],
                   ),
-                  if (isSelected)
-                    Icon(
-                      Icons.check_circle,
-                      color: info['color'],
-                      size: 20,
-                    ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
+                ),
+              );
+            }).toList(),
       ),
     );
   }
 
-  Widget _buildDateSelector(BuildContext context) {
+  Widget _buildDateTimeSelector(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -313,41 +317,83 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outlineVariant),
       ),
-      child: InkWell(
-        onTap: _selectDate,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.calendar_today,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  selectedDate == null
-                      ? 'No due date set'
-                      : DateFormat('MMM dd, yyyy').format(selectedDate!),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: selectedDate == null
-                        ? colorScheme.onSurfaceVariant
-                        : colorScheme.onSurface,
+      child: Column(
+        children: [
+          // Date Selector
+          InkWell(
+            onTap: _selectDate,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      selectedDate == null
+                          ? 'No due date set'
+                          : DateFormat('MMM dd, yyyy').format(selectedDate!),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color:
+                            selectedDate == null
+                                ? colorScheme.onSurfaceVariant
+                                : colorScheme.onSurface,
+                      ),
+                    ),
                   ),
-                ),
+                  if (selectedDate != null)
+                    InkWell(
+                      onTap:
+                          () => setState(() {
+                            selectedDate = null;
+                            selectedTime = null;
+                          }),
+                      child: const Icon(Icons.clear, size: 20),
+                    ),
+                ],
               ),
-              if (selectedDate != null)
-                InkWell(
-                  onTap: () => setState(() => selectedDate = null),
-                  child: const Icon(
-                    Icons.clear,
-                    size: 20,
-                  ),
-                ),
-            ],
+            ),
           ),
-        ),
+
+          // Time Selector (only show if date is selected)
+          if (selectedDate != null) ...[
+            Divider(height: 1, color: colorScheme.outlineVariant),
+            InkWell(
+              onTap: _selectTime,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        selectedTime == null
+                            ? 'No time set'
+                            : selectedTime!.format(context),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color:
+                              selectedTime == null
+                                  ? colorScheme.onSurfaceVariant
+                                  : colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    if (selectedTime != null)
+                      InkWell(
+                        onTap: () => setState(() => selectedTime = null),
+                        child: const Icon(Icons.clear, size: 20),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -367,10 +413,25 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     }
   }
 
+  Future<void> _selectTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime ?? TimeOfDay.now(),
+    );
+
+    if (picked != null && picked != selectedTime) {
+      setState(() {
+        selectedTime = picked;
+      });
+    }
+  }
+
   void _saveTask() {
     final String title = titleController.text.trim();
     final String? notes =
-    notesController.text.trim().isEmpty ? null : notesController.text.trim();
+        notesController.text.trim().isEmpty
+            ? null
+            : notesController.text.trim();
 
     if (title.isEmpty) {
       _showSnackbar(context, 'Please enter a task title', isError: true);
@@ -378,8 +439,28 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     }
 
     if (selectedQuadrant == null) {
-      _showSnackbar(context, 'Please select a priority quadrant', isError: true);
+      _showSnackbar(
+        context,
+        'Please select a priority quadrant',
+        isError: true,
+      );
       return;
+    }
+
+    // Combine date and time into a single DateTime
+    DateTime? finalDateTime;
+    if (selectedDate != null) {
+      if (selectedTime != null) {
+        finalDateTime = DateTime(
+          selectedDate!.year,
+          selectedDate!.month,
+          selectedDate!.day,
+          selectedTime!.hour,
+          selectedTime!.minute,
+        );
+      } else {
+        finalDateTime = selectedDate;
+      }
     }
 
     final newTask = Task(
@@ -387,7 +468,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       title: title,
       notes: notes,
       quadrant: selectedQuadrant!,
-      dueDate: selectedDate,
+      dueDate: finalDateTime,
       isCompleted: widget.task?.isCompleted ?? false,
       createdAt: widget.task?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
@@ -404,44 +485,49 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        title: Text(
-          'Delete Task',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to delete this task? This action cannot be undone.',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(taskProvider.notifier).deleteTask(widget.task!.id);
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close edit screen
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.errorContainer,
-              foregroundColor: colorScheme.onErrorContainer,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: colorScheme.surfaceContainerHigh,
+            title: Text(
+              'Delete Task',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
             ),
-            child: const Text('Delete'),
+            content: Text(
+              'Are you sure you want to delete this task? This action cannot be undone.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: Navigator.of(context).pop,
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  ref.read(taskProvider.notifier).deleteTask(widget.task!.id);
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Close edit screen
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.errorContainer,
+                  foregroundColor: colorScheme.onErrorContainer,
+                ),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
-  void _showSnackbar(BuildContext context, String message, {required bool isError}) {
+  void _showSnackbar(
+    BuildContext context,
+    String message, {
+    required bool isError,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     ScaffoldMessenger.of(context).showSnackBar(

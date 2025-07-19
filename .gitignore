@@ -12,21 +12,30 @@
 .swiftpm/
 migrate_working_dir/
 
-#keystore
+# Keystore and sensitive files
 key.properties
 *.jks
-
+*.keystore
+*.p12
+*.key
+*.cer
 
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
+**/*.idea/
+**/gradle/
+**/gradlew
+**/gradlew.bat
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.code-workspace
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -34,9 +43,33 @@ key.properties
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
+**/generated_plugin_registrant.dart
+
+# Android specific
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/gradle/
+/android/.gradle/
+/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+
+# iOS specific
+/ios/Flutter/flutter_export_environment.sh
+**/ios/**/.symlinks/
+**/ios/**/Pods/
+**/ios/**/Podfile.lock
+**/ios/**/xcuserdata/
+**/ios/**/.generated/
+**/ios/**/Flutter/App.framework/
+**/ios/**/Flutter/Flutter.framework/
+**/ios/**/Flutter/Flutter.podspec
+**/ios/**/Flutter/Generated.xcconfig
+**/ios/**/ServiceDefinitions.json
 
 # Symbolication related
 app.*.symbols
@@ -44,7 +77,24 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Web specific
+/web/
+
+# macOS specific
+/macos/Flutter/GeneratedPluginRegistrant.swift
+/macos/.default_packages
+
+# Windows specific
+/windows/flutter/generated_plugin_registrant.cc
+/windows/flutter/generated_plugins.cmake
+
+# Coverage
+coverage/
+*.lcov
+
+# Packages
+**/packages/
+
+# Temp files
+*.tmp
+*.temp

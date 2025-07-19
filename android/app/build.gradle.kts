@@ -13,7 +13,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.focus"
+    namespace = "com.codecx.focus"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.focus"
+        applicationId = "com.codecx.focus"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -47,7 +47,6 @@ android {
         }
     }
 
-
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
@@ -60,13 +59,13 @@ android {
         }
     }
 
-
-    // ✅ SPLIT PER ABI ENABLED
+    // ✅ SPLIT PER ABI CONFIGURATION
     splits {
         abi {
             isEnable = true
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86_64")
+            // This will generate split APKs when using --split-per-abi
             isUniversalApk = false
         }
     }

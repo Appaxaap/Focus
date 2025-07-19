@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/task_providers.dart';
 import '../providers/theme_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class SettingsBottomSheet extends ConsumerStatefulWidget {
   const SettingsBottomSheet({super.key});
 
   @override
-  ConsumerState<SettingsBottomSheet> createState() => _SettingsBottomSheetState();
+  ConsumerState<SettingsBottomSheet> createState() =>
+      _SettingsBottomSheetState();
 }
 
 class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
@@ -35,18 +38,14 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
 
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
     _slideController.forward();
     _fadeController.forward();
@@ -80,247 +79,187 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.primary,
-                          colorScheme.primary.withOpacity(0.8),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.settings_rounded,
-                      color: colorScheme.onPrimary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Settings',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        'Customize your experience',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Settings Content
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    // Theme Section
-                    _buildSettingsSection(
-                      context: context,
-                      title: 'Appearance',
-                      icon: Icons.palette_rounded,
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 12),
-                          _buildThemeToggle(context, appTheme),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Tasks Section
-                    _buildSettingsSection(
-                      context: context,
-                      title: 'Tasks',
-                      icon: Icons.task_alt_rounded,
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 8),
-                          _buildCompletedTasksToggle(context, showCompleted),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Language Section
-                    // _buildSettingsSection(
-                    //   context: context,
-                    //   title: 'Language',
-                    //   icon: Icons.language_rounded,
-                    //   child: Column(
-                    //     children: [
-                    //       const SizedBox(height: 8),
-                    //       _buildLanguageSelector(context),
-                    //     ],
-                    //   ),
-                    // ),
-
-                    const SizedBox(height: 24),
-
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionButton(
-                            context: context,
-                            icon: Icons.info_rounded,
-                            label: 'About',
-                            onTap: () => _showAboutDialog(context),
-                            color: colorScheme.primaryContainer,
-                            textColor: colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildActionButton(
-                            context: context,
-                            icon: Icons.code_rounded,
-                            label: 'Developer',
-                            onTap: () => _showDeveloperDialog(context),
-                            color: colorScheme.secondaryContainer,
-                            textColor: colorScheme.onSecondaryContainer,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-                  ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Header
+              _buildHeader(context),
+
+              // Settings Preview
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      _buildQuickThemeToggle(context, appTheme),
+                      const SizedBox(height: 16),
+                      _buildQuickTasksToggle(context, showCompleted),
+                      const SizedBox(height: 24),
+                      _buildQuickActions(context),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSettingsSection({
-    required BuildContext context,
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
+  Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primary,
+                  colorScheme.primary.withOpacity(0.7),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.tune_rounded,
+              color: colorScheme.onPrimary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 18,
-                    color: colorScheme.primary,
+                Text(
+                  'Settings',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(height: 4),
                 Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
+                  'Customize your Focus experience',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
-            child,
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildThemeToggle(BuildContext context, AppTheme currentTheme) {
+  Widget _buildQuickThemeToggle(BuildContext context, AppTheme currentTheme) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _buildThemeOption(
-              context: context,
-              theme: AppTheme.light,
-              icon: Icons.light_mode_rounded,
-              label: 'Light',
-              isSelected: currentTheme == AppTheme.light,
-              isFirst: true,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.palette_outlined,
+                  color: colorScheme.onPrimaryContainer,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Theme',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Choose your preferred appearance',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _buildThemeOption(
-              context: context,
-              theme: AppTheme.dark,
-              icon: Icons.dark_mode_rounded,
-              label: 'Dark',
-              isSelected: currentTheme == AppTheme.dark,
-              isFirst: false,
-            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildThemeOption(
+                  context: context,
+                  theme: AppTheme.light,
+                  icon: Icons.light_mode_rounded,
+                  label: 'Light',
+                  isSelected: currentTheme == AppTheme.light,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildThemeOption(
+                  context: context,
+                  theme: AppTheme.dark,
+                  icon: Icons.dark_mode_rounded,
+                  label: 'Dark',
+                  isSelected: currentTheme == AppTheme.dark,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -333,7 +272,6 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     required IconData icon,
     required String label,
     required bool isSelected,
-    required bool isFirst,
   }) {
     final appTheme = Theme.of(context);
     final colorScheme = appTheme.colorScheme;
@@ -341,16 +279,21 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     return GestureDetector(
       onTap: () {
         ref.read(themeProvider.notifier).setTheme(theme);
-        HapticFeedback.selectionClick();
+        HapticFeedback.lightImpact();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.horizontal(
-            left: isFirst ? const Radius.circular(15) : Radius.zero,
-            right: !isFirst ? const Radius.circular(15) : Radius.zero,
+          color: isSelected ? colorScheme.primary : colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color:
+                isSelected
+                    ? colorScheme.primary
+                    : colorScheme.outline.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
@@ -358,15 +301,21 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           children: [
             Icon(
               icon,
-              size: 18,
-              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+              size: 20,
+              color:
+                  isSelected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: appTheme.textTheme.bodyMedium?.copyWith(
-                color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color:
+                    isSelected
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
           ],
@@ -375,91 +324,269 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     );
   }
 
-  Widget _buildCompletedTasksToggle(BuildContext context, bool showCompleted) {
+  Widget _buildQuickTasksToggle(BuildContext context, bool showCompleted) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Icon(
-          Icons.check_circle_outline_rounded,
-          color: colorScheme.primary,
-          size: 24,
-        ),
-        title: Text(
-          'Show completed tasks',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w500,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.task_alt_rounded,
+              color: colorScheme.onSecondaryContainer,
+              size: 20,
+            ),
           ),
-        ),
-        subtitle: Text(
-          'Display finished tasks in your list',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Show completed tasks',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  'Display finished tasks in your list',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        trailing: Switch.adaptive(
-          value: showCompleted,
-          onChanged: (value) {
-            ref.read(showCompletedTasksProvider.notifier).state = value;
-            HapticFeedback.selectionClick();
-          },
-          activeColor: colorScheme.primary,
-        ),
+          Switch.adaptive(
+            value: showCompleted,
+            onChanged: (value) {
+              ref.read(showCompletedTasksProvider.notifier).state = value;
+              HapticFeedback.lightImpact();
+            },
+            activeColor: colorScheme.primary,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ],
       ),
     );
   }
 
-  // localization
-  Widget _buildLanguageSelector(BuildContext context) {
+  Widget _buildQuickActions(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+    return Row(
+      children: [
+        Expanded(
+          child: _buildQuickActionButton(
+            context: context,
+            icon: Icons.info_outline_rounded,
+            label: 'About',
+            onTap: () => _showModernAboutDialog(context),
+            color: colorScheme.tertiaryContainer,
+            textColor: colorScheme.onTertiaryContainer,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showModernAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'About Focus',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                  style: IconButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceVariant,
+                    shape: const CircleBorder(),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 8),
+                Text(
+                  'Version 1.0.0',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Made with ❤️ by Basim Basheer',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Action buttons grid
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        context,
+                        'Source',
+                        Icons.code_rounded,
+                        () => _launchUrl(
+                          'https://github.com/Appaxaap/focus-android',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionButton(
+                        context,
+                        'Issues',
+                        Icons.bug_report_rounded,
+                        () => _launchUrl(
+                          'https://github.com/Appaxaap/focus-android/issues',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: _buildActionButton(
+                    context,
+                    'Community',
+                    Icons.telegram,
+                    () => _launchUrl('https://t.me/your_community_link'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
+    return FilledButton.tonalIcon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Icon(
-          Icons.translate_rounded,
-          color: colorScheme.primary,
-          size: 24,
-        ),
-        title: Text(
-          'English',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w500,
+    );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Widget _buildAboutRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
           ),
+          child: Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
         ),
-        subtitle: Text(
-          'App language',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            Text(
+              value,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        trailing: Icon(
-          Icons.arrow_forward_ios_rounded,
-          color: colorScheme.onSurfaceVariant,
-          size: 16,
-        ),
-        onTap: () {
-          // TODO: Implement language selection
-          HapticFeedback.selectionClick();
+      ],
+    );
+  }
+
+  Widget _buildIconButton(
+    BuildContext context,
+    IconData icon,
+    String tooltip,
+    String url,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        icon: Icon(icon, size: 24),
+        color: colorScheme.primary,
+        onPressed: () async {
+          HapticFeedback.lightImpact();
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri);
+          }
         },
+        style: IconButton.styleFrom(
+          backgroundColor: colorScheme.surfaceVariant,
+          padding: const EdgeInsets.all(16),
+        ),
       ),
     );
   }
 
-  Widget _buildActionButton({
+  Widget _buildQuickActionButton({
     required BuildContext context,
     required IconData icon,
     required String label,
@@ -468,9 +595,12 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     required Color textColor,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
@@ -482,200 +612,20 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
-            Icon(
-              icon,
-              color: textColor,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
+            Icon(icon, color: textColor, size: 24),
+            const SizedBox(height: 8),
             Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: textColor,
                 fontWeight: FontWeight.w600,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showAboutDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.primary,
-                    colorScheme.primary.withOpacity(0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.apps_rounded,
-                color: colorScheme.onPrimary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'About Focus',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Focus is a task management app based on the Eisenhower Matrix to help you prioritize what matters most.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoItem(context, 'Version', '1.0.0'),
-            _buildInfoItem(context, 'Latest Release', 'v1.0.0 - Initial Release'),
-            // _buildInfoItem(context, 'Documentation', 'See README.md for detailed information'),
-            // _buildInfoItem(context, 'Sponsors', 'Open for sponsorship'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(color: colorScheme.primary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeveloperDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colorScheme.secondary,
-                    colorScheme.secondary.withOpacity(0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.person_rounded,
-                color: colorScheme.onSecondary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'About Developer',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'This app was developed by Basim Basheer as part of a Flutter project.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoItem(context, 'GitHub', 'github.com/Appaxaap'),
-            _buildInfoItem(context, 'LinkedIn', 'linkedin.com/in/Basim Basheer'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(color: colorScheme.primary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(BuildContext context, String label, String value) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 80,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus/screens/settings_screen.dart';
 import 'package:focus/services/hive_service.dart';
@@ -49,11 +50,23 @@ final hiveServiceProvider = Provider<HiveService>((ref) {
   throw UnimplementedError('hiveServiceProvider must be overridden');
 });
 
-class FocusApp extends ConsumerWidget {
+class FocusApp extends ConsumerStatefulWidget {
   const FocusApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FocusApp> createState() => _FocusAppState();
+}
+
+class _FocusAppState extends ConsumerState<FocusApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Enable edge-to-edge display
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
 
     // Define the AMOLED theme
