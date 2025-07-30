@@ -1,0 +1,10 @@
+# F-Droid Screenshot URLs
+screen1=https://github.com/user-attachments/assets/3129b7de-d6ca-48e6-b454-bb8bad2c2fa0
+screen2=https://github.com/user-attachments/assets/f7f7dafe-1a88-409e-a995-7ed660792815
+screen3=https://github.com/user-attachments/assets/cc7aeac3-c5fa-408b-92fd-8090979237d8
+screen4=https://github.com/user-attachments/assets/d1498880-d459-4cf6-ad9e-f2718bce4964
+screen5=https://github.com/user-attachments/assets/00189dab-eeec-453f-be9c-dd5b56640673
+screen6=https://github.com/user-attachments/assets/fb49fadb-2e0d-48f0-b325-707cfd49e97c
+screen7=https://github.com/user-attachments/assets/79c70e9d-8f7b-457b-bb4c-e076dc995c7b
+screen8=https://github.com/user-attachments/assets/aeb6ef92-fedb-4c56-b45d-089e4f7459da
+screen9=https://github.com/user-attachments/assets/eb7fed94-07d5-44a0-b5f8-61e83185aa61
