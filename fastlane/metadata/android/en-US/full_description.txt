@@ -1,0 +1,1 @@
+A simple app to organize tasks using the Eisenhower Matrix. Works 100% offline with no ads or tracking. Sort tasks by urgency/importance into four quadrants.
