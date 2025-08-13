@@ -1,443 +1,382 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:focus/services/notification_service.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:uuid/uuid.dart';
 import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
 import '../providers/task_provider.dart';
+import '../widgets/quadrant_button.dart';
+import '../widgets/text_fields.dart';
 
 class TaskEditScreen extends ConsumerStatefulWidget {
   final Task? task;
   final Quadrant? initialQuadrant;
-
   const TaskEditScreen({super.key, this.task, this.initialQuadrant});
 
   @override
   ConsumerState<TaskEditScreen> createState() => _TaskEditScreenState();
 }
 
-class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
+class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
+    with TickerProviderStateMixin {
   late TextEditingController titleController;
   late TextEditingController notesController;
   late Quadrant? selectedQuadrant;
   late DateTime? selectedDate;
   late TimeOfDay? selectedTime;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize controllers and variables
     titleController = TextEditingController(text: widget.task?.title ?? '');
     notesController = TextEditingController(text: widget.task?.notes ?? '');
     selectedQuadrant = widget.task?.quadrant ?? widget.initialQuadrant;
     selectedDate = widget.task?.dueDate;
-    // Extract time from existing date if available
-    selectedTime =
-        widget.task?.dueDate != null
-            ? TimeOfDay.fromDateTime(widget.task!.dueDate!)
-            : null;
+    selectedTime = widget.task?.dueDate != null
+        ? TimeOfDay.fromDateTime(widget.task!.dueDate!)
+        : null;
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    // 🔥 LOG DEVICE TIMEZONE
+    if (kDebugMode) {
+      try {
+        final String tzName = tz.local.name;
+        final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+        final Duration offset = now.timeZoneOffset;
+        final String offsetStr =
+            '${offset.isNegative ? "-" : "+"}'
+            '${offset.inHours.abs()}:${(offset.inMinutes.remainder(60)).toString().padLeft(2, '0')}';
+
+        print('📍 TaskEditScreen initialized');
+        print('🌍 Device Timezone: $tzName');
+        print('🕒 UTC Offset: $offsetStr');
+        print('📅 Selected Date: $selectedDate');
+        print('⏰ Selected Time: $selectedTime');
+      } catch (e) {
+        print('❌ Failed to get timezone: $e');
+      }
+    }
   }
 
   @override
   void dispose() {
     titleController.dispose();
     notesController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
-  // Map of quadrant info for display
+  // Helper methods for theme-specific colors
+  Color _getContainerBackgroundColor(BuildContext context) {
+    final baseColor = const Color(0xFF232323);
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return baseColor.withAlpha((255 * 0.4).toInt()); // 40% opacity
+    } else {
+      return Theme.of(context).colorScheme.surfaceVariant;
+    }
+  }
+
+  Color _getIconColor(BuildContext context) {
+    final baseColor = const Color(0xFF6C7B7F);
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return baseColor.withAlpha((255 * 0.6).toInt()); // 60% opacity
+    } else {
+      return Theme.of(context).colorScheme.onSurfaceVariant;
+    }
+  }
+
   Map<Quadrant, Map<String, dynamic>> get quadrantInfo => {
     Quadrant.urgentImportant: {
-      'color': const Color(0xFFFF4757),
-      'title': 'Do First',
-      'subtitle': 'Urgent & Important',
+      'color': const Color(0xFFFF4557),
       'icon': Icons.priority_high,
+      'title': 'Urgent',
     },
     Quadrant.notUrgentImportant: {
-      'color': const Color(0xFF2ED573),
-      'title': 'Schedule',
-      'subtitle': 'Not Urgent but Important',
+      'color': const Color(0xFF2DD575),
       'icon': Icons.schedule,
+      'title': 'Schedule',
     },
     Quadrant.urgentNotImportant: {
-      'color': const Color(0xFFFFA726),
-      'title': 'Delegate',
-      'subtitle': 'Urgent but Not Important',
+      'color': const Color(0xFFFCA72A),
       'icon': Icons.person_add,
+      'title': 'Delegate',
     },
     Quadrant.notUrgentNotImportant: {
-      'color': const Color(0xFF747D8C),
-      'title': 'Eliminate',
-      'subtitle': 'Not Urgent & Not Important',
+      'color': const Color(0xFF747D8E),
       'icon': Icons.remove_circle_outline,
+      'title': 'Eliminate',
     },
   };
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final isEditing = widget.task != null;
+    final colorScheme = Theme.of(context).colorScheme;
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 400;
+    final screenHeight = screenSize.height;
+    final isShortScreen = screenHeight < 700;
+
+    // Calculate responsive values
+    final horizontalPadding = isSmallScreen ? 16.0 : 20.0;
+    final appBarTitleSize = isSmallScreen ? 32.0 : 40.0;
+    final backButtonSize = screenSize.width * 0.14; // 14% of width
+    final backButtonMargin = screenSize.width * 0.025; // 2.5% of width
+    final toolbarHeight = isShortScreen ? 80.0 : 90.0;
+    final sectionSpacing = isShortScreen ? 20.0 : 24.0;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-          color: colorScheme.onSurfaceVariant,
-        ),
-        title: Text(
-          isEditing ? 'Edit Task' : 'New Task',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurface,
+        leadingWidth: backButtonSize + (backButtonMargin * 2) + 16,
+        leading: Container(
+          width: backButtonSize,
+          height: backButtonSize,
+          margin: EdgeInsets.all(backButtonMargin),
+          decoration: BoxDecoration(
+            color: _getContainerBackgroundColor(context),
+            borderRadius: BorderRadius.circular(backButtonSize / 2),
+          ),
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back,
+              color: _getIconColor(context),
+              size: isSmallScreen ? 20 : 24,
+            ),
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+            constraints: BoxConstraints.tightFor(
+              width: backButtonSize,
+              height: backButtonSize,
+            ),
+            alignment: Alignment.center,
           ),
         ),
-        actions: [
-          if (isEditing)
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _showDeleteConfirmation(context),
-              color: colorScheme.error,
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        centerTitle: true,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Title Section
             Text(
-              'Task Title',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+              isEditing ? 'Edit Task' : 'New Task',
+              style: TextStyle(
                 color: colorScheme.onSurface,
+                fontSize: appBarTitleSize,
+                fontWeight: FontWeight.w600,
+                height: 1.0,
               ),
             ),
-            const SizedBox(height: 8),
-            _buildTextField(
-              controller: titleController,
-              hint: 'Enter task title...',
-            ),
-            const SizedBox(height: 24),
-
-            // Priority Section
+            SizedBox(height: isSmallScreen ? 2 : 4),
             Text(
-              'Priority Quadrant',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildQuadrantSelector(context),
-            const SizedBox(height: 24),
-
-            // Due Date & Time Section
-            Text(
-              'Due Date & Time',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _buildDateTimeSelector(context),
-            const SizedBox(height: 24),
-
-            // Notes Section
-            Text(
-              'Notes (Optional)',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _buildTextField(
-              controller: notesController,
-              hint: 'Add notes or description...',
-              maxLines: 4,
-            ),
-
-            const SizedBox(height: 40),
-
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: FilledButton.tonal(
-                onPressed: _saveTask,
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.primaryContainer,
-                  foregroundColor: colorScheme.onPrimaryContainer,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  isEditing ? 'Update Task' : 'Create Task',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
+              'Add your priority',
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.6),
+                fontSize: isSmallScreen ? 12 : 14,
+                fontWeight: FontWeight.w400,
+                height: 1.0,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    int maxLines = 1,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant, width: 1),
-      ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: theme.textTheme.bodyLarge?.copyWith(
-          color: colorScheme.onSurface,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: theme.textTheme.bodyLarge?.copyWith(
-            color: colorScheme.onSurfaceVariant.withOpacity(0.6),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuadrantSelector(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Column(
-        children:
-            Quadrant.values.map((quadrant) {
-              final info = quadrantInfo[quadrant]!;
-              final isSelected = selectedQuadrant == quadrant;
-
-              return InkWell(
-                onTap: () => setState(() => selectedQuadrant = quadrant),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        isSelected
-                            ? Border.all(color: info['color'], width: 1.5)
-                            : null,
-                    color: isSelected ? info['color'].withOpacity(0.1) : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 4,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: info['color'],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(info['icon'], color: info['color'], size: 24),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              info['title'],
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color:
-                                    isSelected
-                                        ? info['color']
-                                        : colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              info['subtitle'],
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isSelected)
-                        Icon(
-                          Icons.check_circle,
-                          color: info['color'],
-                          size: 20,
-                        ),
-                    ],
-                  ),
+        toolbarHeight: toolbarHeight,
+        actions: [
+          if (isEditing)
+            Padding(
+              padding: EdgeInsets.only(right: horizontalPadding - 4),
+              child: IconButton(
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: colorScheme.error,
+                  size: isSmallScreen ? 20 : 24,
                 ),
-              );
-            }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildDateTimeSelector(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          // Date Selector
-          InkWell(
-            onTap: _selectDate,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      selectedDate == null
-                          ? 'No due date set'
-                          : DateFormat('MMM dd, yyyy').format(selectedDate!),
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color:
-                            selectedDate == null
-                                ? colorScheme.onSurfaceVariant
-                                : colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                  if (selectedDate != null)
-                    InkWell(
-                      onTap:
-                          () => setState(() {
-                            selectedDate = null;
-                            selectedTime = null;
-                          }),
-                      child: const Icon(Icons.clear, size: 20),
-                    ),
-                ],
+                onPressed: () => _showDeleteConfirmation(context),
               ),
             ),
-          ),
-
-          // Time Selector (only show if date is selected)
-          if (selectedDate != null) ...[
-            Divider(height: 1, color: colorScheme.outlineVariant),
-            InkWell(
-              onTap: _selectTime,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(12),
+        ],
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: isShortScreen ? 16 : 20,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - (isShortScreen ? 32 : 40),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.access_time, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        selectedTime == null
-                            ? 'No time set'
-                            : selectedTime!.format(context),
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color:
-                              selectedTime == null
-                                  ? colorScheme.onSurfaceVariant
-                                  : colorScheme.onSurface,
-                        ),
+                    CustomTitleTextField(
+                      controller: titleController,
+                      colorScheme: colorScheme,
+                    ),
+                    SizedBox(height: isShortScreen ? 8 : 10),
+                    CustomNotesTextField(
+                      controller: notesController,
+                      colorScheme: colorScheme,
+                    ),
+                    SizedBox(height: sectionSpacing),
+                    Text(
+                      'Due Date and Time',
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: isSmallScreen ? 16 : 18,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    if (selectedTime != null)
-                      InkWell(
-                        onTap: () => setState(() => selectedTime = null),
-                        child: const Icon(Icons.clear, size: 20),
+                    SizedBox(height: isShortScreen ? 12 : 16),
+                    CustomDateTimeField(
+                      selectedDate: selectedDate,
+                      selectedTime: selectedTime,
+                      onTap: _selectDate,
+                      colorScheme: colorScheme,
+                      onClear: () {
+                        setState(() {
+                          selectedDate = null;
+                          selectedTime = null;
+                        });
+                      },
+                    ),
+                    SizedBox(height: sectionSpacing),
+                    Text(
+                      'Priority Quadrant',
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: isSmallScreen ? 16 : 18,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    SizedBox(height: isShortScreen ? 12 : 16),
+                    QuadrantSelector(
+                      initialQuadrant: selectedQuadrant,
+                      onQuadrantSelected: (quadrant) {
+                        setState(() {
+                          selectedQuadrant = quadrant;
+                        });
+                      },
+                      animationController: _animationController,
+                    ),
+                    SizedBox(height: isShortScreen ? 24 : 40),
+                    _buildAddTaskButton(isEditing, colorScheme, screenSize),
                   ],
                 ),
               ),
             ),
-          ],
-        ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddTaskButton(
+    bool isEditing,
+    ColorScheme colorScheme,
+    Size screenSize,
+  ) {
+    final isSmallScreen = screenSize.width < 400;
+    final buttonHeight = isSmallScreen ? 56.0 : 64.0;
+    final fontSize = isSmallScreen ? 14.0 : 16.0;
+
+    return SizedBox(
+      width: double.infinity,
+      height: buttonHeight,
+      child: ElevatedButton(
+        onPressed: _saveTask,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(isSmallScreen ? 28 : 32),
+          ),
+          elevation: 0,
+        ),
+        child: Text(
+          isEditing ? 'Update task' : 'Add task',
+          style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
 
   Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
+              surface: Theme.of(context).colorScheme.surface,
+              onSurface: Theme.of(context).colorScheme.onSurface,
+            ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-
-    if (picked != null && picked != selectedDate) {
+    if (pickedDate != null) {
       setState(() {
-        selectedDate = picked;
+        selectedDate = pickedDate;
       });
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: selectedTime ?? TimeOfDay.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Theme.of(context).colorScheme.primary,
+                surface: Theme.of(context).colorScheme.surface,
+                onSurface: Theme.of(context).colorScheme.onSurface,
+              ),
+              dialogTheme: DialogThemeData(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+      if (pickedTime != null) {
+        setState(() {
+          selectedTime = pickedTime;
+        });
+      }
     }
   }
 
-  Future<void> _selectTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: selectedTime ?? TimeOfDay.now(),
-    );
-
-    if (picked != null && picked != selectedTime) {
-      setState(() {
-        selectedTime = picked;
-      });
-    }
-  }
-
-  void _saveTask() {
+  /// saving the task
+  Future<void> _saveTask() async {
     final String title = titleController.text.trim();
-    final String? notes =
-        notesController.text.trim().isEmpty
-            ? null
-            : notesController.text.trim();
+    final String? notes = notesController.text.trim().isEmpty
+        ? null
+        : notesController.text.trim();
 
+    // Validation
     if (title.isEmpty) {
       _showSnackbar(context, 'Please enter a task title', isError: true);
       return;
     }
-
     if (selectedQuadrant == null) {
       _showSnackbar(
         context,
@@ -447,24 +386,128 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       return;
     }
 
-    // Combine date and time into a single DateTime
+    // DateTime handling with timezone awareness
     DateTime? finalDateTime;
     if (selectedDate != null) {
-      if (selectedTime != null) {
+      try {
         finalDateTime = DateTime(
           selectedDate!.year,
           selectedDate!.month,
           selectedDate!.day,
-          selectedTime!.hour,
-          selectedTime!.minute,
+          selectedTime?.hour ?? 9, // Default to 9 AM if no time selected
+          selectedTime?.minute ?? 0,
         );
-      } else {
-        finalDateTime = selectedDate;
+
+        // Convert to timezone-aware datetime
+        final tz.TZDateTime tzDateTime = tz.TZDateTime.from(
+          finalDateTime,
+          tz.local,
+        );
+
+        if (!tzDateTime.isAfter(tz.TZDateTime.now(tz.local))) {
+          _showSnackbar(
+            context,
+            'Please select a future date and time',
+            isError: true,
+          );
+          return;
+        }
+
+        if (kDebugMode) {
+          print('🕒 Final DateTime validation:');
+          print('   📅 Selected Date: $selectedDate');
+          print('   ⏰ Selected Time: $selectedTime');
+          print('   🎯 Final DateTime: $finalDateTime');
+          print('   🌍 TZ DateTime: $tzDateTime');
+          print('   📍 Current Time: ${tz.TZDateTime.now(tz.local)}');
+          print(
+            '   ⏳ Time Until: ${tzDateTime.difference(tz.TZDateTime.now(tz.local))}',
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ DateTime conversion error: $e');
+        }
+        _showSnackbar(context, 'Invalid date/time selection', isError: true);
+        return;
       }
     }
 
+    final notificationService = NotificationService();
+    final bool isEditing = widget.task != null;
+    final String taskId = widget.task?.id ?? const Uuid().v4();
+    final int notificationId = taskId.hashCode;
+
+    // Cancel existing notification if editing
+    if (isEditing) {
+      await notificationService.cancelNotification(notificationId);
+      if (kDebugMode) {
+        print('🗑️ Cancelled existing notification for task: $taskId');
+      }
+    }
+
+    bool notificationScheduled = false;
+    String? notificationError;
+
+    // Schedule notification if datetime is set
+    if (finalDateTime != null) {
+      try {
+        // 1. Initialize service
+        await notificationService.onReady;
+
+        // 2. Check and request permissions
+        final hasPermissions = await notificationService
+            .requestAllPermissions();
+
+        if (!hasPermissions) {
+          notificationError =
+              'Notification permissions required for reminders.';
+          if (kDebugMode) {
+            print('❌ Permissions denied, but continuing to save task');
+          }
+        } else {
+          // 3. Convert to timezone-aware datetime
+          final tz.TZDateTime scheduledTime = tz.TZDateTime.from(
+            finalDateTime,
+            tz.local,
+          );
+
+          // 4. Schedule notification
+          await notificationService.scheduleNotification(
+            id: notificationId,
+            title: 'Task Due: $title',
+            body: notes ?? "Time for your task: $title",
+            scheduledDate: scheduledTime,
+            payload: taskId,
+          );
+
+          notificationScheduled = true;
+
+          if (kDebugMode) {
+            print('✅ Notification scheduled successfully!');
+            print('   🎯 Scheduled Time: $scheduledTime');
+            print(
+              '   ⏳ Time Until: ${scheduledTime.difference(tz.TZDateTime.now(tz.local))}',
+            );
+
+            // Debug pending notifications
+            await notificationService.debugPendingNotifications();
+          }
+        }
+      } catch (e, stackTrace) {
+        notificationError = 'Failed to schedule notification: ${e.toString()}';
+        if (kDebugMode) {
+          print('❌ Notification scheduling error:');
+          print('   🚨 Error: $e');
+          print('   📍 Type: ${e.runtimeType}');
+          print('   📚 Stack: $stackTrace');
+        }
+      }
+    }
+
+    // Create and save the task
     final newTask = Task(
-      id: widget.task?.id ?? const Uuid().v4(),
+      id: taskId,
       title: title,
       notes: notes,
       quadrant: selectedQuadrant!,
@@ -474,52 +517,101 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       updatedAt: DateTime.now(),
     );
 
-    // Always use updateTask which handles both new and existing tasks
     ref.read(taskProvider.notifier).updateTask(newTask);
-    Navigator.pop(context);
+
+    if (kDebugMode) {
+      print('💾 Task saved:');
+      print('   🆔 ID: ${newTask.id}');
+      print('   📧 Title: ${newTask.title}');
+      print('   📅 Due: ${newTask.dueDate}');
+      print('   🔔 Notification: $notificationScheduled');
+    }
+
+    // Show feedback to user
+    if (context.mounted) {
+      if (notificationScheduled && finalDateTime != null) {
+        final timeUntil = finalDateTime.difference(DateTime.now());
+        final hoursUntil = timeUntil.inHours;
+        final minutesUntil = timeUntil.inMinutes % 60;
+
+        String timeMessage = '';
+        if (hoursUntil > 0) {
+          timeMessage = ' (in ${hoursUntil}h ${minutesUntil}m)';
+        } else if (minutesUntil > 0) {
+          timeMessage = ' (in ${minutesUntil}m)';
+        } else {
+          timeMessage = ' (very soon!)';
+        }
+
+        _showSnackbar(
+          context,
+          'Task saved with reminder$timeMessage',
+          isError: false,
+        );
+      } else if (notificationError != null) {
+        _showSnackbar(context, notificationError, isError: true);
+      } else {
+        _showSnackbar(context, 'Task saved!', isError: false);
+      }
+
+      // Small delay before navigation
+      await Future.delayed(const Duration(milliseconds: 300));
+      Navigator.pop(context);
+    }
   }
 
   void _showDeleteConfirmation(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 400;
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: colorScheme.surfaceContainerHigh,
-            title: Text(
-              'Delete Task',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
-            ),
-            content: Text(
-              'Are you sure you want to delete this task? This action cannot be undone.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  ref.read(taskProvider.notifier).deleteTask(widget.task!.id);
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Close edit screen
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.errorContainer,
-                  foregroundColor: colorScheme.onErrorContainer,
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          'Delete Task',
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+            fontSize: isSmallScreen ? 18 : 20,
           ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this task? This action cannot be undone.',
+          style: TextStyle(
+            color: colorScheme.onSurface.withOpacity(0.6),
+            fontSize: isSmallScreen ? 14 : 16,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: Navigator.of(context).pop,
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.6),
+                fontSize: isSmallScreen ? 14 : 16,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(taskProvider.notifier).deleteTask(widget.task!.id);
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.error,
+              foregroundColor: colorScheme.onError,
+            ),
+            child: Text(
+              'Delete',
+              style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -529,31 +621,40 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     required bool isError,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 400;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        margin: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12 : 16,
+          vertical: isSmallScreen ? 16 : 24,
+        ),
         backgroundColor: isError ? colorScheme.error : colorScheme.primary,
         content: Row(
           children: [
             Icon(
               isError ? Icons.error_outline : Icons.check_circle_outline,
-              color: isError ? colorScheme.onError : colorScheme.onPrimary,
+              color: colorScheme.onError,
+              size: isSmallScreen ? 20 : 24,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isSmallScreen ? 8 : 12),
             Expanded(
               child: Text(
                 message,
                 style: TextStyle(
-                  color: isError ? colorScheme.onError : colorScheme.onPrimary,
+                  color: colorScheme.onError,
+                  fontSize: isSmallScreen ? 13 : 14,
                 ),
               ),
             ),
           ],
         ),
         duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
+        ),
       ),
     );
   }

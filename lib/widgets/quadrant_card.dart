@@ -33,16 +33,32 @@ class QuadrantCard extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.task_alt_outlined,
-            color: colorScheme.onSurface.withOpacity(0.3),
-            size: 32,
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colorScheme.onSurface.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.check,
+              color: colorScheme.onSurface.withOpacity(0.4),
+              size: 18,
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap to add task',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.5),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: colorScheme.onSurface.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              'Tap to add task',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 12,
+              ),
             ),
           ),
         ],

@@ -7,7 +7,7 @@ import '../main.dart';
 enum AppTheme {
   light,
   dark,
-  amoled,
+  amoled, system,
 }
 
 final themeProvider = StateNotifierProvider<ThemeNotifier, AppTheme>((ref) {

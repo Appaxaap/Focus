@@ -1,31 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 import '../models/task_models.dart';
 import '../providers/task_provider.dart';
 import '../screens/task_edit_screen.dart';
 
-class TaskTile extends ConsumerWidget {
+class TaskTile extends ConsumerStatefulWidget {
   final Task task;
 
   const TaskTile({super.key, required this.task});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TaskTile> createState() => _TaskTileState();
+}
+
+class _TaskTileState extends ConsumerState<TaskTile> {
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check every minute if task becomes overdue
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted &&
+          widget.task.dueDate != null &&
+          !widget.task.isCompleted &&
+          widget.task.dueDate!.isBefore(DateTime.now())) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
     final isOverdue =
-        task.dueDate != null &&
-        task.dueDate!.isBefore(DateTime.now()) &&
-        !task.isCompleted;
+        widget.task.dueDate != null &&
+        widget.task.dueDate!.isBefore(DateTime.now()) &&
+        !widget.task.isCompleted;
+
+    final isDueSoon =
+        widget.task.dueDate != null &&
+        !widget.task.isCompleted &&
+        !isOverdue &&
+        widget.task.dueDate!.difference(DateTime.now()).inMinutes <= 60;
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => TaskEditScreen(task: task)),
+          MaterialPageRoute(
+            builder: (context) => TaskEditScreen(task: widget.task),
+          ),
         );
       },
       child: Container(
@@ -34,7 +70,21 @@ class TaskTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.4)),
+          border: Border.all(
+            color: isOverdue
+                ? colorScheme.error.withOpacity(0.3)
+                : colorScheme.outline.withOpacity(0.4),
+            width: isOverdue ? 1.5 : 1.0,
+          ),
+          boxShadow: isOverdue
+              ? [
+                  BoxShadow(
+                    color: colorScheme.error.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +99,7 @@ class TaskTile extends ConsumerWidget {
                   onTap: () {
                     ref
                         .read(taskProvider.notifier)
-                        .toggleTaskCompletion(task.id);
+                        .toggleTaskCompletion(widget.task.id);
                   },
                   child: Container(
                     width: 20,
@@ -57,26 +107,25 @@ class TaskTile extends ConsumerWidget {
                     margin: const EdgeInsets.only(top: 2),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color:
-                          task.isCompleted
-                              ? colorScheme.primary
-                              : Colors.transparent,
+                      color: widget.task.isCompleted
+                          ? colorScheme.primary
+                          : Colors.transparent,
                       border: Border.all(
-                        color:
-                            task.isCompleted
-                                ? colorScheme.primary
-                                : colorScheme.outline,
+                        color: widget.task.isCompleted
+                            ? colorScheme.primary
+                            : isOverdue
+                            ? colorScheme.error
+                            : colorScheme.outline,
                         width: 1.5,
                       ),
                     ),
-                    child:
-                        task.isCompleted
-                            ? Icon(
-                              Icons.check,
-                              color: colorScheme.onPrimary,
-                              size: 12,
-                            )
-                            : null,
+                    child: widget.task.isCompleted
+                        ? Icon(
+                            Icons.check,
+                            color: colorScheme.onPrimary,
+                            size: 12,
+                          )
+                        : null,
                   ),
                 ),
 
@@ -85,20 +134,19 @@ class TaskTile extends ConsumerWidget {
                 // Task Title
                 Expanded(
                   child: Text(
-                    task.title,
+                    widget.task.title,
                     style: textTheme.bodyMedium?.copyWith(
-                      color:
-                          task.isCompleted
-                              ? colorScheme.onSurface.withOpacity(0.5)
-                              : colorScheme.onSurface,
-                      fontWeight:
-                          task.isCompleted
-                              ? FontWeight.normal
-                              : FontWeight.w600,
-                      decoration:
-                          task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
+                      color: widget.task.isCompleted
+                          ? colorScheme.onSurface.withOpacity(0.5)
+                          : isOverdue
+                          ? colorScheme.error
+                          : colorScheme.onSurface,
+                      fontWeight: widget.task.isCompleted
+                          ? FontWeight.normal
+                          : FontWeight.w600,
+                      decoration: widget.task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
                       decorationColor: colorScheme.onSurface.withOpacity(0.4),
                     ),
                     maxLines: 2,
@@ -109,14 +157,16 @@ class TaskTile extends ConsumerWidget {
             ),
 
             // Second row: Notes (if available)
-            if (task.notes != null && task.notes!.isNotEmpty) ...[
+            if (widget.task.notes != null && widget.task.notes!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.only(left: 32),
                 child: Text(
-                  task.notes!,
+                  widget.task.notes!,
                   style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: isOverdue
+                        ? colorScheme.error.withOpacity(0.8)
+                        : colorScheme.onSurface.withOpacity(0.7),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -125,11 +175,16 @@ class TaskTile extends ConsumerWidget {
             ],
 
             // Third row: Due Date and Time (if available)
-            if (task.dueDate != null) ...[
+            if (widget.task.dueDate != null) ...[
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.only(left: 32),
-                child: _buildDateTimeChip(context, task.dueDate!, isOverdue),
+                child: _buildDateTimeChip(
+                  context,
+                  widget.task.dueDate!,
+                  isOverdue,
+                  isDueSoon,
+                ),
               ),
             ],
           ],
@@ -142,6 +197,7 @@ class TaskTile extends ConsumerWidget {
     BuildContext context,
     DateTime dueDate,
     bool isOverdue,
+    bool isDueSoon,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -159,44 +215,61 @@ class TaskTile extends ConsumerWidget {
       dateText = DateFormat('MMM d').format(dueDate);
     }
 
+    Color chipColor;
+    Color textColor;
+    IconData icon;
+
+    if (isOverdue) {
+      chipColor = colorScheme.errorContainer;
+      textColor = colorScheme.error;
+      icon = Icons.warning_amber_rounded;
+    } else if (isDueSoon) {
+      chipColor = colorScheme.tertiaryContainer;
+      textColor = colorScheme.onTertiaryContainer;
+      icon = Icons.timer_outlined;
+    } else {
+      chipColor = colorScheme.surfaceContainerHighest;
+      textColor = colorScheme.onSurfaceVariant;
+      icon = hasTime ? Icons.access_time : Icons.calendar_today;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color:
-            isOverdue
-                ? colorScheme.errorContainer
-                : colorScheme.surfaceContainerHighest,
+        color: chipColor,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color:
-              isOverdue
-                  ? colorScheme.error.withOpacity(0.3)
-                  : colorScheme.outline.withOpacity(0.3),
+          color: isOverdue
+              ? colorScheme.error.withOpacity(0.3)
+              : colorScheme.outline.withOpacity(0.3),
           width: 0.5,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            hasTime ? Icons.access_time : Icons.calendar_today,
-            size: 12,
-            color: isOverdue ? colorScheme.error : colorScheme.onSurfaceVariant,
-          ),
+          Icon(icon, size: 12, color: textColor),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               dateText,
               style: theme.textTheme.labelSmall?.copyWith(
-                color:
-                    isOverdue
-                        ? colorScheme.error
-                        : colorScheme.onSurfaceVariant,
+                color: textColor,
                 fontWeight: FontWeight.w500,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (isDueSoon) ...[
+            const SizedBox(width: 4),
+            Text(
+              '• Due soon',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -66,7 +66,7 @@ android {
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86_64")
             // This will generate split APKs when using --split-per-abi
-            isUniversalApk = false
+            isUniversalApk = true
         }
     }
 }

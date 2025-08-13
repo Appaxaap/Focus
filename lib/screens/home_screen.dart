@@ -7,6 +7,7 @@ import '../models/task_models.dart';
 import '../providers/filter_provider.dart';
 import '../providers/task_provider.dart';
 import '../screens/task_edit_screen.dart';
+import '../widgets/grouped_buttons.dart';
 import '../widgets/quadrant_card.dart';
 import '../widgets/settings_bottomsheet.dart';
 import '../widgets/task_tile.dart';
@@ -83,7 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Section
+                // Header Section with Grouped Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -106,59 +107,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        IconButton.filledTonal(
-                          onPressed: () {
-                            final newMode =
-                                viewMode == ViewMode.card
-                                    ? ViewMode.list
-                                    : ViewMode.card;
-                            ref.read(viewModeProvider.notifier).state = newMode;
-                            HapticFeedback.selectionClick();
-                          },
-                          icon: Icon(
-                            viewMode == ViewMode.card
-                                ? Icons.view_list_rounded
-                                : Icons.grid_view_rounded,
-                            color: colorScheme.onSurface, // ✅ Add this
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.surfaceContainerHigh,
-                            foregroundColor:
-                                colorScheme
-                                    .onSurface, // Optional: For ripple effect
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton.filledTonal(
-                          onPressed: () => _showFilterDialog(context, ref),
-                          icon: Icon(
-                            Icons.filter_list_rounded,
-                            color: colorScheme.onSurface, // ✅ Add this
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.surfaceContainerHigh,
-                            foregroundColor: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () {
-                            showSettingsBottomSheet(context);
-                          },
-                          icon: Icon(
-                            Icons.settings,
-                            color:
-                                colorScheme
-                                    .onSurface, // ✅ Fix: Use theme-aware color
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.surfaceContainerHigh,
-                            foregroundColor: colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
+                    GroupedButtons(
+                      viewMode: viewMode,
+                      onFilterPressed: () async => _showFilterDialog(context, ref),
+
+                      onSettingsPressed: () async => showSettingsBottomSheet(context),
+
                     ),
                   ],
                 ),
@@ -185,6 +139,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ),
       ),
+
+      // floating button for task adding
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddTask(context),
         backgroundColor: colorScheme.primary,
@@ -370,71 +326,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         break;
     }
 
-    // ✅ FIX: Separate completed and incomplete tasks
+    // Separate completed and incomplete tasks
     final completedTasks =
         filteredTasks.where((task) => task.isCompleted).toList();
     final incompleteTasks =
         filteredTasks.where((task) => !task.isCompleted).toList();
 
-    // ✅ FIX: Use only incomplete tasks for quadrant grouping
+    // Use only incomplete tasks for quadrant grouping
     final quadrantGroups = <Quadrant, List<Task>>{};
     for (final quadrant in Quadrant.values) {
       quadrantGroups[quadrant] =
           incompleteTasks.where((task) => task.quadrant == quadrant).toList();
     }
 
-    // ✅ FIX: Check if there are any tasks to show (completed or incomplete)
+    // Check if there are any tasks to show (completed or incomplete)
     if (filteredTasks.isEmpty) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.task_alt_outlined,
-                color: colorScheme.onSurfaceVariant.withOpacity(0.4),
-                size: 64,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: colorScheme.onSurface.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 16),
-              Text(
-                filter == TaskViewFilter.All && !showCompleted
-                    ? 'No tasks found'
-                    : 'No tasks found for this filter',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
+              child: Icon(
+                Icons.check,
+                color: colorScheme.onSurface.withOpacity(0.4),
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            Text(
+              filter == TaskViewFilter.All && !showCompleted
+                  ? 'No tasks found'
+                  : 'No tasks found for this filter',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // tap to add button
+            GestureDetector(
+              onTap: () => _navigateToAddTask(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                filter == TaskViewFilter.All && !showCompleted
-                    ? 'Try adjusting your filter or add new tasks'
-                    : 'Try adjusting your filter or add new tasks',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurface.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              const SizedBox(height: 24),
-              if (!showCompleted && filter == TaskViewFilter.All)
-                FilledButton.icon(
-                  onPressed: () => _navigateToAddTask(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add New Task'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.primaryContainer,
-                    foregroundColor: colorScheme.onPrimaryContainer,
+                child: Text(
+                  'Tap to add task',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 16,
                   ),
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       );
     }
-
     return ListView(
       children: [
         // ✅ FIX: Show completed tasks section only if showCompleted is true and there are completed tasks
