@@ -14,6 +14,7 @@
   <img alt="Flutter" src="https://img.shields.io/badge/flutter-3.10.5-blue?style=flat-square&logo=flutter">
   <img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat-square">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square">
+  <img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat-square">
 </p>
 
 ---
