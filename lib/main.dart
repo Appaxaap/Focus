@@ -9,6 +9,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'models/quadrant_enum.dart';
 import 'models/task_models.dart';
 import 'providers/theme_provider.dart';
+import 'providers/task_providers.dart';
 import 'screens/home_screen.dart';
 
 // Define the custom background color
@@ -41,6 +42,11 @@ void main() async {
           StateNotifierProvider<ThemeNotifier, AppTheme>((ref) {
             return ThemeNotifier(hiveService)
               ..setTheme(savedTheme ?? AppTheme.light);
+          }),
+        ),
+        showCompletedTasksNotifierProvider.overrideWithProvider(
+          StateNotifierProvider<ShowCompletedTasksNotifier, bool>((ref) {
+            return ShowCompletedTasksNotifier(hiveService);
           }),
         ),
       ],
