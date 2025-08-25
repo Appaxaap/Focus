@@ -224,14 +224,5 @@ Let’s keep this simple, human, and helpful — together.
 
 ---
 
-## ✈️ Coming Soon
-
-* F-Droid release
-* Play Store version
-* Optional task reminders
-* Export to PDF/Markdown
-
----
-
 > “What is important is seldom urgent and what is urgent is seldom important.”
 > — Dwight D. Eisenhower
