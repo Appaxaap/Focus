@@ -1,21 +1,24 @@
-<h1 align="center">🧭 Focus – Stay Productive, Not Just Busy</h1>
+<h1 align="center">
+  <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Focus icon" width="192" height="192"/>
+  <br>
+  Focus
+  <a href="https://github.com/Appaxaap/Focus">
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=D1BCFF&labelColor=202124"/>
+  </a>
+</h1>
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Logo" width="150" />
-</p>
+<p align="center"><strong>🧭 Stay Productive, Not Just Busy</strong></p>
+<p align="center"><i>A fully offline Eisenhower Matrix planner built with Flutter</i></p>
 
-<p align="center">
-  <b>A fully offline Eisenhower Matrix planner built with Flutter</b><br>
-  <i>No distractions. No ads. No cloud. Just <b>you</b> and your priorities.</i>
-</p>
+<div align="center">
 
-<p align="center">
-  <img alt="Platform" src="https://img.shields.io/badge/Android-Platform-34A853?style=flat&logo=android&logoColor=white&labelColor=202124">
-  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32.5-02569B?style=flat&logo=flutter&logoColor=white&labelColor=202124">
-  <img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=4285F4&logo=github&label=Release">
-  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-FFB300?style=flat&labelColor=202124">
-  <img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=34A853&logo=icloud&logoColor=white&label=Downloads&cacheSeconds=3600">
-</p>
+<img alt="Platform" src="https://img.shields.io/badge/Android-Platform-D1BCFF?style=flat&logo=android&logoColor=fffffff&labelColor=202124">
+<img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32.5-D1BCFF?style=flat&logo=flutter&logoColor=fffffff&labelColor=202124">
+<img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=D1BCFF&logo=github&logoColor=fffffff&label=Release&labelColor=202124">
+<img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-D1BCFF?style=flat&labelColor=202124&logoColor=fffffff">
+<img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=D1BCFF&logo=icloud&logoColor=fffffff&label=Downloads&labelColor=202124">
+
+</div>
 
 ---
 
