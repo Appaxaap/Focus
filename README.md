@@ -10,11 +10,11 @@
 </p>
 
 <p align="center">
-  <img alt="Platform" src="https://img.shields.io/badge/platform-Android-green?style=flat-square&logo=android">
-  <img alt="Flutter" src="https://img.shields.io/badge/flutter-3.10.5-blue?style=flat-square&logo=flutter">
-  <img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat-square">
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square">
-  <img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat-square">
+  <img alt="Platform" src="https://img.shields.io/badge/Android-Platform-34A853?style=flat&logo=android&logoColor=white&labelColor=202124">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32.5-02569B?style=flat&logo=flutter&logoColor=white&labelColor=202124">
+  <img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=4285F4&logo=github&label=Release">
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-FFB300?style=flat&labelColor=202124">
+  <img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=34A853&logo=icloud&logoColor=white&label=Downloads&cacheSeconds=3600">
 </p>
 
 ---
