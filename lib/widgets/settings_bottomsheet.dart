@@ -277,7 +277,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
   @override
   Widget build(BuildContext context) {
     final appTheme = ref.watch(themeProvider);
-    final showCompleted = ref.watch(showCompletedTasksProvider);
+    final showCompleted = ref.watch(showCompletedTasksNotifierProvider);
     final colorScheme = _getColorScheme(appTheme);
 
     return SlideTransition(
@@ -582,7 +582,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
               child: Switch.adaptive(
                 value: showCompleted,
                 onChanged: (value) {
-                  ref.read(showCompletedTasksProvider.notifier).state = value;
+                  ref.read(showCompletedTasksNotifierProvider.notifier).setValue(value);
                   HapticFeedback.lightImpact();
                 },
                 activeColor: Theme.of(context).colorScheme.primary,
