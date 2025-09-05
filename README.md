@@ -169,37 +169,6 @@ lib/
 ## 📄 License
 
 This project is open-source under the **GPL v3.0 License**.
-```
-Focus - Eisenhower Matrix Application
-Copyright (C) 2025 Basim Basheer
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-Contact Information:
-Email: [your-email@domain.com]
-GitHub: https://github.com/Appaxaap/Focus
-
-Additional Terms under GPL v3.0 Section 7:
-- Attribution Requirement: Any derivative work must prominently display 
-  "Based on Focus by Basim Basheer" in the application's about section 
-  and any promotional materials.
-- Anti-Tivoization: This software cannot be used in devices that prevent 
-  users from running modified versions of the software.
-- Network Use: If this software is used to provide a service over a 
-  network, the complete source code must be made available to all users 
-  of that service.
-```
 
 ---
 
