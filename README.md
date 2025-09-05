@@ -15,7 +15,7 @@
 <img alt="Platform" src="https://img.shields.io/badge/Android-Platform-D1BCFF?style=flat&logo=android&logoColor=fffffff&labelColor=202124">
 <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32.5-D1BCFF?style=flat&logo=flutter&logoColor=fffffff&labelColor=202124">
 <img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=D1BCFF&logo=github&logoColor=fffffff&label=Release&labelColor=202124">
-<img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-D1BCFF?style=flat&labelColor=202124&logoColor=fffffff">
+<img alt="License: MIT" src="https://img.shields.io/badge/License-GPL v3.0-D1BCFF?style=flat&labelColor=202124&logoColor=fffffff">
 <img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=D1BCFF&logo=icloud&logoColor=fffffff&label=Downloads&labelColor=202124">
 
 </div>
