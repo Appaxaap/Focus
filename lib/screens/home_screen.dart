@@ -56,7 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final tasks = ref.watch(taskProvider);
     final filter = ref.watch(filterProvider);
     final viewMode = ref.watch(viewModeProvider);
-    final showCompleted = ref.watch(showCompletedTasksProvider);
+    final showCompleted = ref.watch(showCompletedTasksNotifierProvider);
 
     final completedTasks = tasks.where((task) => task.isCompleted).toList();
     final incompleteTasks = tasks.where((task) => !task.isCompleted).toList();

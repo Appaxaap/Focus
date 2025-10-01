@@ -44,9 +44,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
   // load provider
   Future<void> _loadPreferences() async {
-    final hiveService = ref.read(hiveServiceProvider);
-    final showCompleted = await hiveService.getShowCompletedPreference();
-    ref.read(showCompletedTasksProvider.notifier).state = showCompleted;
+    // The preference is now automatically loaded by the notifier provider
+    // No need to manually load it here
   }
 
   @override
@@ -54,7 +53,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final appTheme = ref.watch(themeProvider);
-    final showCompleted = ref.watch(showCompletedTasksProvider);
+    final showCompleted = ref.watch(showCompletedTasksNotifierProvider);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -125,8 +124,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       ),
                       value: showCompleted,
                       onChanged: (value) {
-                        ref.read(showCompletedTasksProvider.notifier).state =
-                            value;
+                        ref.read(showCompletedTasksNotifierProvider.notifier).setValue(value);
                         HapticFeedback.selectionClick();
                       },
                       activeColor: colorScheme.primary,
@@ -488,7 +486,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   Future<void> _clearAllData(WidgetRef ref) async {
     final hiveService = ref.read(hiveServiceProvider);
     await hiveService.clearAllData();
-    ref.invalidate(showCompletedTasksProvider);
+    ref.invalidate(showCompletedTasksNotifierProvider);
   }
 
   void _showAboutAppDialog(BuildContext context) {
