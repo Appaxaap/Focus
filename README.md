@@ -1,208 +1,154 @@
 <h1 align="center">
-  <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Focus icon" width="192" height="192"/>
+  <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Focus icon" width="128" height="128"/>
   <br>
   Focus
-  <a href="https://github.com/Appaxaap/Focus">
+  <a href="https://github.com/Appaxaap/Focus/releases/latest">
     <img alt="GitHub Release" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=D1BCFF&labelColor=202124"/>
+  </a>
+  <a href="https://buymeacoffee.com/bxmbshr">
+    <img alt="Support" src="https://img.shields.io/badge/Support-☕-D1BCFF?style=flat&labelColor=202124"/>
   </a>
 </h1>
 
-<p align="center"><strong>🧭 Stay Productive, Not Just Busy</strong></p>
-<p align="center"><i>A fully offline Eisenhower Matrix planner built with Flutter</i></p>
+<p align="center"><strong>🧭 Prioritize what matters — without distractions</strong></p>
+<p align="center"><i>A 100% offline Eisenhower Matrix planner for focused minds</i></p>
 
 <div align="center">
-
-<img alt="Platform" src="https://img.shields.io/badge/Android-Platform-D1BCFF?style=flat&logo=android&logoColor=fffffff&labelColor=202124">
-<img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32.5-D1BCFF?style=flat&logo=flutter&logoColor=fffffff&labelColor=202124">
-<img alt="Version" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=D1BCFF&logo=github&logoColor=fffffff&label=Release&labelColor=202124">
-<img alt="License: MIT" src="https://img.shields.io/badge/License-GPL v3.0-D1BCFF?style=flat&labelColor=202124&logoColor=fffffff">
-<img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=D1BCFF&logo=icloud&logoColor=fffffff&label=Downloads&labelColor=202124">
-
+  <img alt="Platform" src="https://img.shields.io/badge/Android-Platform-D1BCFF?style=flat&logo=android&logoColor=fffffff&labelColor=202124">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32.5-D1BCFF?style=flat&logo=flutter&logoColor=fffffff&labelColor=202124">
+  <img alt="License" src="https://img.shields.io/badge/License-GPL_v3.0-D1BCFF?style=flat&labelColor=202124">
+  <img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=D1BCFF&label=Downloads&labelColor=202124">
 </div>
 
 ---
 
-![feature_graphics](https://github.com/user-attachments/assets/2ced335e-9bc7-45b2-8022-dd3079a7c77a)
+![Focus App Showcase](https://github.com/user-attachments/assets/2ced335e-9bc7-45b2-8022-dd3079a7c77a)
 
 ---
 
-## 🧠 Why I Built This
+## 🌟 Why Focus Exists
 
-I’ve tried dozens of productivity apps — most lock features behind paywalls, require sign-ups, track behavior, or worst… flood you with notifications.
+Most productivity apps **add complexity** — with logins, cloud sync, ads, and notifications that fragment your attention.
 
-All I wanted was a **simple, focused app** to organize my day using the Eisenhower Matrix — a method that works.
+**Focus is different**:
+- 🌙 **Truly offline** — no internet required  
+- 🔒 **Zero tracking** — your data never leaves your device  
+- 🧘 **Designed for calm** — minimal UI, maximum clarity  
+- 💙 **Free forever** — no paywalls, ever  
 
-So I built **Focus**:
-
-- 🌙 Offline-first by default  
-- 🔐 No data collection  
-- 🚀 Works out of the box  
-- 🧘 Designed for clarity, not complexity  
-
----
-
-## 🚀 What is the Eisenhower Matrix?
-
-The Eisenhower Matrix helps you prioritize what matters most.
-
-| Urgent     | Not Urgent         |
-|------------|--------------------|
-| ✅ Important → Do now     | 🕒 Important → Plan it |
-| ❗ Not Important → Delegate | 🚫 Not Important → Eliminate |
-
-Focus brings this framework to life — as a **clear, tactile layout** on your phone.
+> Built for people who value **privacy, intention, and deep work**.
 
 ---
 
-## ✨ What You Can Do with Focus
+## 🧠 The Eisenhower Matrix, Simplified
 
-- 🧩 Drag-and-drop or add tasks to 4 quadrants
-- 🌗 Toggle Light & Dark Mode (Material You)
-- ✅ Mark tasks complete
-- 🔍 Show/hide completed tasks
-- 🗃 Switch to list view when needed
-- 🕐 Add due dates (for prioritization)
-- 📱 No account. No tracking. 100% offline
+Focus implements Dwight Eisenhower’s timeless prioritization framework:
 
----
+|                          | **Important**               | **Not Important**         |
+|--------------------------|-----------------------------|---------------------------|
+| **Urgent**               | ✅ **Do First**             | 🤝 **Delegate**           |
+| **Not Urgent**           | 📅 **Schedule**             | 🗑️ **Eliminate**          |
 
-## 🤔 How Is Focus Different from Other Task Apps?
-
-| Feature                     | ✅ Focus                     | ❌ Most Task Apps            |
-|----------------------------|-----------------------------|------------------------------|
-| Offline-first              | Yes                         | Rare                         |
-| Login Required             | No                          | Often Mandatory              |
-| Matrix Method              | Eisenhower (Quadrant)       | Checklist or Kanban          |
-| Ads or Subscriptions       | Never                       | Often                        |
-| Privacy & Data Ownership   | 100% Local (Hive)           | Cloud-stored, tracked        |
-| Simple by Design           | Minimal & purposeful        | Feature-heavy & cluttered    |
-| Internet Required          | Never                       | Yes                          |
-
-Focus is **not** for teams, calendars, or collaboration. It’s built for **you** — and how **you** work best.
+Visually organize tasks into these quadrants to **cut through noise** and focus on what moves the needle.
 
 ---
 
-## 💡 Who Is It For?
+## ✨ Key Features
 
-- 🎨 Creators & Makers
-- 🧠 Deep Work Devotees
-- 📚 Students & Solo Learners
-- 🧘‍♂️ Minimalist Productivity Seekers
+- **Quadrant-based task management**  
+  Drag tasks into the right priority zone
+- **100% offline & private**  
+  All data stored locally via Hive (no cloud)
+- **Smart task defaults**  
+  "Do First" → due today • "Schedule" → due tomorrow
+- **Swipe actions**  
+  Complete (→) or delete (←) with haptic feedback
+- **Adaptive UI**  
+  Light/dark mode + list/card views
+- **Zero setup**  
+  Works immediately — no accounts or onboarding
 
-> If you value privacy, focus, and intention — this is your app.
+---
+
+## 🔍 How Focus Stands Out
+
+| Feature                | Focus                          | Typical Task Apps         |
+|------------------------|--------------------------------|---------------------------|
+| **Data Privacy**       | ✅ 100% local (Hive)           | ❌ Cloud-synced           |
+| **Offline Access**     | ✅ Always                      | ❌ Requires internet      |
+| **Cost**               | ✅ Free forever                | ❌ Freemium/paywalls      |
+| **Complexity**         | ✅ Minimalist                  | ❌ Feature overload       |
+| **Notifications**      | ✅ Only for your tasks         | ❌ Marketing/promotions   |
+
+---
+
+## 🎯 For Whom?
+
+- 🧠 **Deep work practitioners**  
+- 🎨 **Creators & makers**  
+- 📚 **Students & researchers**  
+- 🧘 **Minimalists** who value intentionality  
+
+> If you believe **productivity ≠ busyness**, this is your app.
 
 ---
 
 ## 📱 Screenshots
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/3129b7de-d6ca-48e6-b454-bb8bad2c2fa0" width="300" />
-  <img src="https://github.com/user-attachments/assets/f7f7dafe-1a88-409e-a995-7ed660792815" width="300" />
-  <img src="https://github.com/user-attachments/assets/cc7aeac3-c5fa-408b-92fd-8090979237d8" width="300" />
+  <img src="https://github.com/user-attachments/assets/3129b7de-d6ca-48e6-b454-bb8bad2c2fa0" width="220" />
+  <img src="https://github.com/user-attachments/assets/f7f7dafe-1a88-409e-a995-7ed660792815" width="220" />
+  <img src="https://github.com/user-attachments/assets/cc7aeac3-c5fa-408b-92fd-8090979237d8" width="220" />
 </p>
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/d1498880-d459-4cf6-ad9e-f2718bce4964" width="300" />
-  <img src="https://github.com/user-attachments/assets/00189dab-eeec-453f-be9c-dd5b56640673" width="300" />
-  <img src="https://github.com/user-attachments/assets/fb49fadb-2e0d-48f0-b325-707cfd49e97c" width="300" />
-</p>
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/79c70e9d-8f7b-457b-bb4c-e076dc995c7b" width="300" />
-  <img src="https://github.com/user-attachments/assets/aeb6ef92-fedb-4c56-b45d-089e4f7459da" width="300" />
-  <img src="https://github.com/user-attachments/assets/eb7fed94-07d5-44a0-b5f8-61e83185aa61" width="300" />
+  <img src="https://github.com/user-attachments/assets/d1498880-d459-4cf6-ad9e-f2718bce4964" width="220" />
+  <img src="https://github.com/user-attachments/assets/00189dab-eeec-453f-be9c-dd5b56640673" width="220" />
+  <img src="https://github.com/user-attachments/assets/fb49fadb-2e0d-48f0-b325-707cfd49e97c" width="220" />
 </p>
 
 ---
 
-## 🧰 Tech Stack
+## 🛠️ Tech Stack
 
-| Tech        | Purpose                     |
-|-------------|-----------------------------|
-| Flutter     | Cross-platform UI            |
-| Hive        | Local key-value DB           |
-| Provider    | Lightweight state management |
-| Material You| Dynamic theme customization  |
+- **Flutter** (cross-platform UI)  
+- **Hive** (local NoSQL database)  
+- **Riverpod** (state management)  
+- **Material You** (dynamic theming)  
 
 ---
 
-## 🛠️ Project Structure (Simplified)
+## 🙏 Support Focus
 
-```
-lib/
-├── models/                # Data models for tasks and quadrants
-│   ├── quadrant_enum.dart
-│   ├── task_models.dart
-│   └── *.g.dart           # Hive-generated adapter files
-│
-├── providers/             # State management using Riverpod/Provider
-│   ├── filter_provider.dart
-│   ├── task_provider.dart
-│   ├── task_providers.dart
-│   └── theme_provider.dart
-│
-├── screens/               # App screens
-│   ├── home_screen.dart
-│   ├── settings_screen.dart
-│   └── task_edit_screen.dart
-│
-├── services/              # Local services
-│   ├── hive_service.dart
-│   └── notification_service.dart
-│
-├── utils/                 # Utilities and constants
-│   ├── constants.dart
-│   ├── date_utils.dart
-│   ├── enums.dart
-│   └── theme_data.dart
-│
-├── widgets/               # Reusable UI components
-│   ├── quadrant_card.dart
-│   ├── settings_bottom_sheet.dart
-│   └── task_tile.dart
-│
-├── hive_initializer.dart  # Initializes Hive boxes
-└── main.dart              # Entry point
+Focus is **free, open-source, and ad-free** — built with care for focused minds like yours.  
 
-```
+If it helps you stay productive, consider supporting its development:  
+→ [**Buy me a coffee ☕**](https://buymeacoffee.com/bxmbshr)
+
+Every contribution funds:
+- New privacy-respecting features  
+- Maintenance & bug fixes  
+- Future offline-first apps  
+
+---
+
+## 📣 Community & Feedback
+
+- 💬 **Join discussions**: [Telegram Community](https://t.me/+Cpyd0Us0sisxOWE1)  
+- 🐞 **Report issues**: [GitHub Issues](https://github.com/Appaxaap/Focus/issues)  
+- 🚀 **Upvote on Product Hunt**: [Focus on PH](https://www.producthunt.com/posts/focus-10)  
 
 ---
 
 ## 📄 License
 
-This project is open-source under the **GPL v3.0 License**.
+Distributed under **GPL v3.0**. See [LICENSE](LICENSE).
 
 ---
 
-## 📣 Spread the Word
-
-🔗 [**Check it out on Product Hunt 🚀**](https://www.producthunt.com/posts/focus-10?utm_source=other&utm_medium=social)  
-Join the launch, upvote if you love it, and share your thoughts!
-
-💬 [**Join the Telegram Community 📱**](https://t.me/+Cpyd0Us0sisxOWE1)  
-Stay updated, give feedback, and help shape future features.
+> “What is important is seldom urgent, and what is urgent is seldom important.”  
+> — **Dwight D. Eisenhower**
 
 ---
 
-## 🙋 Who Made This?
-
-Hi, I’m **Basim Basheer** — Founder of [Codecx](https://codecx.ae), UX engineer, and Indie app builder.
-
-I built **Focus** to solve a personal problem, and I hope it helps you too.
-
-You can reach me at:
-📧 [basim@codecx.ae](mailto:basim@codecx.ae)
-🐦 [@Basim Basheer](https://x.com/Appaxaap)
-
----
-
-## 🌍 Want to Help?
-
-* Spot a bug? Open an issue.
-* Have an idea? Let’s discuss it.
-* Like the app? A ⭐ star means a lot.
-
-Let’s keep this simple, human, and helpful — together.
-
----
-
-> “What is important is seldom urgent and what is urgent is seldom important.”
-> — Dwight D. Eisenhower
+**Made with 💙 by [Basim Basheer](https://x.com/Appaxaap)**  
+[basim@codecx.ae](mailto:basim@codecx.ae) • [Codecx](https://codecx.ae)
