@@ -117,17 +117,24 @@ Visually organize tasks into these quadrants to **cut through noise** and focus 
 
 ---
 
-## 🙏 Support Focus
+## 🙏 Support the Vision
 
-Focus is **free, open-source, and ad-free** — built with care for focused minds like yours.  
+**Focus is just the beginning.**
 
-If it helps you stay productive, consider supporting its development:  
+I’m building a suite of **offline-first, privacy-respecting apps** that help you stay focused, organized, and in control — without compromise.
+
+Your support directly enables:
+- 🚀 Development of **new privacy-first apps** (coming soon!)
+- 🔒 Continued maintenance of **Focus** (bug fixes, updates, polish)
+- 🌱 Exploration of **ethical, sustainable app development** models
+
+> **No ads. No tracking. No paywalls. Ever.**  
+> Just honest, human-centered tools — built for people like you.
+
+If Focus has helped you cut through the noise, consider supporting the journey:  
 → [**Buy me a coffee ☕**](https://buymeacoffee.com/bxmbshr)
 
-Every contribution funds:
-- New privacy-respecting features  
-- Maintenance & bug fixes  
-- Future offline-first apps  
+Every contribution — big or small — fuels the next chapter.
 
 ---
 
@@ -149,6 +156,3 @@ Distributed under **GPL v3.0**. See [LICENSE](LICENSE).
 > — **Dwight D. Eisenhower**
 
 ---
-
-**Made with 💙 by [Basim Basheer](https://x.com/Appaxaap)**  
-[basim@codecx.ae](mailto:basim@codecx.ae) • [Codecx](https://codecx.ae)
