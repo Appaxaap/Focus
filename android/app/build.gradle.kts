@@ -34,22 +34,30 @@ android {
         versionCode = 6
         versionName = "2.1.0"
 
-        // Add this for multiDex support
+        // multiDex support
         multiDexEnabled = true
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
+            // This only runs when key.properties exists locally
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Use release signing if properties exist, otherwise debug (for CI)
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = false
             isShrinkResources = false
             proguardFiles(
@@ -59,7 +67,7 @@ android {
         }
     }
 
-    // ✅ SPLIT PER ABI CONFIGURATION
+    // SPLIT PER ABI CONFIGURATION
     splits {
         abi {
             isEnable = true
@@ -84,7 +92,7 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
 
     // Flutter dependencies
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20")
 }
 
 flutter {
