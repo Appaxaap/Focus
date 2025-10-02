@@ -1,0 +1,19 @@
+{
+  "appName": "Focus",
+  "settingsTitle": "Settings",
+  "customizeExperience": "Customize your Focus experience",
+  "goodMorning": "Good Morning",
+  "goodAfternoon": "Good Afternoon",
+  "goodEvening": "Good Evening",
+  "tasksCompletedToday": "{count, plural, =0{No tasks yet} =1{1 task completed today!} other{{count} tasks completed today!}} 🎉",
+  "showCompletedTasks": "Show Completed Tasks",
+  "displayFinishedTasks": "Display finished tasks",
+  "clearCompletedTasks": "Clear Completed Tasks",
+  "removeFinishedTasks": "{count, plural, =1{Remove 1 finished task} other{Remove {count} finished tasks}}",
+  "nothingToClear": "Nothing to Clear",
+  "completeSomeTasks": "Complete some tasks first",
+  "taskCompleted": "Task completed",
+  "taskDeleted": "Task deleted",
+  "madeWithLove": "Made with 💙 by Basim Basheer",
+  "privacyMessage": "🔒 All your data stays on your device — no cloud, no tracking."
+}

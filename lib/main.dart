@@ -66,7 +66,6 @@ class _FocusAppState extends ConsumerState<FocusApp> {
     super.initState();
     // Enable edge-to-edge display
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
   }
 
   @override
@@ -110,24 +109,22 @@ class _FocusAppState extends ConsumerState<FocusApp> {
           displayColor: Colors.white,
         ),
       ),
-      darkTheme:
-          themeMode == AppTheme.amoled
-              ? amoledTheme
-              : ThemeData(
-                useMaterial3: true,
-                brightness: Brightness.dark,
-                scaffoldBackgroundColor:
-                    appBackgroundColor, // Custom background
-                appBarTheme: const AppBarTheme(
-                  backgroundColor: appBackgroundColor,
-                ),
-                bottomAppBarTheme : const BottomAppBarTheme(
-                  color: appBackgroundColor,
-                ),
-                textTheme: GoogleFonts.dmSansTextTheme(
-                  ThemeData.dark(useMaterial3: true).textTheme,
-                ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+      darkTheme: themeMode == AppTheme.amoled
+          ? amoledTheme
+          : ThemeData(
+              useMaterial3: true,
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: appBackgroundColor, // Custom background
+              appBarTheme: const AppBarTheme(
+                backgroundColor: appBackgroundColor,
               ),
+              bottomAppBarTheme: const BottomAppBarTheme(
+                color: appBackgroundColor,
+              ),
+              textTheme: GoogleFonts.dmSansTextTheme(
+                ThemeData.dark(useMaterial3: true).textTheme,
+              ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+            ),
       themeMode: themeMode == AppTheme.light ? ThemeMode.light : ThemeMode.dark,
       home: const HomeScreen(),
     );

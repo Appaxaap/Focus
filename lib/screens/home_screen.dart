@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../providers/task_providers.dart';
+import '../providers/show_completed_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import '../models/quadrant_enum.dart';
@@ -56,7 +56,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final tasks = ref.watch(taskProvider);
     final filter = ref.watch(filterProvider);
     final viewMode = ref.watch(viewModeProvider);
-    final showCompleted = ref.watch(showCompletedTasksProvider);
+    final showCompletedAsync = ref.watch(showCompletedTasksProvider);
+    final showCompleted = showCompletedAsync.value ?? false;
 
     final completedTasks = tasks.where((task) => task.isCompleted).toList();
     final incompleteTasks = tasks.where((task) => !task.isCompleted).toList();
@@ -109,10 +110,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     GroupedButtons(
                       viewMode: viewMode,
-                      onFilterPressed: () async => _showFilterDialog(context, ref),
+                      onFilterPressed: () async =>
+                          _showFilterDialog(context, ref),
 
-                      onSettingsPressed: () async => showSettingsBottomSheet(context),
-
+                      onSettingsPressed: () async =>
+                          showSettingsBottomSheet(context),
                     ),
                   ],
                 ),
@@ -120,19 +122,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                 // Main Content
                 Expanded(
-                  child:
-                      viewMode == ViewMode.card
-                          ? _buildCardView(
-                            showCompleted ? tasks : incompleteTasks,
-                            colorScheme,
-                          )
-                          : _buildListView(
-                            tasks,
-                            filter,
-                            showCompleted,
-                            theme,
-                            colorScheme,
-                          ),
+                  child: viewMode == ViewMode.card
+                      ? _buildCardView(
+                          showCompleted ? tasks : incompleteTasks,
+                          colorScheme,
+                        )
+                      : _buildListView(
+                          tasks,
+                          filter,
+                          showCompleted,
+                          theme,
+                          colorScheme,
+                        ),
                 ),
               ],
             ),
@@ -163,22 +164,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   title: 'Do First',
                   description: 'Urgent • Important',
                   accentColor: const Color(0xFFFF4757),
-                  taskCount:
-                      tasks
-                          .where(
-                            (task) => task.quadrant == Quadrant.urgentImportant,
-                          )
-                          .length,
+                  taskCount: tasks
+                      .where(
+                        (task) => task.quadrant == Quadrant.urgentImportant,
+                      )
+                      .length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.urgentImportant,
-                    tasks:
-                        tasks
-                            .where(
-                              (task) =>
-                                  task.quadrant == Quadrant.urgentImportant,
-                            )
-                            .toList(),
+                    tasks: tasks
+                        .where(
+                          (task) => task.quadrant == Quadrant.urgentImportant,
+                        )
+                        .toList(),
                   ),
                 ),
               ),
@@ -188,23 +186,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   title: 'Schedule',
                   description: 'Not Urgent • Important',
                   accentColor: const Color(0xFF2ED573),
-                  taskCount:
-                      tasks
-                          .where(
-                            (task) =>
-                                task.quadrant == Quadrant.notUrgentImportant,
-                          )
-                          .length,
+                  taskCount: tasks
+                      .where(
+                        (task) => task.quadrant == Quadrant.notUrgentImportant,
+                      )
+                      .length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.notUrgentImportant,
-                    tasks:
-                        tasks
-                            .where(
-                              (task) =>
-                                  task.quadrant == Quadrant.notUrgentImportant,
-                            )
-                            .toList(),
+                    tasks: tasks
+                        .where(
+                          (task) =>
+                              task.quadrant == Quadrant.notUrgentImportant,
+                        )
+                        .toList(),
                   ),
                 ),
               ),
@@ -220,23 +215,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   title: 'Delegate',
                   description: 'Urgent • Not Important',
                   accentColor: const Color(0xFFFFA726),
-                  taskCount:
-                      tasks
-                          .where(
-                            (task) =>
-                                task.quadrant == Quadrant.urgentNotImportant,
-                          )
-                          .length,
+                  taskCount: tasks
+                      .where(
+                        (task) => task.quadrant == Quadrant.urgentNotImportant,
+                      )
+                      .length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.urgentNotImportant,
-                    tasks:
-                        tasks
-                            .where(
-                              (task) =>
-                                  task.quadrant == Quadrant.urgentNotImportant,
-                            )
-                            .toList(),
+                    tasks: tasks
+                        .where(
+                          (task) =>
+                              task.quadrant == Quadrant.urgentNotImportant,
+                        )
+                        .toList(),
                   ),
                 ),
               ),
@@ -246,24 +238,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   title: 'Eliminate',
                   description: 'Not Urgent • Not Important',
                   accentColor: const Color(0xFF747D8C),
-                  taskCount:
-                      tasks
-                          .where(
-                            (task) =>
-                                task.quadrant == Quadrant.notUrgentNotImportant,
-                          )
-                          .length,
+                  taskCount: tasks
+                      .where(
+                        (task) =>
+                            task.quadrant == Quadrant.notUrgentNotImportant,
+                      )
+                      .length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.notUrgentNotImportant,
-                    tasks:
-                        tasks
-                            .where(
-                              (task) =>
-                                  task.quadrant ==
-                                  Quadrant.notUrgentNotImportant,
-                            )
-                            .toList(),
+                    tasks: tasks
+                        .where(
+                          (task) =>
+                              task.quadrant == Quadrant.notUrgentNotImportant,
+                        )
+                        .toList(),
                   ),
                 ),
               ),
@@ -286,37 +275,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     switch (filter) {
       case TaskViewFilter.Daily:
-        filteredTasks =
-            tasks
-                .where(
-                  (task) =>
-                      task.dueDate != null && task.dueDate!.isSameDay(now),
-                )
-                .toList();
+        filteredTasks = tasks
+            .where(
+              (task) => task.dueDate != null && task.dueDate!.isSameDay(now),
+            )
+            .toList();
         break;
       case TaskViewFilter.Weekly:
-        filteredTasks =
-            tasks
-                .where(
-                  (task) =>
-                      task.dueDate != null &&
-                      task.dueDate!.isAfter(
-                        now.subtract(const Duration(days: 1)),
-                      ) &&
-                      task.dueDate!.isBefore(now.add(const Duration(days: 7))),
-                )
-                .toList();
+        filteredTasks = tasks
+            .where(
+              (task) =>
+                  task.dueDate != null &&
+                  task.dueDate!.isAfter(
+                    now.subtract(const Duration(days: 1)),
+                  ) &&
+                  task.dueDate!.isBefore(now.add(const Duration(days: 7))),
+            )
+            .toList();
         break;
       case TaskViewFilter.Monthly:
-        filteredTasks =
-            tasks
-                .where(
-                  (task) =>
-                      task.dueDate != null &&
-                      task.dueDate!.year == now.year &&
-                      task.dueDate!.month == now.month,
-                )
-                .toList();
+        filteredTasks = tasks
+            .where(
+              (task) =>
+                  task.dueDate != null &&
+                  task.dueDate!.year == now.year &&
+                  task.dueDate!.month == now.month,
+            )
+            .toList();
         break;
       case TaskViewFilter.All:
       default:
@@ -327,16 +312,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     // Separate completed and incomplete tasks
-    final completedTasks =
-        filteredTasks.where((task) => task.isCompleted).toList();
-    final incompleteTasks =
-        filteredTasks.where((task) => !task.isCompleted).toList();
+    final completedTasks = filteredTasks
+        .where((task) => task.isCompleted)
+        .toList();
+    final incompleteTasks = filteredTasks
+        .where((task) => !task.isCompleted)
+        .toList();
 
     // Use only incomplete tasks for quadrant grouping
     final quadrantGroups = <Quadrant, List<Task>>{};
     for (final quadrant in Quadrant.values) {
-      quadrantGroups[quadrant] =
-          incompleteTasks.where((task) => task.quadrant == quadrant).toList();
+      quadrantGroups[quadrant] = incompleteTasks
+          .where((task) => task.quadrant == quadrant)
+          .toList();
     }
 
     // Check if there are any tasks to show (completed or incomplete)
@@ -399,10 +387,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
     return ListView(
       children: [
-        // ✅ FIX: Show completed tasks section only if showCompleted is true and there are completed tasks
+        // Show completed tasks section only if showCompleted is true and there are completed tasks
         if (showCompleted && completedTasks.isNotEmpty)
           _buildCompletedTasksSection(completedTasks, theme, colorScheme),
-        // ✅ FIX: Show quadrant sections only for incomplete tasks
+        // Show quadrant sections only for incomplete tasks
         ...Quadrant.values.map((quadrant) {
           final quadrantTasks = quadrantGroups[quadrant]!;
           if (quadrantTasks.isEmpty) return const SizedBox.shrink();
@@ -491,16 +479,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
-              children:
-                  completedTasks.map((task) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: TaskTile(
-                        task: task,
-                        key: ValueKey('completed_${task.id}'),
-                      ),
-                    );
-                  }).toList(),
+              children: completedTasks.map((task) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TaskTile(
+                    task: task,
+                    key: ValueKey('completed_${task.id}'),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -600,16 +587,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
-              children:
-                  tasks.map((task) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: TaskTile(
-                        task: task,
-                        key: ValueKey('${task.id}_${task.isCompleted}'),
-                      ),
-                    );
-                  }).toList(),
+              children: tasks.map((task) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TaskTile(
+                    task: task,
+                    key: ValueKey('${task.id}_${task.isCompleted}'),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -699,14 +685,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ],
                 ),
                 const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Text(
-                    description,
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
+                SizedBox(
+                  height: 32, // ← Height to accommodate up to 2 lines
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Text(
+                      description,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
@@ -815,26 +806,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         height: 24,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color:
-                              isSelected
-                                  ? colorScheme.primary
-                                  : Colors.transparent,
+                          color: isSelected
+                              ? colorScheme.primary
+                              : Colors.transparent,
                           border: Border.all(
-                            color:
-                                isSelected
-                                    ? colorScheme.primary
-                                    : colorScheme.outline,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.outline,
                             width: 1.5,
                           ),
                         ),
-                        child:
-                            isSelected
-                                ? Icon(
-                                  Icons.check,
-                                  color: colorScheme.onPrimary,
-                                  size: 16,
-                                )
-                                : null,
+                        child: isSelected
+                            ? Icon(
+                                Icons.check,
+                                color: colorScheme.onPrimary,
+                                size: 16,
+                              )
+                            : null,
                       ),
                       title: Text(
                         _getFilterDisplayName(filterOption),

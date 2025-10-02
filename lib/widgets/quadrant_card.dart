@@ -79,10 +79,23 @@ class QuadrantCard extends ConsumerWidget {
   }
 
   void _navigateToAddTask(BuildContext context, Quadrant quadrant) {
+    DateTime? suggestedDueDate;
+    if (quadrant == Quadrant.urgentImportant || quadrant == Quadrant.urgentNotImportant) {
+      // Do First or Delegate → Today
+      suggestedDueDate = DateTime.now();
+    } else if (quadrant == Quadrant.notUrgentImportant) {
+      // Schedule → Tomorrow
+      suggestedDueDate = DateTime.now().add(const Duration(days: 1));
+    }
+    // Eliminate → no due date
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TaskEditScreen(initialQuadrant: quadrant),
+        builder: (context) => TaskEditScreen(
+          initialQuadrant: quadrant,
+          suggestedDueDate: suggestedDueDate,
+        ),
       ),
     );
   }

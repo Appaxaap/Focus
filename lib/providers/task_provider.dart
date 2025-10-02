@@ -58,7 +58,9 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     final taskIndex = state.indexWhere((task) => task.id == updatedTask.id);
     if (taskIndex != -1) {
       // Existing task
-      await _hiveService.updateTask(updatedTask.copyWith(updatedAt: DateTime.now()));
+      await _hiveService.updateTask(
+        updatedTask.copyWith(updatedAt: DateTime.now()),
+      );
     } else {
       // New task
       await _hiveService.addTask(updatedTask);
@@ -68,7 +70,29 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
   // Deletes a task
   Future<void> deleteTask(String taskId) async {
-    await _hiveService.deleteTask(taskId);
+    state = state.where((task) => task.id != taskId).toList();
+
+    try {
+      await _hiveService.deleteTask(taskId);
+    } catch (e) {
+      await _loadTasks();
+    }
+  }
+
+  // Clear completed tasks
+  Future<void> clearCompletedTasks() async {
+    // Get all completed task IDs
+    final completedIds = state
+        .where((task) => task.isCompleted)
+        .map((task) => task.id)
+        .toList();
+
+    // Delete each from Hive
+    for (final id in completedIds) {
+      await _hiveService.deleteTask(id);
+    }
+
+    // Reload tasks
     await _loadTasks();
   }
 
@@ -76,10 +100,14 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   Future<void> toggleTaskCompletion(String taskId) async {
     final taskIndex = state.indexWhere((task) => task.id == taskId);
     if (taskIndex != -1) {
-      final task = state[taskIndex];
-      final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
+      final updatedTask = state[taskIndex].copyWith(
+        isCompleted: !state[taskIndex].isCompleted,
+      );
+      final newState = List<Task>.from(state);
+      newState[taskIndex] = updatedTask;
+      state = newState;
+
       await _hiveService.updateTask(updatedTask);
-      await _loadTasks();
     }
   }
 

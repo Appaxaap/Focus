@@ -70,7 +70,6 @@ class HiveService {
   }
 
   // Data management
-// Add this to your HiveService class
   Future<void> clearAllData() async {
     try {
       // Clear tasks box
@@ -97,7 +96,6 @@ class HiveService {
     }
   }
 
-  // Add to HiveService class
   static const String _themeKey = 'app_theme';
 
   Future<void> setThemePreference(AppTheme theme) async {
@@ -172,5 +170,18 @@ class HiveService {
     if (_taskBox == null || _prefsBox == null || !_taskBox!.isOpen || !_prefsBox!.isOpen) {
       await initialize();
     }
+  }
+
+
+  static const String _localeKey = 'app_locale';
+
+  Future<void> setLocalePreference(String localeCode) async {
+    await _ensureInitialized();
+    await _prefsBox!.put(_localeKey, localeCode);
+  }
+
+  Future<String> getLocalePreference() async {
+    await _ensureInitialized();
+    return _prefsBox!.get(_localeKey, defaultValue: 'en_US');
   }
 }

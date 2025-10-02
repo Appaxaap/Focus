@@ -6,7 +6,6 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../main.dart';
-import '../models/task_models.dart';
 import '../providers/theme_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -425,7 +424,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       final jsonString = await file.readAsString();
       final jsonList = jsonDecode(jsonString) as List;
 
-      await hiveService.importData(jsonList.map((e) => e as Map<String, dynamic>).toList());
+      await hiveService.importData(
+        jsonList.map((e) => e as Map<String, dynamic>).toList(),
+      );
 
       _showSuccessSnackbar(context, 'Backup restored successfully!');
     } catch (e, s) {
@@ -440,48 +441,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
     return showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: colorScheme.surfaceContainerHigh,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-            icon: Icon(Icons.warning_outlined, color: colorScheme.error),
-            title: Text(
-              'Clear All Data ?',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: colorScheme.error,
-              ),
-            ),
-            content: Text(
-              'This will permanently delete ALL your tasks and settings.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  await _clearAllData(ref);
-                  _showSuccessSnackbar(
-                    context,
-                    'All data has been cleared',
-                    isError: true,
-                  );
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.error,
-                  foregroundColor: colorScheme.onError,
-                ),
-                child: const Text('Clear All'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        icon: Icon(Icons.warning_outlined, color: colorScheme.error),
+        title: Text(
+          'Clear All Data ?',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            color: colorScheme.error,
           ),
+        ),
+        content: Text(
+          'This will permanently delete ALL your tasks and settings.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: Navigator.of(context).pop,
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _clearAllData(ref);
+              _showSuccessSnackbar(
+                context,
+                'All data has been cleared',
+                isError: true,
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.error,
+              foregroundColor: colorScheme.onError,
+            ),
+            child: const Text('Clear All'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -497,39 +495,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
     showGeneralDialog(
       context: context,
-      pageBuilder:
-          (context, animation, secondaryAnimation) => AlertDialog(
-            backgroundColor: colorScheme.surfaceContainerHigh,
-            title: Row(
-              children: [
-                Icon(Icons.apps_outlined, color: colorScheme.primary),
-                const SizedBox(width: 12),
-                Text(
-                  'About Focus',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'Focus is a task management app based on the Eisenhower Matrix '
-              'to help you prioritize what matters most.\n\n'
-              'Features:\n'
-              '- Task categorization into quadrants\n'
-              '- Backup and restore functionality\n'
-              '- Completed tasks toggle',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+      pageBuilder: (context, animation, secondaryAnimation) => AlertDialog(
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        title: Row(
+          children: [
+            Icon(Icons.apps_outlined, color: colorScheme.primary),
+            const SizedBox(width: 12),
+            Text(
+              'About Focus',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurface,
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text('OK'),
-              ),
-            ],
+          ],
+        ),
+        content: Text(
+          'Focus is a task management app based on the Eisenhower Matrix '
+          'to help you prioritize what matters most.\n\n'
+          'Features:\n'
+          '- Task categorization into quadrants\n'
+          '- Backup and restore functionality\n'
+          '- Completed tasks toggle',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: Navigator.of(context).pop,
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -539,36 +536,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
     showGeneralDialog(
       context: context,
-      pageBuilder:
-          (context, animation, secondaryAnimation) => AlertDialog(
-            backgroundColor: colorScheme.surfaceContainerHigh,
-            title: Row(
-              children: [
-                Icon(Icons.person_outline, color: colorScheme.primary),
-                const SizedBox(width: 12),
-                Text(
-                  'About Developer',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'This app was developed by Basim Basheer as part of a Flutter project.\n\n'
-              'GitHub: github.com/Appaxaap\n'
-              'LinkedIn: linkedin.com/in/Basim Basheer',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+      pageBuilder: (context, animation, secondaryAnimation) => AlertDialog(
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        title: Row(
+          children: [
+            Icon(Icons.person_outline, color: colorScheme.primary),
+            const SizedBox(width: 12),
+            Text(
+              'About Developer',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurface,
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text('OK'),
-              ),
-            ],
+          ],
+        ),
+        content: Text(
+          'This app was developed by Basim Basheer as part of a Flutter project.\n\n'
+          'GitHub: github.com/Appaxaap\n'
+          'LinkedIn: linkedin.com/in/Basim Basheer',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: Navigator.of(context).pop,
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 

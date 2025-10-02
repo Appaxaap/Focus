@@ -14,7 +14,13 @@ import '../widgets/text_fields.dart';
 class TaskEditScreen extends ConsumerStatefulWidget {
   final Task? task;
   final Quadrant? initialQuadrant;
-  const TaskEditScreen({super.key, this.task, this.initialQuadrant});
+  final DateTime? suggestedDueDate;
+  const TaskEditScreen({
+    super.key,
+    this.task,
+    this.initialQuadrant,
+    this.suggestedDueDate,
+  });
 
   @override
   ConsumerState<TaskEditScreen> createState() => _TaskEditScreenState();

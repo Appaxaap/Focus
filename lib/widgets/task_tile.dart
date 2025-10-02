@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
 import '../providers/task_provider.dart';
 import '../screens/task_edit_screen.dart';
@@ -21,7 +23,6 @@ class _TaskTileState extends ConsumerState<TaskTile> {
   @override
   void initState() {
     super.initState();
-    // Check every minute if task becomes overdue
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted &&
           widget.task.dueDate != null &&
@@ -36,6 +37,32 @@ class _TaskTileState extends ConsumerState<TaskTile> {
   void dispose() {
     _timer.cancel();
     super.dispose();
+  }
+
+  void _showSnackbar(String action) {
+    String message;
+    if (action == 'completed') {
+      switch (widget.task.quadrant) {
+        case Quadrant.urgentImportant:
+          message = '✅ Urgent & important task done!';
+          break;
+        case Quadrant.notUrgentImportant:
+          message = '🎯 Important task scheduled!';
+          break;
+        case Quadrant.urgentNotImportant:
+          message = '🤝 Delegated an urgent task!';
+          break;
+        case Quadrant.notUrgentNotImportant:
+          message = '🗑️ Eliminated a distraction!';
+          break;
+      }
+    } else {
+      message = 'Task deleted';
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 1)),
+    );
   }
 
   @override
@@ -55,139 +82,162 @@ class _TaskTileState extends ConsumerState<TaskTile> {
         !isOverdue &&
         widget.task.dueDate!.difference(DateTime.now()).inMinutes <= 60;
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TaskEditScreen(task: widget.task),
-          ),
-        );
+    return Dismissible(
+      key: Key(widget.task.id),
+      direction: DismissDirection.horizontal,
+      background: Container(
+        color: Colors.green.shade100,
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        child: Icon(Icons.check, color: Colors.green.shade700),
+      ),
+      secondaryBackground: Container(
+        color: Colors.red.shade100,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: Icon(Icons.delete, color: Colors.red.shade700),
+      ),
+      onDismissed: (direction) {
+        if (direction == DismissDirection.startToEnd) {
+          // Swipe right → Complete
+          ref.read(taskProvider.notifier).toggleTaskCompletion(widget.task.id);
+          HapticFeedback.lightImpact();
+          _showSnackbar('completed');
+        } else if (direction == DismissDirection.endToStart) {
+          // Swipe left → Delete
+          ref.read(taskProvider.notifier).deleteTask(widget.task.id);
+          HapticFeedback.mediumImpact();
+          _showSnackbar('deleted');
+        }
       },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isOverdue
-                ? colorScheme.error.withOpacity(0.3)
-                : colorScheme.outline.withOpacity(0.4),
-            width: isOverdue ? 1.5 : 1.0,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TaskEditScreen(task: widget.task),
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isOverdue
+                  ? colorScheme.error.withOpacity(0.3)
+                  : colorScheme.outline.withOpacity(0.4),
+              width: isOverdue ? 1.5 : 1.0,
+            ),
+            boxShadow: isOverdue
+                ? [
+                    BoxShadow(
+                      color: colorScheme.error.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
-          boxShadow: isOverdue
-              ? [
-                  BoxShadow(
-                    color: colorScheme.error.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // First row: Checkbox and Title
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Custom Checkbox
-                GestureDetector(
-                  onTap: () {
-                    ref
-                        .read(taskProvider.notifier)
-                        .toggleTaskCompletion(widget.task.id);
-                  },
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    margin: const EdgeInsets.only(top: 2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: widget.task.isCompleted
-                          ? colorScheme.primary
-                          : Colors.transparent,
-                      border: Border.all(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      ref
+                          .read(taskProvider.notifier)
+                          .toggleTaskCompletion(widget.task.id);
+                      HapticFeedback.lightImpact();
+                      _showSnackbar('Task completed');
+                    },
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color: widget.task.isCompleted
                             ? colorScheme.primary
+                            : Colors.transparent,
+                        border: Border.all(
+                          color: widget.task.isCompleted
+                              ? colorScheme.primary
+                              : isOverdue
+                              ? colorScheme.error
+                              : colorScheme.outline,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: widget.task.isCompleted
+                          ? Icon(
+                              Icons.check,
+                              color: colorScheme.onPrimary,
+                              size: 12,
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.task.title,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: widget.task.isCompleted
+                            ? colorScheme.onSurface.withOpacity(0.5)
                             : isOverdue
                             ? colorScheme.error
-                            : colorScheme.outline,
-                        width: 1.5,
+                            : colorScheme.onSurface,
+                        fontWeight: widget.task.isCompleted
+                            ? FontWeight.normal
+                            : FontWeight.w600,
+                        decoration: widget.task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                        decorationColor: colorScheme.onSurface.withOpacity(0.4),
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    child: widget.task.isCompleted
-                        ? Icon(
-                            Icons.check,
-                            color: colorScheme.onPrimary,
-                            size: 12,
-                          )
-                        : null,
                   ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // Task Title
-                Expanded(
+                ],
+              ),
+              if (widget.task.notes != null &&
+                  widget.task.notes!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 32),
                   child: Text(
-                    widget.task.title,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: widget.task.isCompleted
-                          ? colorScheme.onSurface.withOpacity(0.5)
-                          : isOverdue
-                          ? colorScheme.error
-                          : colorScheme.onSurface,
-                      fontWeight: widget.task.isCompleted
-                          ? FontWeight.normal
-                          : FontWeight.w600,
-                      decoration: widget.task.isCompleted
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                      decorationColor: colorScheme.onSurface.withOpacity(0.4),
+                    widget.task.notes!,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: isOverdue
+                          ? colorScheme.error.withOpacity(0.8)
+                          : colorScheme.onSurface.withOpacity(0.7),
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
-            ),
-
-            // Second row: Notes (if available)
-            if (widget.task.notes != null && widget.task.notes!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(left: 32),
-                child: Text(
-                  widget.task.notes!,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: isOverdue
-                        ? colorScheme.error.withOpacity(0.8)
-                        : colorScheme.onSurface.withOpacity(0.7),
+              if (widget.task.dueDate != null) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 32),
+                  child: _buildDateTimeChip(
+                    context,
+                    widget.task.dueDate!,
+                    isOverdue,
+                    isDueSoon,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
+              ],
             ],
-
-            // Third row: Due Date and Time (if available)
-            if (widget.task.dueDate != null) ...[
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(left: 32),
-                child: _buildDateTimeChip(
-                  context,
-                  widget.task.dueDate!,
-                  isOverdue,
-                  isDueSoon,
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -202,21 +252,12 @@ class _TaskTileState extends ConsumerState<TaskTile> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Check if the time is meaningful (not just midnight)
     final hasTime = dueDate.hour != 0 || dueDate.minute != 0;
+    String dateText = hasTime
+        ? '${DateFormat('MMM d').format(dueDate)} at ${DateFormat('h:mm a').format(dueDate)}'
+        : DateFormat('MMM d').format(dueDate);
 
-    String dateText;
-    if (hasTime) {
-      // Format with both date and time
-      dateText =
-          '${DateFormat('MMM d').format(dueDate)} at ${DateFormat('h:mm a').format(dueDate)}';
-    } else {
-      // Format with just date
-      dateText = DateFormat('MMM d').format(dueDate);
-    }
-
-    Color chipColor;
-    Color textColor;
+    Color chipColor, textColor;
     IconData icon;
 
     if (isOverdue) {
@@ -250,9 +291,9 @@ class _TaskTileState extends ConsumerState<TaskTile> {
         children: [
           Icon(icon, size: 12, color: textColor),
           const SizedBox(width: 4),
-          Flexible(
+          Expanded(
             child: Text(
-              dateText,
+              isDueSoon ? '$dateText • Due soon' : dateText,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: textColor,
                 fontWeight: FontWeight.w500,
@@ -260,16 +301,6 @@ class _TaskTileState extends ConsumerState<TaskTile> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (isDueSoon) ...[
-            const SizedBox(width: 4),
-            Text(
-              '• Due soon',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
         ],
       ),
     );
