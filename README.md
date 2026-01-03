@@ -1,99 +1,107 @@
 <h1 align="center">
-  <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Focus icon" width="128" height="128"/>
+  <img src="https://github.com/user-attachments/assets/0b26465a-9712-4286-b796-68aac70ef7d1" alt="Focus app icon offline task manager" width="128" height="128"/>
   <br>
   Focus
   <a href="https://github.com/Appaxaap/Focus/releases/latest">
     <img alt="GitHub Release" src="https://img.shields.io/github/v/release/Appaxaap/Focus?style=flat&color=D1BCFF&labelColor=202124"/>
   </a>
   <a href="https://buymeacoffee.com/bxmbshr">
-    <img alt="Support" src="https://img.shields.io/badge/Support-☕-D1BCFF?style=flat&labelColor=202124"/>
+    <img alt="Support development" src="https://img.shields.io/badge/Support-D1BCFF?style=flat&labelColor=202124"/>
   </a>
 </h1>
 
-<p align="center"><strong>🧭 Prioritize what matters — without distractions</strong></p>
-<p align="center"><i>A 100% offline Eisenhower Matrix planner for focused minds</i></p>
+<p align="center"><strong>Offline task manager built on the Eisenhower Matrix</strong></p>
+<p align="center"><i>A privacy focused Android productivity app made with Flutter</i></p>
 
 <div align="center">
-  <img alt="Platform" src="https://img.shields.io/badge/Android-Platform-D1BCFF?style=flat&logo=android&logoColor=fffffff&labelColor=202124">
-  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.32.5-D1BCFF?style=flat&logo=flutter&logoColor=fffffff&labelColor=202124">
-  <img alt="License" src="https://img.shields.io/badge/License-GPL_v3.0-D1BCFF?style=flat&labelColor=202124">
-  <img alt="Downloads" src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=D1BCFF&label=Downloads&labelColor=202124">
+  <img src="https://img.shields.io/badge/Platform-Android-D1BCFF?style=flat&logo=android&labelColor=202124">
+  <img src="https://img.shields.io/badge/Framework-Flutter-D1BCFF?style=flat&logo=flutter&labelColor=202124">
+  <img src="https://img.shields.io/badge/License-GPL_v3.0-D1BCFF?style=flat&labelColor=202124">
+  <img src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=D1BCFF&label=Downloads&labelColor=202124">
 </div>
 
 ---
 
-![Focus App Showcase](https://github.com/user-attachments/assets/2ced335e-9bc7-45b2-8022-dd3079a7c77a)
+![Focus offline Eisenhower Matrix task planner](https://github.com/user-attachments/assets/2ced335e-9bc7-45b2-8022-dd3079a7c77a)
 
 ---
 
-## 🌟 Why Focus Exists
+## About Focus
 
-Most productivity apps **add complexity** — with logins, cloud sync, ads, and notifications that fragment your attention.
+Focus is an **offline task manager for Android** built around the **Eisenhower Matrix productivity method**.
 
-**Focus is different**:
-- 🌙 **Truly offline** — no internet required  
-- 🔒 **Zero tracking** — your data never leaves your device  
-- 🧘 **Designed for calm** — minimal UI, maximum clarity  
-- 💙 **Free forever** — no paywalls, ever  
+Unlike most task and todo apps, Focus does not require accounts, cloud sync, subscriptions, or internet access. All data is stored locally on your device.
 
-> Built for people who value **privacy, intention, and deep work**.
+This makes Focus ideal for users who want a **simple, fast, and privacy respecting productivity app**.
 
----
+### Key principles
 
-## 🧠 The Eisenhower Matrix, Simplified
+- Fully offline task planning  
+- Local only data storage  
+- No analytics or tracking  
+- No ads or subscriptions  
+- Minimal and distraction free UI  
 
-Focus implements Dwight Eisenhower’s timeless prioritization framework:
-
-|                          | **Important**               | **Not Important**         |
-|--------------------------|-----------------------------|---------------------------|
-| **Urgent**               | ✅ **Do First**             | 🤝 **Delegate**           |
-| **Not Urgent**           | 📅 **Schedule**             | 🗑️ **Eliminate**          |
-
-Visually organize tasks into these quadrants to **cut through noise** and focus on what moves the needle.
+Focus is designed for intentional work and long term clarity.
 
 ---
 
-## ✨ Key Features
+## Eisenhower Matrix Task Management
 
-- **Quadrant-based task management**  
-  Drag tasks into the right priority zone
-- **100% offline & private**  
-  All data stored locally via Hive (no cloud)
-- **Smart task defaults**  
-  "Do First" → due today • "Schedule" → due tomorrow
-- **Swipe actions**  
-  Complete (→) or delete (←) with haptic feedback
-- **Adaptive UI**  
-  Light/dark mode + list/card views
-- **Zero setup**  
-  Works immediately — no accounts or onboarding
+The Eisenhower Matrix is a proven productivity framework that helps prioritize tasks based on urgency and importance.
+
+|                    | Important       | Not Important |
+|--------------------|-----------------|---------------|
+| Urgent             | Do First        | Delegate      |
+| Not Urgent         | Schedule        | Eliminate     |
+
+Focus visualizes this matrix directly, allowing you to quickly decide what deserves attention and what does not.
+
+This approach helps reduce cognitive overload and improve daily decision making.
 
 ---
 
-## 🔍 How Focus Stands Out
+## Features
 
-| Feature                | Focus                          | Typical Task Apps         |
-|------------------------|--------------------------------|---------------------------|
-| **Data Privacy**       | ✅ 100% local (Hive)           | ❌ Cloud-synced           |
-| **Offline Access**     | ✅ Always                      | ❌ Requires internet      |
-| **Cost**               | ✅ Free forever                | ❌ Freemium/paywalls      |
-| **Complexity**         | ✅ Minimalist                  | ❌ Feature overload       |
-| **Notifications**      | ✅ Only for your tasks         | ❌ Marketing/promotions   |
-
----
-
-## 🎯 For Whom?
-
-- 🧠 **Deep work practitioners**  
-- 🎨 **Creators & makers**  
-- 📚 **Students & researchers**  
-- 🧘 **Minimalists** who value intentionality  
-
-> If you believe **productivity ≠ busyness**, this is your app.
+- Eisenhower Matrix based task organization  
+- Offline first Android task manager  
+- Local NoSQL storage using Hive  
+- Smart default due dates for each quadrant  
+- Swipe gestures to complete or delete tasks  
+- Haptic feedback for interactions  
+- Light and dark theme support  
+- List view and card view layouts  
+- No account or onboarding required  
 
 ---
 
-## 📱 Screenshots
+## Comparison With Typical Task Apps
+
+| Feature           | Focus                     | Typical Todo Apps |
+|-------------------|---------------------------|-------------------|
+| Offline usage     | Yes                       | Often limited     |
+| Data storage      | Local only                | Cloud based       |
+| Privacy           | No tracking               | Analytics common  |
+| Cost              | Free                      | Freemium          |
+| Complexity        | Minimal                   | Feature heavy     |
+
+Focus prioritizes reliability and simplicity over feature bloat.
+
+---
+
+## Who This App Is For
+
+- Developers and solo founders  
+- Students and researchers  
+- Deep work practitioners  
+- Users who prefer offline productivity tools  
+- Anyone looking for a private task manager  
+
+If you believe productivity is about focus rather than constant activity, Focus is built for you.
+
+---
+
+## Screenshots
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/3129b7de-d6ca-48e6-b454-bb8bad2c2fa0" width="220" />
@@ -108,51 +116,38 @@ Visually organize tasks into these quadrants to **cut through noise** and focus 
 
 ---
 
-## 🛠️ Tech Stack
+## Technology Stack
 
-- **Flutter** (cross-platform UI)  
-- **Hive** (local NoSQL database)  
-- **Riverpod** (state management)  
-- **Material You** (dynamic theming)  
-
----
-
-## 🙏 Support the Vision
-
-**Focus is just the beginning.**
-
-I’m building a suite of **offline-first, privacy-respecting apps** that help you stay focused, organized, and in control — without compromise.
-
-Your support directly enables:
-- 🚀 Development of **new privacy-first apps** (coming soon!)
-- 🔒 Continued maintenance of **Focus** (bug fixes, updates, polish)
-- 🌱 Exploration of **ethical, sustainable app development** models
-
-> **No ads. No tracking. No paywalls. Ever.**  
-> Just honest, human-centered tools — built for people like you.
-
-If Focus has helped you cut through the noise, consider supporting the journey:  
-→ [**Buy me a coffee ☕**](https://buymeacoffee.com/bxmbshr)
-
-Every contribution — big or small — fuels the next chapter.
+- Flutter for cross platform UI  
+- Hive for offline local storage  
+- Riverpod for state management  
+- Material You for adaptive theming  
 
 ---
 
-## 📣 Community & Feedback
+## Support Development
 
-- 💬 **Join discussions**: [Telegram Community](https://t.me/+Cpyd0Us0sisxOWE1)  
-- 🐞 **Report issues**: [GitHub Issues](https://github.com/Appaxaap/Focus/issues)  
-- 🚀 **Upvote on Product Hunt**: [Focus on PH](https://www.producthunt.com/posts/focus-10)  
+Focus is developed independently and will always remain offline first and privacy focused.
 
----
-
-## 📄 License
-
-Distributed under **GPL v3.0**. See [LICENSE](LICENSE).
+If you want to support continued development of ethical productivity tools, you can do so here:  
+https://buymeacoffee.com/bxmbshr
 
 ---
 
-> “What is important is seldom urgent, and what is urgent is seldom important.”  
-> — **Dwight D. Eisenhower**
+## Community and Feedback
+
+- Telegram community: https://t.me/+Cpyd0Us0sisxOWE1  
+- Bug reports and feature requests: https://github.com/Appaxaap/Focus/issues  
+- Product Hunt page: https://www.producthunt.com/posts/focus-10  
 
 ---
+
+## License
+
+Focus is open source software licensed under GPL v3.0.  
+See the LICENSE file for details.
+
+---
+
+> What is important is seldom urgent, and what is urgent is seldom important.  
+> Dwight D. Eisenhower
