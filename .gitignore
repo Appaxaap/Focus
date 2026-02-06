@@ -100,3 +100,14 @@ coverage/
 # Temp files
 *.tmp
 *.temp
+
+# Flutter generated (desktop)
+linux/flutter/generated_*
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/generated_*
+
+# Android gradle internals
+android/.gradle/
+android/gradle/
+android/build/
+android/local.properties
