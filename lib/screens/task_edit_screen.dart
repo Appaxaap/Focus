@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus/services/notification_service.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:uuid/uuid.dart';
 import '../models/quadrant_enum.dart';
@@ -52,26 +51,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-
-    // 🔥 LOG DEVICE TIMEZONE
-    if (kDebugMode) {
-      try {
-        final String tzName = tz.local.name;
-        final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-        final Duration offset = now.timeZoneOffset;
-        final String offsetStr =
-            '${offset.isNegative ? "-" : "+"}'
-            '${offset.inHours.abs()}:${(offset.inMinutes.remainder(60)).toString().padLeft(2, '0')}';
-
-        print('📍 TaskEditScreen initialized');
-        print('🌍 Device Timezone: $tzName');
-        print('🕒 UTC Offset: $offsetStr');
-        print('📅 Selected Date: $selectedDate');
-        print('⏰ Selected Time: $selectedTime');
-      } catch (e) {
-        print('❌ Failed to get timezone: $e');
-      }
-    }
   }
 
   @override
@@ -371,7 +350,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
     }
   }
 
-  /// saving the task
+  // saving the task
   Future<void> _saveTask() async {
     final String title = titleController.text.trim();
     final String? notes = notesController.text.trim().isEmpty
@@ -418,22 +397,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
           );
           return;
         }
-
-        if (kDebugMode) {
-          print('🕒 Final DateTime validation:');
-          print('   📅 Selected Date: $selectedDate');
-          print('   ⏰ Selected Time: $selectedTime');
-          print('   🎯 Final DateTime: $finalDateTime');
-          print('   🌍 TZ DateTime: $tzDateTime');
-          print('   📍 Current Time: ${tz.TZDateTime.now(tz.local)}');
-          print(
-            '   ⏳ Time Until: ${tzDateTime.difference(tz.TZDateTime.now(tz.local))}',
-          );
-        }
       } catch (e) {
-        if (kDebugMode) {
-          print('❌ DateTime conversion error: $e');
-        }
         _showSnackbar(context, 'Invalid date/time selection', isError: true);
         return;
       }
@@ -447,9 +411,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
     // Cancel existing notification if editing
     if (isEditing) {
       await notificationService.cancelNotification(notificationId);
-      if (kDebugMode) {
-        print('🗑️ Cancelled existing notification for task: $taskId');
-      }
     }
 
     bool notificationScheduled = false;
@@ -469,7 +430,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
           notificationError =
               'Notification permissions required for reminders.';
           if (kDebugMode) {
-            print('❌ Permissions denied, but continuing to save task');
+            print('Permissions denied, but continuing to save task');
           }
         } else {
           // 3. Convert to timezone-aware datetime
@@ -490,25 +451,17 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
           notificationScheduled = true;
 
           if (kDebugMode) {
-            print('✅ Notification scheduled successfully!');
-            print('   🎯 Scheduled Time: $scheduledTime');
+            print('Notification scheduled successfully!');
+            print('Scheduled Time: $scheduledTime');
             print(
-              '   ⏳ Time Until: ${scheduledTime.difference(tz.TZDateTime.now(tz.local))}',
+              'Time Until: ${scheduledTime.difference(tz.TZDateTime.now(tz.local))}',
             );
 
             // Debug pending notifications
             await notificationService.debugPendingNotifications();
           }
         }
-      } catch (e, stackTrace) {
-        notificationError = 'Failed to schedule notification: ${e.toString()}';
-        if (kDebugMode) {
-          print('❌ Notification scheduling error:');
-          print('   🚨 Error: $e');
-          print('   📍 Type: ${e.runtimeType}');
-          print('   📚 Stack: $stackTrace');
-        }
-      }
+      } catch (e, stackTrace) {}
     }
 
     // Create and save the task
@@ -524,14 +477,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
     );
 
     ref.read(taskProvider.notifier).updateTask(newTask);
-
-    if (kDebugMode) {
-      print('💾 Task saved:');
-      print('   🆔 ID: ${newTask.id}');
-      print('   📧 Title: ${newTask.title}');
-      print('   📅 Due: ${newTask.dueDate}');
-      print('   🔔 Notification: $notificationScheduled');
-    }
 
     // Show feedback to user
     if (context.mounted) {

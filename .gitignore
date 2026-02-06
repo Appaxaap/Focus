@@ -19,6 +19,12 @@ key.properties
 *.p12
 *.key
 *.cer
+.env
+.env.*
+
+# Local database files
+*.hive
+*.lock
 
 # IntelliJ related
 *.iml
@@ -47,7 +53,6 @@ key.properties
 .pub-cache/
 .pub/
 /build/
-**/generated_plugin_registrant.dart
 
 # Android specific
 /android/app/debug
@@ -91,9 +96,6 @@ app.*.map.json
 # Coverage
 coverage/
 *.lcov
-
-# Packages
-**/packages/
 
 # Temp files
 *.tmp

@@ -424,13 +424,13 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           ? 'A fresh start awaits 🌅'
           : 'Great start to your day!';
     } else if (hour < 17) {
-      return completedToday > 3 ? 'You’re on fire! 🔥' : 'Afternoon push!';
+      return completedToday > 3 ? 'You’re on fire 🔥' : 'Afternoon push!';
     } else if (hour < 22) {
       return completedToday == 0
           ? 'It’s okay. Tomorrow is new.'
           : 'Strong finish!';
     } else {
-      return 'Rest well. Your tasks will wait. 🌙';
+      return 'Rest well. Your tasks will wait 🌙';
     }
   }
 
@@ -490,7 +490,6 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     );
   }
 
-  // ✅ Keep your original spring button implementations
   Widget _buildSpringThemeButton({
     required IconData icon,
     required AppTheme theme,
@@ -717,101 +716,18 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
   }
 
   Future<void> _handleClearCompleted(int count) async {
-    HapticFeedback.mediumImpact();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: TweenAnimationBuilder(
-          duration: const Duration(milliseconds: 400),
-          tween: Tween<double>(begin: 0.0, end: 1.0),
-          curve: const Cubic(0.05, 0.7, 0.1, 1.0),
-          builder: (context, double value, child) {
-            final colorScheme = _getColorScheme(ref.read(themeProvider));
-            return Transform.scale(
-              scale: value,
-              child: Container(
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: colorScheme.card,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.delete_sweep_rounded,
-                        color: Colors.red.shade600,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Clear Completed Tasks?',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primaryText,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'You\'re about to permanently delete $count completed ${count == 1 ? 'task' : 'tasks'}. This action cannot be undone.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colorScheme.secondaryText,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildDialogButton(
-                            label: 'Cancel',
-                            isPrimary: false,
-                            onTap: () => Navigator.pop(context, false),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildDialogButton(
-                            label: 'Clear All',
-                            isPrimary: true,
-                            onTap: () => Navigator.pop(context, true),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
+    final bool confirmed = Platform.isWindows
+        ? await _showWindowsClearDialog(count)
+        : await _showMobileClearDialog(count);
 
     if (confirmed == true) {
       await ref.read(taskProvider.notifier).clearCompletedTasks();
-
       ref.read(showCompletedTasksProvider.notifier).set(false);
-      HapticFeedback.heavyImpact();
+
+      if (!Platform.isWindows) {
+        HapticFeedback.heavyImpact();
+      }
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -820,31 +736,154 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '✨ Clean slate. ',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(text: 'Take a breath. You’ve got this.'),
-                      ],
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
+            content: const Text(
+              'Completed tasks cleared. Fresh start.',
+              style: TextStyle(color: Colors.white),
             ),
-            duration: const Duration(seconds: 3),
           ),
         );
       }
     }
+  }
+
+  Future<bool> _showWindowsClearDialog(int count) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) {
+            final colorScheme = _getColorScheme(ref.read(themeProvider));
+
+            return AlertDialog(
+              backgroundColor: colorScheme.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: Text(
+                'Clear completed tasks?',
+                style: TextStyle(
+                  color: colorScheme.primaryText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              content: Text(
+                'This will permanently remove $count completed '
+                '${count == 1 ? 'task' : 'tasks'}.',
+                style: TextStyle(color: colorScheme.secondaryText),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: colorScheme.secondaryText),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade600,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Clear'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Future<bool> _showMobileClearDialog(int count) async {
+    HapticFeedback.mediumImpact();
+
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: TweenAnimationBuilder(
+              duration: const Duration(milliseconds: 400),
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              curve: const Cubic(0.05, 0.7, 0.1, 1.0),
+              builder: (context, double value, child) {
+                final colorScheme = _getColorScheme(ref.read(themeProvider));
+
+                return Transform.scale(
+                  scale: value,
+                  child: Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: colorScheme.card,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.delete_sweep_rounded,
+                          color: Colors.red.shade600,
+                          size: 40,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Clear Completed Tasks?',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'You\'re about to permanently delete '
+                          '$count completed ${count == 1 ? 'task' : 'tasks'}.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: colorScheme.secondaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDialogButton(
+                                label: 'Cancel',
+                                isPrimary: false,
+                                onTap: () => Navigator.pop(context, false),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDialogButton(
+                                label: 'Clear All',
+                                isPrimary: true,
+                                onTap: () => Navigator.pop(context, true),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ) ??
+        false;
   }
 
   Widget _buildDialogButton({
@@ -969,7 +1008,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     final colorScheme = _getColorScheme(appTheme);
     final infoBgColor = appTheme == AppTheme.light
         ? const Color(0xFFF2F2F7)
-        : const Color(0xFF3A3A3C); // Fixed for dark mode visibility
+        : const Color(0xFF3A3A3C);
 
     showDialog(
       context: context,
@@ -1237,7 +1276,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
       return _ColorScheme(
         background: const Color(0xFF1C1C1E),
         card: const Color(0xFF2C2C2E),
-        secondaryCard: const Color(0xFF3A3A3C), // ← Updated for visibility
+        secondaryCard: const Color(0xFF3A3A3C),
         primaryText: Colors.white,
         secondaryText: const Color(0xFF8E8E93),
         dragHandle: Colors.white.withOpacity(0.3),

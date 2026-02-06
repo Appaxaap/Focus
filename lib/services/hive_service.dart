@@ -15,6 +15,11 @@ class HiveService {
   // Preference keys
   static const String _showCompletedKey = 'show_completed';
   static const String _themeModeKey = 'theme_mode';
+  static const String _themeKey = 'app_theme';
+  static const String _localeKey = 'app_locale';
+  static const String _quadrantNamesKey = 'quadrant_names';
+
+  static const String _sunriseTimestampKey = 'sunrise_timestamp';
 
   Future<void> initialize() async {
     if (!Hive.isAdapterRegistered(TaskAdapter().typeId)) {
@@ -24,13 +29,37 @@ class HiveService {
       Hive.registerAdapter(QuadrantAdapter());
     }
 
-    // Check if boxes are already open before trying to open them
     if (_taskBox == null || !_taskBox!.isOpen) {
       _taskBox = await Hive.openBox<Task>(_taskBoxName);
     }
     if (_prefsBox == null || !_prefsBox!.isOpen) {
       _prefsBox = await Hive.openBox(_prefsBoxName);
     }
+  }
+
+  Future<void> saveQuadrantNames(Map<String, String> names) async {
+    await _ensureInitialized();
+    final storableMap = names.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+    await _prefsBox!.put(_quadrantNamesKey, storableMap);
+  }
+
+  // Gets the last saved timestamp for when the sunrise screen was shown.
+  Future<int> getLastSunriseTimestamp() async {
+    await _ensureInitialized();
+    // Reads the timestamp from your preferences box. Defaults to 0 if not found.
+    return _prefsBox!.get(_sunriseTimestampKey, defaultValue: 0) as int;
+  }
+
+  // Saves the current time as the last shown timestamp for the sunrise screen.
+  Future<void> saveSunriseTimestamp() async {
+    await _ensureInitialized();
+    // Writes the current time to your preferences box.
+    await _prefsBox!.put(
+      _sunriseTimestampKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   // Task operations
@@ -72,20 +101,14 @@ class HiveService {
   // Data management
   Future<void> clearAllData() async {
     try {
-      // Clear tasks box
       final tasksBox = await Hive.openBox<Task>('tasks');
       await tasksBox.clear();
       await tasksBox.close();
 
-      // Clear preferences box
       final prefsBox = await Hive.openBox('preferences');
       await prefsBox.clear();
       await prefsBox.close();
 
-      // Clear any other boxes you might have
-      // If you have more boxes, add them here
-
-      // Optional: Delete all Hive boxes completely
       await Hive.deleteBoxFromDisk('tasks');
       await Hive.deleteBoxFromDisk('preferences');
 
@@ -95,8 +118,6 @@ class HiveService {
       rethrow;
     }
   }
-
-  static const String _themeKey = 'app_theme';
 
   Future<void> setThemePreference(AppTheme theme) async {
     await _ensureInitialized();
@@ -108,23 +129,32 @@ class HiveService {
     final themeString = _prefsBox!.get(_themeKey) as String?;
     if (themeString == null) return null;
     return AppTheme.values.firstWhere(
-          (e) => e.toString() == themeString,
+      (e) => e.toString() == themeString,
       orElse: () => AppTheme.light,
     );
   }
 
   Future<String> exportData() async {
     final tasks = await getAllTasks();
-    final jsonList = tasks.map((task) => task.toJson()).toList();
-    return jsonEncode(jsonList);
+    return jsonEncode({
+      'version': 1,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'tasks': tasks.map((t) => t.toJson()).toList(),
+    });
   }
 
+
   Future<void> importData(List<Map<String, dynamic>> jsonList) async {
-    await initialize();
+    await _ensureInitialized();
     await _taskBox!.clear();
+
     for (final json in jsonList) {
-      final task = Task.fromJson(json);
-      await addTask(task);
+      try {
+        final task = Task.fromJson(json);
+        await addTask(task);
+      } catch (e) {
+        debugPrint('Skipping invalid task import: $e');
+      }
     }
   }
 
@@ -167,13 +197,13 @@ class HiveService {
 
   // Helper method to ensure initialization
   Future<void> _ensureInitialized() async {
-    if (_taskBox == null || _prefsBox == null || !_taskBox!.isOpen || !_prefsBox!.isOpen) {
+    if (_taskBox == null ||
+        _prefsBox == null ||
+        !_taskBox!.isOpen ||
+        !_prefsBox!.isOpen) {
       await initialize();
     }
   }
-
-
-  static const String _localeKey = 'app_locale';
 
   Future<void> setLocalePreference(String localeCode) async {
     await _ensureInitialized();

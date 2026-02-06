@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,22 +7,30 @@ import 'package:focus/services/notification_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'dart:io';
+import 'package:desktop_window/desktop_window.dart';
+
 import 'models/quadrant_enum.dart';
 import 'models/task_models.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/desktop_home_screen.dart';
+import 'screens/sunrise_screen.dart';
 
-// Define the custom background color
 const Color appBackgroundColor = Color(0xFF141118);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize timezones for notifications.
   tz.initializeTimeZones();
 
-  // notification initialization
-  NotificationService().initialize();
+  // Initialize services.
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    NotificationService().initialize();
+  }
 
+  // Initialize Hive for local storage.
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
   Hive.registerAdapter(QuadrantAdapter());
@@ -29,7 +38,16 @@ void main() async {
   final hiveService = HiveService();
   await hiveService.initialize();
 
+  // Get the saved theme preference from Hive.
   final savedTheme = await hiveService.getThemePreference();
+
+  const minSize = Size(1068, 873);
+
+  if (Platform.isWindows) {
+    await DesktopWindow.setWindowSize(minSize);
+
+    await DesktopWindow.setMinWindowSize(minSize);
+  }
 
   runApp(
     ProviderScope(
@@ -49,10 +67,57 @@ void main() async {
   );
 }
 
+// Provider for the HiveService.
 final hiveServiceProvider = Provider<HiveService>((ref) {
   throw UnimplementedError('hiveServiceProvider must be overridden');
 });
 
+// A router screen to decide whether to show the Sunrise screen or the Home screen.
+class SplashRouterScreen extends ConsumerWidget {
+  const SplashRouterScreen({super.key});
+
+  Future<Widget> _decideInitialScreen(WidgetRef ref) async {
+    final hiveService = ref.read(hiveServiceProvider);
+    final lastShownTimestamp = await hiveService.getLastSunriseTimestamp();
+    final lastShownDate = DateTime.fromMillisecondsSinceEpoch(
+      lastShownTimestamp,
+    );
+    final now = DateTime.now();
+
+    final isNewDay = now.difference(lastShownDate).inDays > 0;
+    final isMorning = now.hour < 12;
+
+    if (isNewDay && isMorning) {
+      await hiveService.saveSunriseTimestamp();
+      return const SunriseScreen();
+    } else {
+      return const HomeScreen();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<Widget>(
+      future: _decideInitialScreen(ref),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.hasData) {
+          return snapshot.data!;
+        }
+        return const Scaffold(
+          backgroundColor: appBackgroundColor,
+          body: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// The root widget of the application.
 class FocusApp extends ConsumerStatefulWidget {
   const FocusApp({super.key});
 
@@ -64,7 +129,6 @@ class _FocusAppState extends ConsumerState<FocusApp> {
   @override
   void initState() {
     super.initState();
-    // Enable edge-to-edge display
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
@@ -72,9 +136,8 @@ class _FocusAppState extends ConsumerState<FocusApp> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
 
-    // Define the AMOLED theme with DM Sans and custom background
     final ThemeData amoledTheme = ThemeData.dark(useMaterial3: true).copyWith(
-      scaffoldBackgroundColor: appBackgroundColor, // Custom background
+      scaffoldBackgroundColor: appBackgroundColor,
       canvasColor: appBackgroundColor,
       cardColor: appBackgroundColor,
       appBarTheme: const AppBarTheme(
@@ -90,20 +153,26 @@ class _FocusAppState extends ConsumerState<FocusApp> {
         surfaceContainerLow: Colors.grey[850]!,
         surfaceContainerHighest: Colors.grey[700]!,
       ),
-      bottomAppBarTheme: const BottomAppBarTheme(color: appBackgroundColor),
       textTheme: GoogleFonts.dmSansTextTheme(
         ThemeData.dark().textTheme,
       ).apply(bodyColor: Colors.white, displayColor: Colors.white),
     );
+
+    bool isDesktop = kIsWeb
+        ? false
+        : [
+            TargetPlatform.windows,
+            TargetPlatform.macOS,
+            TargetPlatform.linux,
+          ].contains(defaultTargetPlatform);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Focus',
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: appBackgroundColor, // Custom background
+        scaffoldBackgroundColor: appBackgroundColor,
         appBarTheme: const AppBarTheme(backgroundColor: appBackgroundColor),
-        bottomAppBarTheme: const BottomAppBarTheme(color: appBackgroundColor),
         textTheme: GoogleFonts.dmSansTextTheme().apply(
           bodyColor: Colors.white,
           displayColor: Colors.white,
@@ -114,19 +183,17 @@ class _FocusAppState extends ConsumerState<FocusApp> {
           : ThemeData(
               useMaterial3: true,
               brightness: Brightness.dark,
-              scaffoldBackgroundColor: appBackgroundColor, // Custom background
+              scaffoldBackgroundColor: appBackgroundColor,
               appBarTheme: const AppBarTheme(
                 backgroundColor: appBackgroundColor,
               ),
-              bottomAppBarTheme: const BottomAppBarTheme(
-                color: appBackgroundColor,
-              ),
+
               textTheme: GoogleFonts.dmSansTextTheme(
                 ThemeData.dark(useMaterial3: true).textTheme,
               ).apply(bodyColor: Colors.white, displayColor: Colors.white),
             ),
       themeMode: themeMode == AppTheme.light ? ThemeMode.light : ThemeMode.dark,
-      home: const HomeScreen(),
+      home: isDesktop ? const DesktopHomeScreen() : const SplashRouterScreen(),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'dart:async';
 import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
 import '../providers/task_provider.dart';
+import '../screens/desktop_task_edit_screen.dart';
 import '../screens/task_edit_screen.dart';
 
 class TaskTile extends ConsumerStatefulWidget {
@@ -112,13 +115,19 @@ class _TaskTileState extends ConsumerState<TaskTile> {
       },
       child: GestureDetector(
         onTap: () {
+          final isDesktop =
+              Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => TaskEditScreen(task: widget.task),
+              builder: (context) => isDesktop
+                  ? DesktopTaskEditScreen(task: widget.task)
+                  : TaskEditScreen(task: widget.task),
             ),
           );
         },
+
         child: Container(
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.only(bottom: 8),
