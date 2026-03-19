@@ -1,0 +1,16 @@
+Focus for Windows — Installation Complete
+
+Focus has been successfully installed.
+
+What to expect in this beta:
+• Core task management features are available
+• Desktop experience is still evolving
+• Updates may introduce breaking changes
+
+Feedback & Support:
+• Report bugs via GitHub Issues
+• Share suggestions and ideas
+• Help improve stability and usability
+
+Thank you for helping test Focus on Windows.
+Your feedback directly influences future updates.

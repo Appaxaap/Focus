@@ -92,6 +92,12 @@ app.*.map.json
 # Windows specific
 /windows/flutter/generated_plugin_registrant.cc
 /windows/flutter/generated_plugins.cmake
+/windows/runner/cmake_install.cmake
+/windows/runner/CMakeCache.txt
+/windows/out/
+*.user
+*.userosscache
+*.sln.docstates
 
 # Coverage
 coverage/
@@ -111,3 +117,12 @@ android/.gradle/
 android/gradle/
 android/build/
 android/local.properties
+
+# Installer outputs
+installers/*.exe
+installers/*.msi
+installers/*.dmg
+installers/*.appimage
+installers/*.deb
+installers/*.rpm
+installers/*.zip

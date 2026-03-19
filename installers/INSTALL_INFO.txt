@@ -1,0 +1,16 @@
+Focus for Windows — Beta Information
+
+Thank you for testing Focus on Windows.
+
+This is the first public beta release of Focus for desktop.
+It is not yet production-ready.
+
+Please be aware:
+• Some features may be missing or unfinished
+• Notifications and syncing are not fully implemented
+• Performance and stability may vary between systems
+
+Your data is stored locally on your device.
+We recommend avoiding critical or long-term task data during beta testing.
+
+Your feedback helps shape future releases.

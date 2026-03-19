@@ -1,3 +1,5 @@
+import 'dart:io';
+import '../providers/quadrant_names_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -959,128 +961,557 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
   }
 
   Widget _buildDateTimeSelector(ThemeData theme, ColorScheme colorScheme) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: InkWell(
-            onTap: _selectDate,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: selectedDate != null
-                    ? colorScheme.primary.withOpacity(0.1)
-                    : colorScheme.surface,
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () => _showInlineDatePicker(theme, colorScheme),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: selectedDate != null
-                      ? colorScheme.primary.withOpacity(0.3)
-                      : colorScheme.outlineVariant.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
                     color: selectedDate != null
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    selectedDate != null
-                        ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                        : 'Pick Date',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                        ? colorScheme.primary.withOpacity(0.1)
+                        : colorScheme.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
                       color: selectedDate != null
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                          ? colorScheme.primary.withOpacity(0.3)
+                          : colorScheme.outlineVariant.withOpacity(0.3),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: InkWell(
-            onTap: selectedDate != null ? () => _selectTime() : null,
-            borderRadius: BorderRadius.circular(10),
-            child: Opacity(
-              opacity: selectedDate == null ? 0.5 : 1.0,
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: selectedTime != null
-                      ? colorScheme.primary.withOpacity(0.1)
-                      : colorScheme.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: selectedTime != null
-                        ? colorScheme.primary.withOpacity(0.3)
-                        : colorScheme.outlineVariant.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.access_time_rounded,
-                      color: selectedTime != null
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      selectedTime != null
-                          ? selectedTime!.format(context)
-                          : 'Pick Time',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: selectedTime != null
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        color: selectedDate != null
                             ? colorScheme.primary
                             : colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                        size: 16,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Text(
+                        selectedDate != null
+                            ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                            : 'Pick Date',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: selectedDate != null
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        if (selectedDate != null || selectedTime != null) ...[
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: () {
-              setState(() {
-                selectedDate = null;
-                selectedTime = null;
-                _currentQuickDateIndex = -1;
-                if (widget.task == null && widget.initialQuadrant == null) {
-                  selectedQuadrant = null;
-                }
-              });
-            },
-            icon: const Icon(Icons.close_rounded, size: 18),
-            style: IconButton.styleFrom(
-              backgroundColor: colorScheme.errorContainer.withOpacity(0.5),
-              foregroundColor: colorScheme.error,
-              padding: const EdgeInsets.all(8),
+            const SizedBox(width: 10),
+            Expanded(
+              child: InkWell(
+                onTap: selectedDate != null
+                    ? () => _showInlineTimePicker(theme, colorScheme)
+                    : null,
+                borderRadius: BorderRadius.circular(10),
+                child: Opacity(
+                  opacity: selectedDate == null ? 0.4 : 1.0,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: selectedTime != null
+                          ? colorScheme.primary.withOpacity(0.1)
+                          : colorScheme.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selectedTime != null
+                            ? colorScheme.primary.withOpacity(0.3)
+                            : colorScheme.outlineVariant.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          color: selectedTime != null
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          selectedTime != null
+                              ? selectedTime!.format(context)
+                              : 'Pick Time',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: selectedTime != null
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+            if (selectedDate != null || selectedTime != null) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    selectedDate = null;
+                    selectedTime = null;
+                    _currentQuickDateIndex = -1;
+                  });
+                },
+                icon: const Icon(Icons.close_rounded, size: 16),
+                style: IconButton.styleFrom(
+                  backgroundColor: colorScheme.errorContainer.withOpacity(0.5),
+                  foregroundColor: colorScheme.error,
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
 
+  void _showInlineDatePicker(ThemeData theme, ColorScheme colorScheme) {
+    DateTime displayMonth = selectedDate ?? DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final daysInMonth = DateUtils.getDaysInMonth(
+              displayMonth.year,
+              displayMonth.month,
+            );
+            final firstWeekday =
+                DateTime(displayMonth.year, displayMonth.month, 1).weekday % 7;
+            final today = DateTime.now();
+
+            return Dialog(
+              backgroundColor: colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SizedBox(
+                width: 320,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '${_monthName(displayMonth.month)} ${displayMonth.year}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () => setDialogState(() {
+                              displayMonth = DateTime(
+                                displayMonth.year,
+                                displayMonth.month - 1,
+                              );
+                            }),
+                            icon: const Icon(Icons.chevron_left_rounded),
+                            style: IconButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(32, 32),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setDialogState(() {
+                              displayMonth = DateTime(
+                                displayMonth.year,
+                                displayMonth.month + 1,
+                              );
+                            }),
+                            icon: const Icon(Icons.chevron_right_rounded),
+                            style: IconButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(32, 32),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+                            .map(
+                              (d) => SizedBox(
+                                width: 36,
+                                child: Center(
+                                  child: Text(
+                                    d,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                      const SizedBox(height: 8),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 7,
+                              mainAxisSpacing: 4,
+                              crossAxisSpacing: 4,
+                              childAspectRatio: 1,
+                            ),
+                        itemCount: firstWeekday + daysInMonth,
+                        itemBuilder: (context, index) {
+                          if (index < firstWeekday) return const SizedBox();
+                          final day = index - firstWeekday + 1;
+                          final date = DateTime(
+                            displayMonth.year,
+                            displayMonth.month,
+                            day,
+                          );
+                          final isToday =
+                              date.year == today.year &&
+                              date.month == today.month &&
+                              date.day == today.day;
+                          final isSelected =
+                              selectedDate != null &&
+                              date.year == selectedDate!.year &&
+                              date.month == selectedDate!.month &&
+                              date.day == selectedDate!.day;
+                          final isPast = date.isBefore(
+                            DateTime(today.year, today.month, today.day),
+                          );
+
+                          return GestureDetector(
+                            onTap: isPast
+                                ? null
+                                : () {
+                                    setState(() {
+                                      selectedDate = date;
+                                      _currentQuickDateIndex = -1;
+                                      if (selectedTime == null) {
+                                        selectedTime = const TimeOfDay(
+                                          hour: 9,
+                                          minute: 0,
+                                        );
+                                      }
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colorScheme.primary
+                                    : isToday
+                                    ? colorScheme.primary.withOpacity(0.12)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$day',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: isPast
+                                        ? colorScheme.onSurfaceVariant
+                                              .withOpacity(0.3)
+                                        : isSelected
+                                        ? colorScheme.onPrimary
+                                        : isToday
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurface,
+                                    fontWeight: isSelected || isToday
+                                        ? FontWeight.w700
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showInlineTimePicker(ThemeData theme, ColorScheme colorScheme) {
+    int hour = selectedTime?.hour ?? 9;
+    int minute = selectedTime?.minute ?? 0;
+    bool isAm = hour < 12;
+    int displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SizedBox(
+                width: 280,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Select time',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _timeSpinner(
+                            value: displayHour,
+                            min: 1,
+                            max: 12,
+                            onChanged: (v) => setDialogState(() {
+                              displayHour = v;
+                              hour = isAm
+                                  ? (v == 12 ? 0 : v)
+                                  : (v == 12 ? 12 : v + 12);
+                            }),
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              ':',
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w300,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          _timeSpinner(
+                            value: minute,
+                            min: 0,
+                            max: 59,
+                            padZero: true,
+                            step: 5,
+                            onChanged: (v) => setDialogState(() => minute = v),
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            children: [
+                              _amPmButton(
+                                label: 'AM',
+                                selected: isAm,
+                                onTap: () => setDialogState(() {
+                                  isAm = true;
+                                  hour = displayHour == 12 ? 0 : displayHour;
+                                }),
+                                theme: theme,
+                                colorScheme: colorScheme,
+                              ),
+                              const SizedBox(height: 6),
+                              _amPmButton(
+                                label: 'PM',
+                                selected: !isAm,
+                                onTap: () => setDialogState(() {
+                                  isAm = false;
+                                  hour = displayHour == 12
+                                      ? 12
+                                      : displayHour + 12;
+                                }),
+                                theme: theme,
+                                colorScheme: colorScheme,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: () {
+                              setState(() {
+                                selectedTime = TimeOfDay(
+                                  hour: hour,
+                                  minute: minute,
+                                );
+                              });
+                              Navigator.pop(context);
+                            },
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Confirm'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _timeSpinner({
+    required int value,
+    required int min,
+    required int max,
+    required ValueChanged<int> onChanged,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    bool padZero = false,
+    int step = 1,
+  }) {
+    return Container(
+      width: 64,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: () {
+              int next = value + step;
+              if (next > max) next = min;
+              onChanged(next);
+            },
+            icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            constraints: const BoxConstraints(),
+          ),
+          Text(
+            padZero ? value.toString().padLeft(2, '0') : value.toString(),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              int next = value - step;
+              if (next < min) next = max;
+              onChanged(next);
+            },
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _amPmButton({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: selected
+                ? colorScheme.onPrimary
+                : colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return months[month - 1];
+  }
+
   Widget _buildQuadrantPanel(ThemeData theme, ColorScheme colorScheme) {
+    final quadrantNames = ref.watch(quadrantNamesProvider);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -1167,6 +1598,8 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
               final quadrant = entry.value;
               final info = quadrantInfo[quadrant]!;
               final isSelected = selectedQuadrant == quadrant;
+              final customName =
+                  quadrantNames[quadrant] ?? info['title'] as String;
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -1214,7 +1647,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                info['title'] as String,
+                                customName,
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: colorScheme.onSurface,
@@ -1268,7 +1701,8 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      quadrantInfo[selectedQuadrant]!['title'] as String,
+                      quadrantNames[selectedQuadrant] ??
+                          quadrantInfo[selectedQuadrant]!['title'] as String,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
@@ -1289,71 +1723,6 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
         ],
       ),
     );
-  }
-
-  Future<void> _selectDate() async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
-              surface: Theme.of(context).colorScheme.surface,
-              onSurface: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (pickedDate != null) {
-      setState(() {
-        selectedDate = pickedDate;
-        _currentQuickDateIndex = -1;
-        if (selectedTime == null) {
-          selectedTime = const TimeOfDay(hour: 9, minute: 0);
-        }
-        if (widget.task == null && widget.initialQuadrant == null) {
-          final diff = pickedDate.difference(DateTime.now()).inDays;
-          if (diff <= 1) {
-            selectedQuadrant = Quadrant.urgentImportant;
-          } else if (diff <= 3) {
-            selectedQuadrant = Quadrant.notUrgentImportant;
-          } else if (selectedQuadrant == Quadrant.urgentImportant ||
-              selectedQuadrant == Quadrant.urgentNotImportant) {
-            selectedQuadrant = Quadrant.notUrgentImportant;
-          }
-        }
-      });
-    }
-  }
-
-  Future<void> _selectTime() async {
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: selectedTime ?? TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
-              surface: Theme.of(context).colorScheme.surface,
-              onSurface: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (pickedTime != null) {
-      setState(() {
-        selectedTime = pickedTime;
-      });
-    }
   }
 
   Future<void> _saveTask() async {
@@ -1539,6 +1908,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
     required bool isError,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final bottomPadding = Platform.isWindows ? 48.0 : 0.0;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1563,7 +1933,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
           ],
         ),
         duration: const Duration(seconds: 3),
-        margin: const EdgeInsets.all(16),
+        margin: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPadding),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );

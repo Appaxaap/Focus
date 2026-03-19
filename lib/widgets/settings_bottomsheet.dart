@@ -1028,7 +1028,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: colorScheme.card,
-                  borderRadius: BorderRadius.circular(40),
+                  borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.25),
@@ -1040,10 +1040,11 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Title pill
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
-                        vertical: 12,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: infoBgColor,
@@ -1052,104 +1053,111 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                       child: Text(
                         'About Focus',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                           color: colorScheme.primaryText,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+
+                    // Version
                     FutureBuilder<String>(
                       future: _getAppVersion(),
                       builder: (context, snapshot) {
-                        String displayVersion =
-                            snapshot.data ?? 'Version Unknown';
-                        if (displayVersion.contains('+')) {
-                          displayVersion = displayVersion.split('+').first;
-                        }
+                        String v = snapshot.data ?? 'Version Unknown';
+                        if (v.contains('+')) v = v.split('+').first;
                         return Text(
-                          displayVersion,
+                          v,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.primaryText,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.secondaryText,
                           ),
                         );
                       },
                     ),
                     const SizedBox(height: 12),
-                    Column(
-                      children: [
-                        Container(
-                          height: 30,
-                          width: 240,
-                          decoration: BoxDecoration(
-                            color: infoBgColor,
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Made with 💙 by Basim Basheer',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: colorScheme.secondaryText,
-                              ),
+
+                    // Made by + privacy note
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: infoBgColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Made with 💙 by Basim Basheer',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.primaryText,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: infoBgColor.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '🔒 All your data stays on your device — no cloud, no tracking.',
+                          const SizedBox(height: 6),
+                          Text(
+                            '🔒 All data stays on your device — no cloud, no tracking.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
-                              color: colorScheme.primaryText.withOpacity(0.8),
-                              fontWeight: FontWeight.w500,
+                              color: colorScheme.secondaryText,
+                              height: 1.4,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 20),
+
+                    // Labeled action buttons
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildActionButton(
-                          icon: Icons.code_rounded,
-                          onTap: () => _launchUrl(
-                            context,
-                            'https://github.com/Appaxaap/Focus',
+                        Expanded(
+                          child: _buildActionButton(
+                            icon: Icons.code_rounded,
+                            label: 'Source',
+                            onTap: () => _launchUrl(
+                              context,
+                              'https://github.com/Appaxaap/Focus',
+                            ),
+                            colorScheme: colorScheme,
                           ),
-                          colorScheme: colorScheme,
                         ),
-                        _buildActionButton(
-                          icon: Icons.bug_report_rounded,
-                          onTap: () => _launchUrl(
-                            context,
-                            'https://github.com/Appaxaap/Focus/issues',
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildActionButton(
+                            icon: Icons.bug_report_rounded,
+                            label: 'Issues',
+                            onTap: () => _launchUrl(
+                              context,
+                              'https://github.com/Appaxaap/Focus/issues',
+                            ),
+                            colorScheme: colorScheme,
                           ),
-                          colorScheme: colorScheme,
                         ),
-                        _buildActionButton(
-                          icon: Icons.telegram_rounded,
-                          onTap: () => _launchUrl(
-                            context,
-                            'https://t.me/+IdAIopSTiXowYWFl',
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildActionButton(
+                            icon: Icons.telegram_rounded,
+                            label: 'Community',
+                            onTap: () => _launchUrl(
+                              context,
+                              'https://t.me/+IdAIopSTiXowYWFl',
+                            ),
+                            colorScheme: colorScheme,
                           ),
-                          colorScheme: colorScheme,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+
+                    // Support button — on-brand color
                     GestureDetector(
                       onTap: () {
                         Navigator.pop(context);
@@ -1157,21 +1165,21 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                       },
                       child: Container(
                         width: double.infinity,
-                        height: 52,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: colorScheme.accent.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(26),
+                          color: colorScheme.secondaryCard,
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: colorScheme.accent.withOpacity(0.3),
-                            width: 1.5,
+                            color: colorScheme.secondaryText.withOpacity(0.2),
+                            width: 1,
                           ),
                         ),
                         child: Center(
                           child: Text(
                             'Support Focus ☕',
                             style: TextStyle(
-                              color: colorScheme.accent,
-                              fontSize: 16,
+                              color: colorScheme.primaryText,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1190,24 +1198,37 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
 
   Widget _buildActionButton({
     required IconData icon,
+    required String label,
     required VoidCallback onTap,
     required _ColorScheme colorScheme,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 64,
-        height: 64,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: colorScheme.secondaryCard,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: colorScheme.secondaryText.withOpacity(0.2),
+            color: colorScheme.secondaryText.withOpacity(0.15),
             width: 1,
           ),
         ),
-        child: Icon(icon, color: colorScheme.primaryText, size: 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: colorScheme.primaryText, size: 22),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: colorScheme.secondaryText,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

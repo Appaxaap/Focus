@@ -9,6 +9,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:io';
 import 'package:desktop_window/desktop_window.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'models/quadrant_enum.dart';
 import 'models/task_models.dart';
@@ -21,6 +22,21 @@ const Color appBackgroundColor = Color(0xFF141118);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await windowManager.ensureInitialized();
+
+  WindowOptions windowOptions = const WindowOptions(
+    size: Size(1200, 800),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+  );
+
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
 
   // Initialize timezones for notifications.
   tz.initializeTimeZones();
