@@ -44,6 +44,51 @@ class _TaskTileState extends ConsumerState<TaskTile> {
     super.dispose();
   }
 
+  void _showUndoDeleteSnackbar() {
+    final task = widget.task;
+    // Optimistically remove from state but don't delete from Hive yet
+    ref.read(taskProvider.notifier).removeFromState(task.id);
+
+    final controller = ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.delete_outline, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                task.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'UNDO',
+          textColor: Colors.white,
+          onPressed: () {
+            ref.read(taskProvider.notifier).restoreTask(task);
+            HapticFeedback.selectionClick();
+          },
+        ),
+      ),
+    );
+
+    // When snackbar closes without undo → permanently delete from Hive
+    controller.closed.then((reason) {
+      if (reason != SnackBarClosedReason.action) {
+        ref.read(taskProvider.notifier).commitDelete(task.id);
+      }
+    });
+  }
+
   void _showSnackbar(String action) {
     String message;
     if (action == 'completed') {
@@ -104,15 +149,12 @@ class _TaskTileState extends ConsumerState<TaskTile> {
       ),
       onDismissed: (direction) {
         if (direction == DismissDirection.startToEnd) {
-          // Swipe right → Complete
           ref.read(taskProvider.notifier).toggleTaskCompletion(widget.task.id);
           HapticFeedback.lightImpact();
           _showSnackbar('completed');
         } else if (direction == DismissDirection.endToStart) {
-          // Swipe left → Delete
-          ref.read(taskProvider.notifier).deleteTask(widget.task.id);
           HapticFeedback.mediumImpact();
-          _showSnackbar('deleted');
+          _showUndoDeleteSnackbar();
         }
       },
       child: GestureDetector(

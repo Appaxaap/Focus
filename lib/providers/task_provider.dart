@@ -79,6 +79,26 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     }
   }
 
+  // Optimistically removes from state without touching Hive (for undo delete)
+  void removeFromState(String taskId) {
+    state = state.where((task) => task.id != taskId).toList();
+  }
+
+  // Restores a task back to state and Hive (undo delete)
+  Future<void> restoreTask(Task task) async {
+    await _hiveService.addTask(task);
+    await _loadTasks();
+  }
+
+  // Permanently deletes from Hive after undo window expires
+  Future<void> commitDelete(String taskId) async {
+    try {
+      await _hiveService.deleteTask(taskId);
+    } catch (e) {
+      await _loadTasks();
+    }
+  }
+
   // Clear completed tasks
   Future<void> clearCompletedTasks() async {
     // Get all completed task IDs
