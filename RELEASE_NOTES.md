@@ -40,8 +40,8 @@ Fixed Platform.isWindows crash risk on non-desktop platforms.
 
 ### Downloads
 
-**Focus-v2.2.0-universal.apk** — works on all Android devices
+**Focus-v2.2.0-universal.apk** works on all Android devices
 
-**Focus-v2.2.0-arm64-v8a.apk** — optimised for modern 64-bit devices (recommended)
+**Focus-v2.2.0-arm64-v8a.apk** optimised for modern 64-bit devices (recommended)
 
-**Focus-v2.2.0-armeabi-v7a.apk** — for older 32-bit devices
+**Focus-v2.2.0-armeabi-v7a.apk** for older 32-bit devices
