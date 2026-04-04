@@ -6,6 +6,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +27,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.5'
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
@@ -36,19 +40,22 @@ jobs:
 
       - name: Rename APKs
         run: |
-          VERSION=${GITHUB_REF_NAME:-v2.2.0}
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Focus-${VERSION}-universal.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/Focus-${VERSION}-arm64.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/Focus-${VERSION}-arm32.apk
+          TAG=${GITHUB_REF_NAME}
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/Focus-${TAG}-universal.apk
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+             build/app/outputs/flutter-apk/Focus-${TAG}-arm64-v8a.apk
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+             build/app/outputs/flutter-apk/Focus-${TAG}-armeabi-v7a.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Focus ${{ github.ref_name }}
+          name: "Focus ${{ github.ref_name }}"
           body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
           files: |
             build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-universal.apk
-            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-arm64.apk
-            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-arm32.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-arm64-v8a.apk
+            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-armeabi-v7a.apk
