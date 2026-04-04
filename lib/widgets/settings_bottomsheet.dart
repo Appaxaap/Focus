@@ -5,8 +5,10 @@ import '../providers/show_completed_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../providers/app_icon_badge_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
+import 'app_dialog.dart';
 
 class SettingsBottomSheet extends ConsumerStatefulWidget {
   const SettingsBottomSheet({super.key});
@@ -21,23 +23,22 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
 
-  // Spring-based width animation controllers for each button
   late AnimationController _darkWidthController;
   late AnimationController _lightWidthController;
-  late AnimationController _infoWidthController;
+  late AnimationController _amoledWidthController;
 
-  // Width animations with spring physics
   late Animation<double> _darkWidthAnimation;
   late Animation<double> _lightWidthAnimation;
-  late Animation<double> _infoWidthAnimation;
+  late Animation<double> _amoledWidthAnimation;
 
-  // Scale animations for pressed state
   late AnimationController _darkPressController;
   late AnimationController _lightPressController;
+  late AnimationController _amoledPressController;
   late AnimationController _infoPressController;
 
   late Animation<double> _darkPressScale;
   late Animation<double> _lightPressScale;
+  late Animation<double> _amoledPressScale;
   late Animation<double> _infoPressScale;
 
   static const double _baseFlexValue = 1.0;
@@ -77,7 +78,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
       vsync: this,
     );
 
-    _infoWidthController = AnimationController(
+    _amoledWidthController = AnimationController(
       duration: const Duration(milliseconds: 320),
       reverseDuration: const Duration(milliseconds: 800),
       vsync: this,
@@ -94,6 +95,11 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     );
 
     _infoPressController = AnimationController(
+      duration: const Duration(milliseconds: 120),
+      vsync: this,
+    );
+
+    _amoledPressController = AnimationController(
       duration: const Duration(milliseconds: 120),
       vsync: this,
     );
@@ -116,10 +122,10 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           ),
         );
 
-    _infoWidthAnimation =
+    _amoledWidthAnimation =
         Tween<double>(begin: _baseFlexValue, end: _baseFlexValue).animate(
           CurvedAnimation(
-            parent: _infoWidthController,
+            parent: _amoledWidthController,
             curve: const Cubic(0.2, 0.0, 0.0, 1.0),
             reverseCurve: Curves.elasticOut,
           ),
@@ -135,6 +141,10 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
 
     _infoPressScale = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(parent: _infoPressController, curve: Curves.easeOut),
+    );
+
+    _amoledPressScale = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _amoledPressController, curve: Curves.easeOut),
     );
 
     _slideController.forward();
@@ -156,9 +166,9 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             _compressedFlexValue,
           );
           _animateButtonWidth(
-            _infoWidthController,
-            _infoWidthAnimation,
-            _baseFlexValue,
+            _amoledWidthController,
+            _amoledWidthAnimation,
+            _compressedFlexValue,
           );
           break;
         case 'light':
@@ -173,16 +183,16 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             _expandedFlexValue,
           );
           _animateButtonWidth(
-            _infoWidthController,
-            _infoWidthAnimation,
+            _amoledWidthController,
+            _amoledWidthAnimation,
             _compressedFlexValue,
           );
           break;
-        case 'info':
+        case 'amoled':
           _animateButtonWidth(
             _darkWidthController,
             _darkWidthAnimation,
-            _baseFlexValue,
+            _compressedFlexValue,
           );
           _animateButtonWidth(
             _lightWidthController,
@@ -190,8 +200,8 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             _compressedFlexValue,
           );
           _animateButtonWidth(
-            _infoWidthController,
-            _infoWidthAnimation,
+            _amoledWidthController,
+            _amoledWidthAnimation,
             _expandedFlexValue,
           );
           break;
@@ -220,8 +230,8 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
       _darkWidthAnimation = newAnimation;
     } else if (controller == _lightWidthController) {
       _lightWidthAnimation = newAnimation;
-    } else if (controller == _infoWidthController) {
-      _infoWidthAnimation = newAnimation;
+    } else if (controller == _amoledWidthController) {
+      _amoledWidthAnimation = newAnimation;
     }
 
     controller.reset();
@@ -231,13 +241,13 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
   void _resetAllWidthAnimations() {
     _darkWidthController.reset();
     _lightWidthController.reset();
-    _infoWidthController.reset();
+    _amoledWidthController.reset();
   }
 
   void _resetToNormalWidths() {
     _animateSnapBack(_darkWidthController);
     _animateSnapBack(_lightWidthController);
-    _animateSnapBack(_infoWidthController);
+    _animateSnapBack(_amoledWidthController);
   }
 
   void _animateSnapBack(AnimationController controller) {
@@ -262,9 +272,10 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     _slideController.dispose();
     _darkWidthController.dispose();
     _lightWidthController.dispose();
-    _infoWidthController.dispose();
+    _amoledWidthController.dispose();
     _darkPressController.dispose();
     _lightPressController.dispose();
+    _amoledPressController.dispose();
     _infoPressController.dispose();
     super.dispose();
   }
@@ -274,6 +285,8 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     final appTheme = ref.watch(themeProvider);
     final showCompletedAsync = ref.watch(showCompletedTasksProvider);
     final showCompleted = showCompletedAsync.value ?? false;
+    final appIconBadgeEnabledAsync = ref.watch(appIconBadgeProvider);
+    final appIconBadgeEnabled = appIconBadgeEnabledAsync.value ?? true;
     final allTasks = ref.watch(taskProvider);
     final completedCount = allTasks.where((task) => task.isCompleted).length;
     final totalTaskCount = allTasks.length;
@@ -292,7 +305,22 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           children: [
             _buildDragHandle(colorScheme),
             const SizedBox(height: 20),
-            _buildGreetingHeader(colorScheme, completedCount),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _buildGreetingHeader(colorScheme, completedCount),
+                  ),
+                  const SizedBox(width: 12),
+                  _buildSpringInfoButton(
+                    colorScheme: colorScheme,
+                    scaleAnimation: _infoPressScale,
+                    pressController: _infoPressController,
+                  ),
+                ],
+              ),
+            ),
             if (totalTaskCount == 0) ...[
               const SizedBox(height: 16),
               _buildEmptyStatePrompt(colorScheme),
@@ -301,6 +329,8 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             _buildThemeSelectionRow(appTheme, colorScheme),
             const SizedBox(height: 16),
             _buildCompletedTasksSection(showCompleted, colorScheme),
+            const SizedBox(height: 16),
+            _buildAppIconBadgeSection(appIconBadgeEnabled, colorScheme),
             const SizedBox(height: 16),
             _buildClearCompletedButton(colorScheme, completedCount),
             const SizedBox(height: 16),
@@ -394,24 +424,19 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 28)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: TextStyle(
-                    color: colorScheme.primaryText,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+          Text(emoji, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: colorScheme.primaryText,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -442,10 +467,10 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
       animation: Listenable.merge([
         _darkWidthAnimation,
         _lightWidthAnimation,
-        _infoWidthAnimation,
+        _amoledWidthAnimation,
         _darkPressScale,
         _lightPressScale,
-        _infoPressScale,
+        _amoledPressScale,
       ]),
       builder: (context, child) {
         return Row(
@@ -477,11 +502,15 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             ),
             const SizedBox(width: 12),
             Expanded(
-              flex: (_infoWidthAnimation.value * 100).round(),
-              child: _buildSpringInfoButton(
+              flex: (_amoledWidthAnimation.value * 100).round(),
+              child: _buildSpringThemeButton(
+                icon: Icons.brightness_1,
+                theme: AppTheme.amoled,
+                currentTheme: currentTheme,
                 colorScheme: colorScheme,
-                scaleAnimation: _infoPressScale,
-                pressController: _infoPressController,
+                buttonKey: 'amoled',
+                scaleAnimation: _amoledPressScale,
+                pressController: _amoledPressController,
               ),
             ),
           ],
@@ -559,24 +588,19 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           pressController.forward();
           HapticFeedback.lightImpact();
         },
-        onTapUp: (_) {
-          pressController.reverse();
-        },
-        onTapCancel: () {
-          pressController.reverse();
-        },
+        onTapUp: (_) => pressController.reverse(),
+        onTapCancel: () => pressController.reverse(),
         onTap: () {
-          _triggerWidthReaction('info');
           HapticFeedback.mediumImpact();
           _showModernAboutDialog(context);
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 240),
           curve: const Cubic(0.4, 0.0, 0.2, 1.0),
-          height: 96,
+          width: 96,
           decoration: BoxDecoration(
             color: colorScheme.card,
-            borderRadius: BorderRadius.circular(48),
+            borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -800,86 +824,56 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
 
   Future<bool> _showMobileClearDialog(int count) async {
     HapticFeedback.mediumImpact();
-
-    return await showDialog<bool>(
+    return await showAppDialog<bool>(
           context: context,
-          barrierDismissible: true,
-          builder: (context) => Dialog(
-            backgroundColor: Colors.transparent,
-            child: TweenAnimationBuilder(
-              duration: const Duration(milliseconds: 400),
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              curve: const Cubic(0.05, 0.7, 0.1, 1.0),
-              builder: (context, double value, child) {
-                final colorScheme = _getColorScheme(ref.read(themeProvider));
-
-                return Transform.scale(
-                  scale: value,
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: colorScheme.card,
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.delete_sweep_rounded,
-                          color: Colors.red.shade600,
-                          size: 40,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Clear Completed Tasks?',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primaryText,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'You\'re about to permanently delete '
-                          '$count completed ${count == 1 ? 'task' : 'tasks'}.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: colorScheme.secondaryText,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildDialogButton(
-                                label: 'Cancel',
-                                isPrimary: false,
-                                onTap: () => Navigator.pop(context, false),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildDialogButton(
-                                label: 'Clear All',
-                                isPrimary: true,
-                                onTap: () => Navigator.pop(context, true),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+          builder: (context) => AppDialogContainer(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.delete_sweep_rounded,
+                  color: Colors.red.shade600,
+                  size: 40,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Clear Completed Tasks?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
-                );
-              },
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You\'re about to permanently delete '
+                  '$count completed ${count == 1 ? 'task' : 'tasks'}.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppDialogButton(
+                        label: 'Cancel',
+                        onTap: () => Navigator.pop(context, false),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppDialogButton(
+                        label: 'Clear All',
+                        isDestructive: true,
+                        onTap: () => Navigator.pop(context, true),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ) ??
@@ -1003,194 +997,229 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     );
   }
 
-  void _showModernAboutDialog(BuildContext context) {
-    final appTheme = ref.read(themeProvider);
-    final colorScheme = _getColorScheme(appTheme);
-    final infoBgColor = appTheme == AppTheme.light
-        ? const Color(0xFFF2F2F7)
-        : const Color(0xFF3A3A3C);
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black54,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: TweenAnimationBuilder(
-          duration: const Duration(milliseconds: 400),
-          tween: Tween<double>(begin: 0.0, end: 1.0),
-          curve: const Cubic(0.05, 0.7, 0.1, 1.0),
-          builder: (context, double scale, child) {
-            return Transform.scale(
-              scale: scale,
-              child: Container(
-                width: 320,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: colorScheme.card,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+  Widget _buildAppIconBadgeSection(
+    bool appIconBadgeEnabled,
+    _ColorScheme colorScheme,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 320),
+            curve: const Cubic(0.4, 0.0, 0.2, 1.0),
+            height: 96,
+            padding: const EdgeInsets.fromLTRB(30, 20, 20, 20),
+            decoration: BoxDecoration(
+              color: colorScheme.card,
+              borderRadius: BorderRadius.circular(48),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Title pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: infoBgColor,
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Text(
-                        'About Focus',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.primaryText,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'App Icon Badge',
+                  style: TextStyle(
+                    color: colorScheme.primaryText,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Show due task count',
+                  style: TextStyle(
+                    color: colorScheme.secondaryText,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 320),
+          curve: const Cubic(0.4, 0.0, 0.2, 1.0),
+          width: 116,
+          height: 96,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.card,
+            borderRadius: BorderRadius.circular(48),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Transform.scale(
+              scale: 1.2,
+              child: Switch.adaptive(
+                value: appIconBadgeEnabled,
+                onChanged: (value) {
+                  ref.read(appIconBadgeProvider.notifier).setEnabled(value);
+                  HapticFeedback.lightImpact();
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                inactiveThumbColor: colorScheme.switchInactiveThumb,
+                inactiveTrackColor: colorScheme.switchInactiveTrack,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-                    // Version
-                    FutureBuilder<String>(
-                      future: _getAppVersion(),
-                      builder: (context, snapshot) {
-                        String v = snapshot.data ?? 'Version Unknown';
-                        if (v.contains('+')) v = v.split('+').first;
-                        return Text(
-                          v,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: colorScheme.secondaryText,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Made by + privacy note
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: infoBgColor,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Made with 💙 by Basim Basheer',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.primaryText,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '🔒 All data stays on your device — no cloud, no tracking.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.secondaryText,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Labeled action buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionButton(
-                            icon: Icons.code_rounded,
-                            label: 'Source',
-                            onTap: () => _launchUrl(
-                              context,
-                              'https://github.com/Appaxaap/Focus',
-                            ),
-                            colorScheme: colorScheme,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildActionButton(
-                            icon: Icons.bug_report_rounded,
-                            label: 'Issues',
-                            onTap: () => _launchUrl(
-                              context,
-                              'https://github.com/Appaxaap/Focus/issues',
-                            ),
-                            colorScheme: colorScheme,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildActionButton(
-                            icon: Icons.telegram_rounded,
-                            label: 'Community',
-                            onTap: () => _launchUrl(
-                              context,
-                              'https://t.me/+IdAIopSTiXowYWFl',
-                            ),
-                            colorScheme: colorScheme,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Support button — on-brand color
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                        _launchUrl(context, 'https://buymeacoffee.com/bxmbshr');
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: colorScheme.secondaryCard,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: colorScheme.secondaryText.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Support Focus ☕',
-                            style: TextStyle(
-                              color: colorScheme.primaryText,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+  void _showModernAboutDialog(BuildContext context) {
+    showAppDialog(
+      context: context,
+      builder: (context) => AppDialogContainer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Text(
+                'About Focus',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-            );
-          },
+            ),
+            const SizedBox(height: 20),
+            FutureBuilder<String>(
+              future: _getAppVersion(),
+              builder: (context, snapshot) {
+                String v = snapshot.data ?? 'Version Unknown';
+                if (v.contains('+')) v = v.split('+').first;
+                return Text(
+                  v,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Made with 💙 by Basim Basheer',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '🔒 All data stays on your device — no cloud, no tracking.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.code_rounded,
+                    label: 'Source',
+                    onTap: () => _launchUrl(
+                      context,
+                      'https://github.com/Appaxaap/Focus',
+                    ),
+                    colorScheme: _getColorScheme(ref.read(themeProvider)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.bug_report_rounded,
+                    label: 'Issues',
+                    onTap: () => _launchUrl(
+                      context,
+                      'https://github.com/Appaxaap/Focus/issues',
+                    ),
+                    colorScheme: _getColorScheme(ref.read(themeProvider)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.telegram_rounded,
+                    label: 'Community',
+                    onTap: () =>
+                        _launchUrl(context, 'https://t.me/+IdAIopSTiXowYWFl'),
+                    colorScheme: _getColorScheme(ref.read(themeProvider)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+                _launchUrl(context, 'https://buymeacoffee.com/bxmbshr');
+              },
+              child: Container(
+                width: double.infinity,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'Support Focus ☕',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1292,6 +1321,22 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         switchActive: const Color(0xFF34C759),
         switchInactiveThumb: const Color(0xFFFFFFFF),
         switchInactiveTrack: const Color(0xFFE5E5EA),
+      );
+    } else if (theme == AppTheme.amoled) {
+      return _ColorScheme(
+        background: Colors.black,
+        card: const Color(0xFF0A0A0A),
+        secondaryCard: const Color(0xFF141414),
+        primaryText: Colors.white,
+        secondaryText: const Color(0xFF8E8E93),
+        dragHandle: Colors.white.withOpacity(0.3),
+        selectedTheme: const Color(0xFF1A1A1A),
+        selectedThemeIcon: const Color(0xFFD1BCFF),
+        dialogBackground: const Color(0xFF0A0A0A),
+        accent: const Color(0xFFD1BCFF),
+        switchActive: const Color(0xFFD1BCFF),
+        switchInactiveThumb: const Color(0xFF767680).withOpacity(0.16),
+        switchInactiveTrack: const Color(0xFF1C1C1E),
       );
     } else {
       return _ColorScheme(

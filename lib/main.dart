@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus/services/hive_service.dart';
+import 'package:focus/services/app_badge_service.dart';
 import 'package:focus/services/notification_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -13,6 +14,8 @@ import 'package:window_manager/window_manager.dart';
 
 import 'models/quadrant_enum.dart';
 import 'models/task_models.dart';
+import 'providers/app_icon_badge_provider.dart';
+import 'providers/task_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/desktop_home_screen.dart';
@@ -89,6 +92,10 @@ final hiveServiceProvider = Provider<HiveService>((ref) {
   throw UnimplementedError('hiveServiceProvider must be overridden');
 });
 
+final appBadgeServiceProvider = Provider<AppBadgeService>((ref) {
+  return AppBadgeService();
+});
+
 // A router screen to decide whether to show the Sunrise screen or the Home screen.
 class SplashRouterScreen extends ConsumerWidget {
   const SplashRouterScreen({super.key});
@@ -143,10 +150,46 @@ class FocusApp extends ConsumerStatefulWidget {
 }
 
 class _FocusAppState extends ConsumerState<FocusApp> {
+  late final ProviderSubscription<List<Task>> _tasksSubscription;
+  late final ProviderSubscription<AsyncValue<bool>> _badgePrefSubscription;
+
+  List<Task> _latestTasks = const [];
+  bool _badgeEnabled = true;
+
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    _tasksSubscription = ref.listenManual<List<Task>>(taskProvider, (
+      previous,
+      next,
+    ) {
+      _latestTasks = next;
+      _syncAppBadge();
+    }, fireImmediately: true);
+
+    _badgePrefSubscription = ref.listenManual<AsyncValue<bool>>(
+      appIconBadgeProvider,
+      (previous, next) {
+        _badgeEnabled = next.value ?? true;
+        _syncAppBadge();
+      },
+      fireImmediately: true,
+    );
+  }
+
+  Future<void> _syncAppBadge() async {
+    await ref
+        .read(appBadgeServiceProvider)
+        .syncBadge(tasks: _latestTasks, enabled: _badgeEnabled);
+  }
+
+  @override
+  void dispose() {
+    _tasksSubscription.close();
+    _badgePrefSubscription.close();
+    super.dispose();
   }
 
   @override
@@ -154,21 +197,26 @@ class _FocusAppState extends ConsumerState<FocusApp> {
     final themeMode = ref.watch(themeProvider);
 
     final ThemeData amoledTheme = ThemeData.dark(useMaterial3: true).copyWith(
-      scaffoldBackgroundColor: appBackgroundColor,
-      canvasColor: appBackgroundColor,
-      cardColor: appBackgroundColor,
+      scaffoldBackgroundColor: Colors.black,
+      canvasColor: Colors.black,
+      cardColor: const Color(0xFF0A0A0A),
       appBarTheme: const AppBarTheme(
-        backgroundColor: appBackgroundColor,
+        backgroundColor: Colors.black,
         surfaceTintColor: Colors.transparent,
       ),
-      colorScheme: ColorScheme.dark(
-        primary: Colors.blueAccent,
-        surface: appBackgroundColor,
-        background: appBackgroundColor,
-        surfaceContainer: Colors.grey[900]!,
-        surfaceContainerHigh: Colors.grey[800]!,
-        surfaceContainerLow: Colors.grey[850]!,
-        surfaceContainerHighest: Colors.grey[700]!,
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFFD1BCFF),
+        onPrimary: Colors.black,
+        secondary: Color(0xFFD1BCFF),
+        surface: Colors.black,
+        surfaceContainer: Color(0xFF0D0D0D),
+        surfaceContainerHigh: Color(0xFF141414),
+        surfaceContainerLow: Color(0xFF0A0A0A),
+        surfaceContainerHighest: Color(0xFF1A1A1A),
+        onSurface: Colors.white,
+        onSurfaceVariant: Color(0xFF8E8E93),
+        outline: Color(0xFF2C2C2E),
+        outlineVariant: Color(0xFF1C1C1E),
       ),
       textTheme: GoogleFonts.dmSansTextTheme(
         ThemeData.dark().textTheme,

@@ -18,6 +18,7 @@ class HiveService {
   static const String _themeKey = 'app_theme';
   static const String _localeKey = 'app_locale';
   static const String _quadrantNamesKey = 'quadrant_names';
+  static const String _appIconBadgeEnabledKey = 'app_icon_badge_enabled';
 
   static const String _sunriseTimestampKey = 'sunrise_timestamp';
 
@@ -143,7 +144,6 @@ class HiveService {
     });
   }
 
-
   Future<void> importData(List<Map<String, dynamic>> jsonList) async {
     await _ensureInitialized();
     await _taskBox!.clear();
@@ -213,5 +213,15 @@ class HiveService {
   Future<String> getLocalePreference() async {
     await _ensureInitialized();
     return _prefsBox!.get(_localeKey, defaultValue: 'en_US');
+  }
+
+  Future<void> setAppIconBadgeEnabledPreference(bool value) async {
+    await _ensureInitialized();
+    await _prefsBox!.put(_appIconBadgeEnabledKey, value);
+  }
+
+  Future<bool> getAppIconBadgeEnabledPreference() async {
+    await _ensureInitialized();
+    return _prefsBox!.get(_appIconBadgeEnabledKey) as bool? ?? true;
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../providers/app_icon_badge_provider.dart';
 import '../providers/show_completed_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
@@ -130,6 +131,8 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
     final appTheme = ref.watch(themeProvider);
     final showCompletedAsync = ref.watch(showCompletedTasksProvider);
     final showCompleted = showCompletedAsync.value ?? false;
+    final appIconBadgeEnabledAsync = ref.watch(appIconBadgeProvider);
+    final appIconBadgeEnabled = appIconBadgeEnabledAsync.value ?? true;
     final allTasks = ref.watch(taskProvider);
     final completedCount = allTasks.where((t) => t.isCompleted).length;
 
@@ -180,6 +183,8 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
         ),
         const SizedBox(height: 10),
         _showCompletedRow(showCompleted, theme, colorScheme),
+        const SizedBox(height: 10),
+        _appIconBadgeRow(appIconBadgeEnabled, theme, colorScheme),
         const SizedBox(height: 10),
         _clearCompletedRow(completedCount, theme, colorScheme),
       ],
@@ -369,6 +374,56 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _appIconBadgeRow(
+    bool appIconBadgeEnabled,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'App Icon Badge',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Show due task count',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: appIconBadgeEnabled,
+            onChanged: (value) {
+              ref.read(appIconBadgeProvider.notifier).setEnabled(value);
+              HapticFeedback.lightImpact();
+            },
+            activeColor: colorScheme.primary,
+          ),
+        ],
       ),
     );
   }

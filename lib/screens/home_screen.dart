@@ -13,6 +13,7 @@ import '../widgets/quadrant_edit_dialog.dart';
 import '../widgets/settings_bottomsheet.dart';
 import '../widgets/task_tile.dart';
 import '../providers/quadrant_names_provider.dart';
+import '../widgets/app_dialog.dart';
 
 enum ViewMode { card, list }
 
@@ -742,7 +743,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           GestureDetector(
             onLongPress: () {
               HapticFeedback.mediumImpact();
-              showDialog(
+              showAppDialog(
                 context: context,
                 builder: (_) => QuadrantEditDialog(
                   quadrant: quadrant,
@@ -862,7 +863,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           GestureDetector(
             onLongPress: () {
               HapticFeedback.mediumImpact();
-              showDialog(
+              showAppDialog(
                 context: context,
                 builder: (_) => QuadrantEditDialog(
                   quadrant: quadrant,
@@ -1050,18 +1051,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final colorScheme = theme.colorScheme;
     final currentFilter = ref.read(filterProvider);
 
-    showDialog(
+    showAppDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          backgroundColor: colorScheme.surfaceContainerHigh,
-          surfaceTintColor: colorScheme.surfaceTint,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Container(
+        return AppDialogContainer(
+          child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 320),
-            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1078,6 +1073,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                       leading: Container(
                         width: 24,
                         height: 24,

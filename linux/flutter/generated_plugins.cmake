@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  desktop_window
   flutter_localization
   flutter_timezone
   screen_retriever_linux

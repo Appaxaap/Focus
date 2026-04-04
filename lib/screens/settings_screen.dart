@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:io';
 import '../main.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/app_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -450,49 +451,63 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   Future<void> _confirmClearData(BuildContext context, WidgetRef ref) async {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return showDialog(
+    showAppDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        icon: Icon(Icons.warning_outlined, color: colorScheme.error),
-        title: Text(
-          'Clear All Data ?',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color: colorScheme.error,
-          ),
-        ),
-        content: Text(
-          'This will permanently delete ALL your tasks and settings.',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _clearAllData(ref);
-              _showSuccessSnackbar(
-                context,
-                'All data has been cleared',
-                isError: true,
-              );
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.error,
-              foregroundColor: colorScheme.onError,
+      builder: (context) => AppDialogContainer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.warning_outlined,
+                color: Theme.of(context).colorScheme.error, size: 40),
+            const SizedBox(height: 20),
+            Text(
+              'Clear All Data?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-            child: const Text('Clear All'),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              'This will permanently delete ALL your tasks and settings.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppDialogButton(
+                    label: 'Cancel',
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppDialogButton(
+                    label: 'Clear All',
+                    isDestructive: true,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _clearAllData(ref);
+                      if (context.mounted) {
+                        _showSuccessSnackbar(
+                          context,
+                          'All data has been cleared',
+                          isError: true,
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -504,80 +519,87 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   void _showAboutAppDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showGeneralDialog(
+    showAppDialog(
       context: context,
-      pageBuilder: (context, animation, secondaryAnimation) => AlertDialog(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        title: Row(
+      builder: (context) => AppDialogContainer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.apps_outlined, color: colorScheme.primary),
-            const SizedBox(width: 12),
+            Icon(Icons.apps_outlined,
+                color: Theme.of(context).colorScheme.primary, size: 40),
+            const SizedBox(height: 16),
             Text(
               'About Focus',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurface,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Focus is a task management app based on the Eisenhower Matrix '
+              'to help you prioritize what matters most.\n\n'
+              '- Task categorization into quadrants\n'
+              '- Backup and restore functionality\n'
+              '- Completed tasks toggle',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            AppDialogButton(
+              label: 'OK',
+              isPrimary: true,
+              onTap: () => Navigator.pop(context),
             ),
           ],
         ),
-        content: Text(
-          'Focus is a task management app based on the Eisenhower Matrix '
-          'to help you prioritize what matters most.\n\n'
-          'Features:\n'
-          '- Task categorization into quadrants\n'
-          '- Backup and restore functionality\n'
-          '- Completed tasks toggle',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }
 
   void _showAboutDeveloperDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showGeneralDialog(
+    showAppDialog(
       context: context,
-      pageBuilder: (context, animation, secondaryAnimation) => AlertDialog(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        title: Row(
+      builder: (context) => AppDialogContainer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_outline, color: colorScheme.primary),
-            const SizedBox(width: 12),
+            Icon(Icons.person_outline,
+                color: Theme.of(context).colorScheme.primary, size: 40),
+            const SizedBox(height: 16),
             Text(
               'About Developer',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurface,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This app was developed by Basim Basheer.\n\n'
+              'GitHub: github.com/Appaxaap\n'
+              'LinkedIn: linkedin.com/in/Basim Basheer',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            AppDialogButton(
+              label: 'OK',
+              isPrimary: true,
+              onTap: () => Navigator.pop(context),
             ),
           ],
         ),
-        content: Text(
-          'This app was developed by Basim Basheer as part of a Flutter project.\n\n'
-          'GitHub: github.com/Appaxaap\n'
-          'LinkedIn: linkedin.com/in/Basim Basheer',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }

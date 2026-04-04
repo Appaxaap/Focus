@@ -52,6 +52,7 @@ dependencies:
   url_launcher: ^6.3.2
   google_fonts: ^6.2.1
   package_info_plus: ^8.3.0
+  flutter_app_badger: ^1.5.0
   flutter_screenutil: ^5.9.3
   window_manager: ^0.5.1
   desktop_window: ^0.4.2
@@ -119,4 +120,3 @@ flutter_launcher_icons:
    adaptive_icon_foreground: "assets/images/512x512_logo.png"
    adaptive_icon_background: "#0A0A0A"
    android_notification_icon: "assets/images/notification_icon.png"
-

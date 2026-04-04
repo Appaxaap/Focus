@@ -9,6 +9,7 @@ import '../models/task_models.dart';
 import '../providers/task_provider.dart';
 import '../widgets/quadrant_button.dart';
 import '../widgets/text_fields.dart';
+import '../widgets/app_dialog.dart';
 
 class TaskEditScreen extends ConsumerStatefulWidget {
   final Task? task;
@@ -518,56 +519,59 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
   }
 
   void _showDeleteConfirmation(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 400;
-
-    showDialog(
+    showAppDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surface,
-        title: Text(
-          'Delete Task',
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-            fontSize: isSmallScreen ? 18 : 20,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to delete this task? This action cannot be undone.',
-          style: TextStyle(
-            color: colorScheme.onSurface.withOpacity(0.6),
-            fontSize: isSmallScreen ? 14 : 16,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: Text(
-              'Cancel',
+      builder: (context) => AppDialogContainer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.delete_outline_rounded,
+                color: Theme.of(context).colorScheme.error, size: 40),
+            const SizedBox(height: 20),
+            Text(
+              'Delete Task?',
               style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.6),
-                fontSize: isSmallScreen ? 14 : 16,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              ref.read(taskProvider.notifier).deleteTask(widget.task!.id);
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.error,
-              foregroundColor: colorScheme.onError,
+            const SizedBox(height: 12),
+            Text(
+              'This action cannot be undone.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
-            child: Text(
-              'Delete',
-              style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: AppDialogButton(
+                    label: 'Cancel',
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppDialogButton(
+                    label: 'Delete',
+                    isDestructive: true,
+                    onTap: () {
+                      ref
+                          .read(taskProvider.notifier)
+                          .deleteTask(widget.task!.id);
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
