@@ -1,4 +1,4 @@
-name: Build Focus APK
+name: Build and Release Focus APK
 
 on:
   workflow_dispatch:
@@ -12,7 +12,13 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -22,11 +28,27 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK
+      - name: Build universal release APK
         run: flutter build apk --release
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Build split APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: Rename APKs
+        run: |
+          VERSION=${GITHUB_REF_NAME:-v2.2.0}
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Focus-${VERSION}-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/Focus-${VERSION}-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/Focus-${VERSION}-arm32.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: Focus ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-universal.apk
+            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-arm64.apk
+            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-arm32.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
