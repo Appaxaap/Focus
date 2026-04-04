@@ -383,6 +383,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       final hiveService = ref.read(hiveServiceProvider);
       final backupData = await hiveService.exportData();
 
+      if (!Platform.isAndroid) {
+        _showSuccessSnackbar(context, 'Backup export is only supported on Android', isError: true);
+        return;
+      }
+
       final directory = Directory('/storage/emulated/0/Download');
       if (!directory.existsSync()) {
         _showSuccessSnackbar(
@@ -397,7 +402,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       final backupFile = File('${directory.path}/focus_backup_$timestamp.json');
 
       await backupFile.writeAsString(backupData);
-      _showSuccessSnackbar(context, 'Backup saved to $backupFile.path');
+      _showSuccessSnackbar(context, 'Backup saved to Downloads/focus_backup_$timestamp.json');
     } catch (e, s) {
       debugPrint('Error exporting backup: $e\n$s');
       _showSuccessSnackbar(context, 'Failed to export backup', isError: true);
@@ -407,7 +412,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   Future<void> _importBackup(BuildContext context) async {
     try {
       final hiveService = ref.read(hiveServiceProvider);
-      await hiveService.initialize(); // Use ensureInitialized instead
 
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -422,7 +426,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
       final file = File(result.files.single.path!);
       final jsonString = await file.readAsString();
-      final jsonList = jsonDecode(jsonString) as List;
+      final decoded = jsonDecode(jsonString);
+
+      final List<dynamic> jsonList;
+      if (decoded is Map<String, dynamic> && decoded.containsKey('tasks')) {
+        jsonList = decoded['tasks'] as List;
+      } else if (decoded is List) {
+        jsonList = decoded;
+      } else {
+        _showSuccessSnackbar(context, 'Invalid backup file format', isError: true);
+        return;
+      }
 
       await hiveService.importData(
         jsonList.map((e) => e as Map<String, dynamic>).toList(),

@@ -59,18 +59,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final showCompletedAsync = ref.watch(showCompletedTasksProvider);
     final showCompleted = showCompletedAsync.value ?? false;
 
-    final completedTasks = tasks.where((task) => task.isCompleted).toList();
     final incompleteTasks = tasks.where((task) => !task.isCompleted).toList();
 
-    ref.listen(taskProvider, (List? previous, List current) {
+    ref.listen<List<Task>>(taskProvider, (previous, current) {
       if (previous != null && previous.length > current.length) {
-        final completedTask = previous.firstWhere(
-          (task) => !current.any((currentTask) => currentTask.id == task.id),
-          orElse: () => null,
-        );
-
+        final completedTask = previous.where(
+          (task) => !current.any((t) => t.id == task.id),
+        ).firstOrNull;
         if (completedTask != null) {
-          _showTaskCompletedSnackbar(context, completedTask as Task, ref);
+          _showTaskCompletedSnackbar(context, completedTask, ref);
         }
       }
     });
@@ -914,12 +911,9 @@ void _showTaskCompletedSnackbar(
         label: 'UNDO',
         textColor: colorScheme.onPrimary,
         onPressed: () {
-          final currentTasks = ref.read(taskProvider);
-          final updatedTask = completedTask.copyWith(isCompleted: false);
-          ref.read(taskProvider.notifier).state = [
-            ...currentTasks,
-            updatedTask,
-          ];
+          ref.read(taskProvider.notifier).updateTask(
+            completedTask.copyWith(isCompleted: false),
+          );
           HapticFeedback.selectionClick();
         },
       ),

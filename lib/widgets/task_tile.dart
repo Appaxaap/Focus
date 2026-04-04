@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,24 +22,25 @@ class TaskTile extends ConsumerStatefulWidget {
 }
 
 class _TaskTileState extends ConsumerState<TaskTile> {
-  late Timer _timer;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted &&
-          widget.task.dueDate != null &&
-          !widget.task.isCompleted &&
-          widget.task.dueDate!.isBefore(DateTime.now())) {
-        setState(() {});
-      }
-    });
+    _startTimerIfNeeded();
+  }
+
+  void _startTimerIfNeeded() {
+    if (widget.task.dueDate != null && !widget.task.isCompleted) {
+      _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    }
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -115,8 +117,8 @@ class _TaskTileState extends ConsumerState<TaskTile> {
       },
       child: GestureDetector(
         onTap: () {
-          final isDesktop =
-              Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+          final isDesktop = !kIsWeb &&
+              (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
           Navigator.push(
             context,

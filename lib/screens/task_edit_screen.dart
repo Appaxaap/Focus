@@ -461,7 +461,12 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
             await notificationService.debugPendingNotifications();
           }
         }
-      } catch (e, stackTrace) {}
+      } catch (e, stackTrace) {
+        notificationError = 'Failed to schedule reminder.';
+        if (kDebugMode) {
+          debugPrint('Notification scheduling error: $e\n$stackTrace');
+        }
+      }
     }
 
     // Create and save the task
@@ -507,6 +512,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
 
       // Small delay before navigation
       await Future.delayed(const Duration(milliseconds: 300));
+      if (!context.mounted) return;
       Navigator.pop(context);
     }
   }
