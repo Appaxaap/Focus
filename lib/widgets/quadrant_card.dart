@@ -14,15 +14,16 @@ class QuadrantCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: () => _navigateToAddTask(context, quadrant),
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        child:
-            tasks.isEmpty ? _buildEmptyState(context) : _buildTaskList(tasks),
-      ),
-    );
+    return tasks.isEmpty
+        ? GestureDetector(
+            onTap: () => _navigateToAddTask(context, quadrant),
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              child: _buildEmptyState(context),
+            ),
+          )
+        : _buildTaskList(tasks);
   }
 
   Widget _buildEmptyState(BuildContext context) {

@@ -9,8 +9,10 @@ import '../providers/task_provider.dart';
 import '../screens/task_edit_screen.dart';
 import '../widgets/grouped_buttons.dart';
 import '../widgets/quadrant_card.dart';
+import '../widgets/quadrant_edit_dialog.dart';
 import '../widgets/settings_bottomsheet.dart';
 import '../widgets/task_tile.dart';
+import '../providers/quadrant_names_provider.dart';
 
 enum ViewMode { card, list }
 
@@ -151,6 +153,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Widget _buildCardView(List<Task> tasks, ColorScheme colorScheme) {
+    final quadrantNames = ref.watch(quadrantNamesProvider);
     return Column(
       children: [
         Expanded(
@@ -158,7 +161,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             children: [
               Expanded(
                 child: _buildMatrixCard(
-                  title: 'Do First',
+                  quadrant: Quadrant.urgentImportant,
+                  title: quadrantNames[Quadrant.urgentImportant] ?? 'Do First',
                   description: 'Urgent • Important',
                   accentColor: const Color(0xFFFF4757),
                   taskCount: tasks
@@ -180,7 +184,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: _buildMatrixCard(
-                  title: 'Schedule',
+                  quadrant: Quadrant.notUrgentImportant,
+                  title: quadrantNames[Quadrant.notUrgentImportant] ?? 'Schedule',
                   description: 'Not Urgent • Important',
                   accentColor: const Color(0xFF2ED573),
                   taskCount: tasks
@@ -209,7 +214,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             children: [
               Expanded(
                 child: _buildMatrixCard(
-                  title: 'Delegate',
+                  quadrant: Quadrant.urgentNotImportant,
+                  title: quadrantNames[Quadrant.urgentNotImportant] ?? 'Delegate',
                   description: 'Urgent • Not Important',
                   accentColor: const Color(0xFFFFA726),
                   taskCount: tasks
@@ -232,7 +238,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: _buildMatrixCard(
-                  title: 'Eliminate',
+                  quadrant: Quadrant.notUrgentNotImportant,
+                  title: quadrantNames[Quadrant.notUrgentNotImportant] ?? 'Eliminate',
                   description: 'Not Urgent • Not Important',
                   accentColor: const Color(0xFF747D8C),
                   taskCount: tasks
@@ -324,6 +331,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           .toList();
     }
 
+    final quadrantNames = ref.watch(quadrantNamesProvider);
     // Check if there are any tasks to show (completed or incomplete)
     if (filteredTasks.isEmpty) {
       return Center(
@@ -393,7 +401,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           if (quadrantTasks.isEmpty) return const SizedBox.shrink();
 
           return _buildListSection(
-            _getQuadrantTitle(quadrant),
+            quadrant,
+            quadrantNames[quadrant] ?? _getQuadrantTitle(quadrant),
             _getQuadrantDescription(quadrant),
             _getQuadrantColor(quadrant),
             quadrantTasks,
@@ -493,6 +502,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Widget _buildListSection(
+    Quadrant quadrant,
     String title,
     String description,
     Color accentColor,
@@ -513,72 +523,84 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: colorScheme.outlineVariant.withOpacity(0.2),
-                  width: 1,
+          GestureDetector(
+            onLongPress: () {
+              HapticFeedback.mediumImpact();
+              showDialog(
+                context: context,
+                builder: (_) => QuadrantEditDialog(
+                  quadrant: quadrant,
+                  currentName: title,
+                ),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.outlineVariant.withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        description,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    tasks.length.toString(),
-                    style: TextStyle(
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
                       color: accentColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          description,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      tasks.length.toString(),
+                      style: TextStyle(
+                        color: accentColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Padding(
@@ -601,6 +623,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Widget _buildMatrixCard({
+    required Quadrant quadrant,
     required String title,
     required String description,
     required Color accentColor,
@@ -620,85 +643,97 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: colorScheme.outlineVariant.withOpacity(0.2),
-                  width: 1,
+          GestureDetector(
+            onLongPress: () {
+              HapticFeedback.mediumImpact();
+              showDialog(
+                context: context,
+                builder: (_) => QuadrantEditDialog(
+                  quadrant: quadrant,
+                  currentName: title,
+                ),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.outlineVariant.withOpacity(0.2),
+                    width: 1,
+                  ),
                 ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: accentColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    if (taskCount > 0)
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                        width: 4,
+                        height: 16,
                         decoration: BoxDecoration(
-                          color: accentColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(2),
                         ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
                         child: Text(
-                          taskCount.toString(),
+                          title,
                           style: TextStyle(
-                            color: accentColor,
-                            fontSize: 11,
+                            color: colorScheme.onSurface,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 32, // ← Height to accommodate up to 2 lines
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: Text(
-                      description,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
+                      if (taskCount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            taskCount.toString(),
+                            style: TextStyle(
+                              color: accentColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 32,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Text(
+                        description,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Expanded(
