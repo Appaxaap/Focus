@@ -742,10 +742,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(16),
               ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                child: child,
+              child: DragTarget<Task>(
+                onWillAcceptWithDetails: (details) =>
+                    details.data.quadrant != quadrant,
+                onAcceptWithDetails: (details) {
+                  final updatedTask =
+                      details.data.copyWith(quadrant: quadrant);
+                  ref.read(taskProvider.notifier).updateTask(updatedTask);
+                  HapticFeedback.mediumImpact();
+                },
+                builder: (context, candidateData, rejectedData) {
+                  final isDraggingOver = candidateData.isNotEmpty;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDraggingOver
+                          ? accentColor.withOpacity(0.08)
+                          : Colors.transparent,
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                      ),
+                      border: isDraggingOver
+                          ? Border.all(
+                              color: accentColor.withOpacity(0.4),
+                              width: 1.5,
+                            )
+                          : null,
+                    ),
+                    child: child,
+                  );
+                },
               ),
             ),
           ),

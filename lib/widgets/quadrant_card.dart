@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/quadrant_enum.dart';
@@ -23,7 +24,7 @@ class QuadrantCard extends ConsumerWidget {
               child: _buildEmptyState(context),
             ),
           )
-        : _buildTaskList(tasks);
+        : _buildTaskList(context, ref, tasks);
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -67,28 +68,84 @@ class QuadrantCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildTaskList(List<Task> tasks) {
+  Widget _buildTaskList(BuildContext context, WidgetRef ref, List<Task> tasks) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: tasks.length,
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final task = tasks[index];
-        return TaskTile(task: task, key: ValueKey(task.id));
+        return LongPressDraggable<Task>(
+          data: task,
+          delay: const Duration(milliseconds: 300),
+          onDragStarted: () => HapticFeedback.mediumImpact(),
+          feedback: Material(
+            color: Colors.transparent,
+            child: Opacity(
+              opacity: 0.85,
+              child: Container(
+                width: 220,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _getQuadrantColor(task.quadrant).withOpacity(0.6),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  task.title,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+          childWhenDragging: Opacity(
+            opacity: 0.3,
+            child: TaskTile(task: task, key: ValueKey(task.id)),
+          ),
+          child: TaskTile(task: task, key: ValueKey(task.id)),
+        );
       },
     );
   }
 
+  Color _getQuadrantColor(Quadrant quadrant) {
+    switch (quadrant) {
+      case Quadrant.urgentImportant:
+        return const Color(0xFFFF4757);
+      case Quadrant.notUrgentImportant:
+        return const Color(0xFF2ED573);
+      case Quadrant.urgentNotImportant:
+        return const Color(0xFFFFA726);
+      case Quadrant.notUrgentNotImportant:
+        return const Color(0xFF747D8C);
+    }
+  }
+
   void _navigateToAddTask(BuildContext context, Quadrant quadrant) {
     DateTime? suggestedDueDate;
-    if (quadrant == Quadrant.urgentImportant || quadrant == Quadrant.urgentNotImportant) {
-      // Do First or Delegate → Today
+    if (quadrant == Quadrant.urgentImportant ||
+        quadrant == Quadrant.urgentNotImportant) {
       suggestedDueDate = DateTime.now();
     } else if (quadrant == Quadrant.notUrgentImportant) {
-      // Schedule → Tomorrow
       suggestedDueDate = DateTime.now().add(const Duration(days: 1));
     }
-    // Eliminate → no due date
 
     Navigator.push(
       context,
