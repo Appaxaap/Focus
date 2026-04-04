@@ -29,6 +29,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -37,18 +40,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
     );
-
     _fadeController.forward();
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _openSearch() {
+    setState(() {
+      _isSearching = true;
+      _searchQuery = '';
+      _searchController.clear();
+    });
+  }
+
+  void _closeSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchQuery = '';
+      _searchController.clear();
+    });
   }
 
   @override
@@ -84,55 +102,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Section with Grouped Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Focus',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                          ),
+                // Header
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _isSearching
+                      ? _buildSearchBar(colorScheme, theme)
+                      : Row(
+                          key: const ValueKey('header'),
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Focus',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Eisenhower Matrix App',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            GroupedButtons(
+                              viewMode: viewMode,
+                              onSearchPressed: _openSearch,
+                              onFilterPressed: () async =>
+                                  _showFilterDialog(context, ref),
+                              onSettingsPressed: () async =>
+                                  showSettingsBottomSheet(context),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Eisenhower Matrix App',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    GroupedButtons(
-                      viewMode: viewMode,
-                      onFilterPressed: () async =>
-                          _showFilterDialog(context, ref),
-
-                      onSettingsPressed: () async =>
-                          showSettingsBottomSheet(context),
-                    ),
-                  ],
                 ),
                 const SizedBox(height: 24),
 
                 // Main Content
                 Expanded(
-                  child: viewMode == ViewMode.card
-                      ? _buildCardView(
-                          showCompleted ? tasks : incompleteTasks,
-                          colorScheme,
-                        )
-                      : _buildListView(
-                          tasks,
-                          filter,
-                          showCompleted,
-                          theme,
-                          colorScheme,
-                        ),
+                  child: _isSearching
+                      ? _buildSearchResults(tasks, theme, colorScheme)
+                      : viewMode == ViewMode.card
+                          ? _buildCardView(
+                              showCompleted ? tasks : incompleteTasks,
+                              colorScheme,
+                            )
+                          : _buildListView(
+                              tasks,
+                              filter,
+                              showCompleted,
+                              theme,
+                              colorScheme,
+                            ),
                 ),
               ],
             ),
@@ -149,6 +175,196 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: const Icon(Icons.add, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  Widget _buildSearchBar(ColorScheme colorScheme, ThemeData theme) {
+    return Row(
+      key: const ValueKey('searchbar'),
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _searchController,
+            autofocus: true,
+            onChanged: (value) => setState(() => _searchQuery = value),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Search tasks...',
+              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHigh,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(40),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: _closeSearch,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHigh,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.close_rounded,
+              color: colorScheme.onSurface,
+              size: 20,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchResults(
+    List<Task> tasks,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    if (_searchQuery.trim().isEmpty) {
+      return Center(
+        child: Text(
+          'Type to search tasks',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    final query = _searchQuery.trim().toLowerCase();
+    final results = tasks.where((task) {
+      return task.title.toLowerCase().contains(query) ||
+          (task.notes?.toLowerCase().contains(query) ?? false);
+    }).toList();
+
+    if (results.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 48,
+              color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No tasks found',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        final task = results[index];
+        final quadrantColor = _getQuadrantColor(task.quadrant);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              _closeSearch();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TaskEditScreen(task: task),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: quadrantColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: task.isCompleted
+                                ? colorScheme.onSurface.withOpacity(0.4)
+                                : colorScheme.onSurface,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (task.notes != null && task.notes!.isNotEmpty)
+                          Text(
+                            task.notes!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: quadrantColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _getQuadrantTitle(task.quadrant),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: quadrantColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

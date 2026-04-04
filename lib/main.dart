@@ -61,9 +61,8 @@ void main() async {
 
   const minSize = Size(1068, 873);
 
-  if (Platform.isWindows) {
+  if (!kIsWeb && Platform.isWindows) {
     await DesktopWindow.setWindowSize(minSize);
-
     await DesktopWindow.setMinWindowSize(minSize);
   }
 
