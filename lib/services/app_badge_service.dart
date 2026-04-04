@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_app_badger/flutter_app_badger.dart';
 
 import '../models/task_models.dart';
 
@@ -40,17 +40,13 @@ class AppBadgeService {
 
   Future<void> _setBadgeCount(int count) async {
     try {
-      if (await FlutterAppBadger.isAppBadgeSupported()) {
-        FlutterAppBadger.updateBadgeCount(count);
-      }
+      await AppBadgePlus.updateBadge(count);
     } catch (_) {}
   }
 
   Future<void> _clearBadge() async {
     try {
-      if (await FlutterAppBadger.isAppBadgeSupported()) {
-        FlutterAppBadger.removeBadge();
-      }
+      await AppBadgePlus.updateBadge(0);
     } catch (_) {}
   }
 
