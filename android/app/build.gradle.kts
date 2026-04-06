@@ -52,11 +52,12 @@ android {
 
     buildTypes {
         release {
-            // Use release signing if properties exist, otherwise debug (for CI)
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            // Only sign release builds locally when a release keystore is present.
+            // CI builds should stay unsigned so the APK can be signed offline.
+            signingConfig = if (keystorePropertiesFile.exists() && System.getenv("CI") != "true") {
                 signingConfigs.getByName("release")
             } else {
-                signingConfigs.getByName("debug")
+                null
             }
             isMinifyEnabled = true
             isShrinkResources = true

@@ -41,11 +41,23 @@ jobs:
       - name: Rename APKs
         run: |
           TAG=${GITHUB_REF_NAME}
-          mv build/app/outputs/flutter-apk/app-release.apk \
+          UNIVERSAL=build/app/outputs/flutter-apk/app-release-unsigned.apk
+          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+            UNIVERSAL=build/app/outputs/flutter-apk/app-release.apk
+          fi
+          mv "${UNIVERSAL}" \
              build/app/outputs/flutter-apk/Focus-${TAG}-universal.apk
-          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+          ARM64=build/app/outputs/flutter-apk/app-arm64-v8a-release-unsigned.apk
+          if [ -f "build/app/outputs/flutter-apk/app-arm64-v8a-release.apk" ]; then
+            ARM64=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          fi
+          mv "${ARM64}" \
              build/app/outputs/flutter-apk/Focus-${TAG}-arm64-v8a.apk
-          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+          ARMEABI=build/app/outputs/flutter-apk/app-armeabi-v7a-release-unsigned.apk
+          if [ -f "build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk" ]; then
+            ARMEABI=build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          fi
+          mv "${ARMEABI}" \
              build/app/outputs/flutter-apk/Focus-${TAG}-armeabi-v7a.apk
 
       - name: Create GitHub Release
