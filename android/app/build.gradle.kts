@@ -31,8 +31,8 @@ android {
         applicationId = "com.codecx.focus"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 8
-        versionName = "2.1.0"
+        versionCode = 9
+        versionName = "2.2.1"
 
         // multiDex support
         multiDexEnabled = true
