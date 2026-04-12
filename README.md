@@ -11,7 +11,7 @@
 </h1>
 
 <p align="center"><strong>Offline task manager built on the Eisenhower Matrix</strong></p>
-<p align="center"><i>A privacy focused Android productivity app made with Flutter</i></p>
+<p align="center"><i>A privacy focused Android and Windows productivity app made with Flutter</i></p>
 
 <div align="center">
   <img src="https://img.shields.io/badge/Platform-Android-D1BCFF?style=flat&logo=android&labelColor=202124">
