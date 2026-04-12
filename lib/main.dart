@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus/services/hive_service.dart';
 import 'package:focus/services/app_badge_service.dart';
 import 'package:focus/services/notification_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:io';
@@ -218,9 +217,9 @@ class _FocusAppState extends ConsumerState<FocusApp> {
         outline: Color(0xFF2C2C2E),
         outlineVariant: Color(0xFF1C1C1E),
       ),
-      textTheme: GoogleFonts.dmSansTextTheme(
-        ThemeData.dark().textTheme,
-      ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+      textTheme: ThemeData.dark()
+          .textTheme
+          .apply(bodyColor: Colors.white, displayColor: Colors.white),
     );
 
     bool isDesktop = kIsWeb
@@ -238,7 +237,7 @@ class _FocusAppState extends ConsumerState<FocusApp> {
         useMaterial3: true,
         scaffoldBackgroundColor: appBackgroundColor,
         appBarTheme: const AppBarTheme(backgroundColor: appBackgroundColor),
-        textTheme: GoogleFonts.dmSansTextTheme().apply(
+        textTheme: ThemeData(useMaterial3: true).textTheme.apply(
           bodyColor: Colors.white,
           displayColor: Colors.white,
         ),
@@ -253,9 +252,9 @@ class _FocusAppState extends ConsumerState<FocusApp> {
                 backgroundColor: appBackgroundColor,
               ),
 
-              textTheme: GoogleFonts.dmSansTextTheme(
-                ThemeData.dark(useMaterial3: true).textTheme,
-              ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+              textTheme: ThemeData.dark(useMaterial3: true)
+                  .textTheme
+                  .apply(bodyColor: Colors.white, displayColor: Colors.white),
             ),
       themeMode: themeMode == AppTheme.light ? ThemeMode.light : ThemeMode.dark,
       home: isDesktop ? const DesktopHomeScreen() : const SplashRouterScreen(),
