@@ -18,26 +18,6 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
-    <!-- Required for url_launcher to open external links -->
-    <uses-permission android:name="android.permission.INTERNET" />
-
-    <queries>
-        <!-- All browsers -->
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="https" />
-        </intent>
-
-        <!-- Specific apps you want to handle URLs -->
-        <package android:name="com.android.chrome" />
-        <package android:name="org.mozilla.firefox" />
-        <package android:name="com.microsoft.emmx" />
-        <package android:name="com.opera.browser" />
-        <package android:name="com.gh4a" /> <!-- GitHub app -->
-        <package android:name="org.telegram.messenger" /> <!-- Telegram -->
-    </queries>
-
     <application
         android:label="Focus"
         android:name="${applicationName}"

@@ -3,10 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:ui' as ui;
 import '../providers/app_icon_badge_provider.dart';
 import '../providers/show_completed_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
+
+const Color _macAccent = Color(0xFF8E63FF);
+const Color _macDanger = Color(0xFFFF4D57);
 
 void showDesktopSettingsFlyout(BuildContext context, GlobalKey anchorKey) {
   final RenderBox renderBox =
@@ -96,34 +100,157 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
 
     return Material(
       color: Colors.transparent,
-      child: Container(
-        width: 300,
-        decoration: BoxDecoration(
-          // Matches bottom sheet background token exactly
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.3),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          child: Container(
+            width: 300,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1A1C22).withOpacity(0.82),
+                  const Color(0xFF111319).withOpacity(0.76),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white.withOpacity(0.18)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 38,
+                  offset: const Offset(0, 18),
+                ),
+                BoxShadow(
+                  color: _macAccent.withOpacity(0.1),
+                  blurRadius: 28,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-          ],
-        ),
-        padding: const EdgeInsets.all(16),
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: SlideTransition(
-            position: _slideAnim,
-            child: _showAbout
-                ? _buildAboutPanel(theme, colorScheme)
-                : _buildMainPanel(theme, colorScheme),
+            padding: const EdgeInsets.all(16),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 18,
+                  right: 18,
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.12),
+                          Colors.white.withOpacity(0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ),
+                FadeTransition(
+                  opacity: _fadeAnim,
+                  child: SlideTransition(
+                    position: _slideAnim,
+                    child: _showAbout
+                        ? _buildAboutPanel(theme, colorScheme)
+                        : _buildMainPanel(theme, colorScheme),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _macToggle({
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 76,
+        height: 42,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: value
+                ? [_macAccent.withOpacity(0.7), _macAccent.withOpacity(0.45)]
+                : [Colors.white.withOpacity(0.16), Colors.white.withOpacity(0.07)],
+          ),
+          border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.8),
+          boxShadow: [
+            if (value)
+              BoxShadow(
+                color: _macAccent.withOpacity(0.5),
+                blurRadius: 16,
+                spreadRadius: 1,
+              ),
+          ],
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 180),
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          curve: Curves.easeOutCubic,
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F1F4),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _glassTile(
+    ColorScheme colorScheme, {
+    bool selected = false,
+    Color? accent,
+  }) {
+    final highlight = accent ?? _macAccent;
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withOpacity(selected ? 0.16 : 0.1),
+          const Color(0xFF2A2D35).withOpacity(selected ? 0.55 : 0.38),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: selected
+            ? highlight.withOpacity(0.45)
+            : Colors.white.withOpacity(0.15),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.22),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ],
     );
   }
 
@@ -204,17 +331,10 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          // Inner cards match bottom sheet card tiles
-          color: selected
-              ? colorScheme.primary.withOpacity(0.15)
-              : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? colorScheme.primary.withOpacity(0.4)
-                : colorScheme.outlineVariant.withOpacity(0.2),
-          ),
+        decoration: _glassTile(
+          colorScheme,
+          selected: selected,
+          accent: _macAccent,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -222,16 +342,14 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
             Icon(
               icon,
               size: 20,
-              color: selected
-                  ? colorScheme.primary
-                  : colorScheme.onSurfaceVariant,
+              color: selected ? _macAccent : colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 6),
             Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: selected
-                    ? colorScheme.primary
+                    ? _macAccent
                     : colorScheme.onSurfaceVariant,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 11,
@@ -243,7 +361,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               width: 5,
               height: 5,
               decoration: BoxDecoration(
-                color: selected ? colorScheme.primary : Colors.transparent,
+                color: selected ? _macAccent : Colors.transparent,
                 shape: BoxShape.circle,
               ),
             ),
@@ -260,11 +378,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.2)),
-      ),
+      decoration: _glassTile(colorScheme),
       child: Row(
         children: [
           Expanded(
@@ -290,13 +404,12 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               ],
             ),
           ),
-          Switch(
+          _macToggle(
             value: showCompleted,
-            onChanged: (v) {
+            onChanged: (_) {
               ref.read(showCompletedTasksProvider.notifier).toggle();
               HapticFeedback.lightImpact();
             },
-            activeColor: colorScheme.primary,
           ),
         ],
       ),
@@ -316,14 +429,10 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
         opacity: hasCompleted ? 1.0 : 0.4,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: hasCompleted
-                  ? const Color(0xFFFF4757).withOpacity(0.3)
-                  : colorScheme.outlineVariant.withOpacity(0.2),
-            ),
+          decoration: _glassTile(
+            colorScheme,
+            selected: hasCompleted,
+            accent: _macDanger,
           ),
           child: Row(
             children: [
@@ -331,12 +440,12 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF4757).withOpacity(0.1),
+                  color: _macDanger.withOpacity(0.14),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.delete_sweep_rounded,
-                  color: Color(0xFFFF4757),
+                  color: _macDanger,
                   size: 16,
                 ),
               ),
@@ -385,11 +494,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.2)),
-      ),
+      decoration: _glassTile(colorScheme),
       child: Row(
         children: [
           Expanded(
@@ -415,13 +520,12 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               ],
             ),
           ),
-          Switch(
+          _macToggle(
             value: appIconBadgeEnabled,
             onChanged: (value) {
               ref.read(appIconBadgeProvider.notifier).setEnabled(value);
               HapticFeedback.lightImpact();
             },
-            activeColor: colorScheme.primary,
           ),
         ],
       ),
@@ -467,13 +571,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withOpacity(0.2),
-            ),
-          ),
+          decoration: _glassTile(colorScheme),
           child: Column(
             children: [
               Text(
@@ -485,7 +583,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               ),
               const SizedBox(height: 8),
               Text(
-                'Made with 💙 by Basim Basheer',
+                'Made with love by Basim Basheer',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
@@ -494,7 +592,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               ),
               const SizedBox(height: 8),
               Text(
-                '🔒 All data stays on your device',
+                'All data stays on your device',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 11,
@@ -544,16 +642,10 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withOpacity(0.2),
-              ),
-            ),
+            decoration: _glassTile(colorScheme),
             child: Center(
               child: Text(
-                'Support Focus ☕',
+                'Support Focus',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: colorScheme.onSurface,
@@ -578,13 +670,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
       onTap: () => _launchUrl(url),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.2),
-          ),
-        ),
+        decoration: _glassTile(colorScheme),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -657,8 +743,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
+
 }
