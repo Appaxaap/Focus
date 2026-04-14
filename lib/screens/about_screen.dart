@@ -467,9 +467,7 @@ class AboutScreen extends StatelessWidget {
       onTap: () async {
         HapticFeedback.lightImpact();
         final uri = Uri.parse('https://$url');
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
-        }
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -509,9 +507,7 @@ class AboutScreen extends StatelessWidget {
       onTap: () async {
         HapticFeedback.lightImpact();
         final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
-        }
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       },
       child: Container(
         padding: const EdgeInsets.all(16),

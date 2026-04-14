@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../providers/show_completed_provider.dart';
@@ -1159,10 +1158,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   child: _buildActionButton(
                     icon: Icons.code_rounded,
                     label: 'Source',
-                    onTap: () => _launchUrl(
-                      context,
-                      'https://github.com/Appaxaap/Focus',
-                    ),
+                    onTap: () => _launchUrl('https://github.com/Appaxaap/Focus'),
                     colorScheme: _getColorScheme(ref.read(themeProvider)),
                   ),
                 ),
@@ -1171,10 +1167,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   child: _buildActionButton(
                     icon: Icons.bug_report_rounded,
                     label: 'Issues',
-                    onTap: () => _launchUrl(
-                      context,
-                      'https://github.com/Appaxaap/Focus/issues',
-                    ),
+                    onTap: () => _launchUrl('https://github.com/Appaxaap/Focus/issues'),
                     colorScheme: _getColorScheme(ref.read(themeProvider)),
                   ),
                 ),
@@ -1183,8 +1176,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   child: _buildActionButton(
                     icon: Icons.telegram_rounded,
                     label: 'Community',
-                    onTap: () =>
-                        _launchUrl(context, 'https://t.me/+IdAIopSTiXowYWFl'),
+                    onTap: () => _launchUrl('https://t.me/+IdAIopSTiXowYWFl'),
                     colorScheme: _getColorScheme(ref.read(themeProvider)),
                   ),
                 ),
@@ -1194,7 +1186,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             GestureDetector(
               onTap: () {
                 Navigator.pop(context);
-                _launchUrl(context, 'https://buymeacoffee.com/bxmbshr');
+                _launchUrl('https://buymeacoffee.com/bxmbshr');
               },
               child: Container(
                 width: double.infinity,
@@ -1262,36 +1254,10 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     );
   }
 
-  Future<void> _launchUrl(BuildContext context, String url) async {
-    try {
-      final uri = Uri.parse(url);
-      if (Platform.isAndroid) {
-        try {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return;
-        } catch (e) {
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri);
-            return;
-          }
-        }
-      }
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return;
-      }
-      throw 'Could not launch URL';
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not open link'),
-          action: SnackBarAction(
-            label: 'Retry',
-            onPressed: () => _launchUrl(context, url),
-          ),
-        ),
-      );
-    }
+  Future<void> _launchUrl(String url) async {
+    HapticFeedback.lightImpact();
+    final uri = Uri.parse(url);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Widget _buildDragHandle(_ColorScheme colorScheme) {
