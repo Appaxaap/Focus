@@ -75,6 +75,73 @@ This approach helps reduce cognitive overload and improve daily decision making.
 
 ---
 
+## Windows Features
+
+- Native desktop layout optimized for keyboard and large screens  
+- Light, dark, and AMOLED theme adaptation across desktop screens  
+- Custom desktop settings flyout aligned with home screen styling  
+- Draggable custom title area with custom window controls  
+- Responsive desktop task edit UI for compact and wide window sizes  
+- Unified custom dialog style across desktop actions and confirmations  
+
+### Desktop Productivity
+
+- Full Eisenhower Matrix workflow on desktop (`Do First`, `Schedule`, `Delegate`, `Eliminate`)  
+- Focus Mode for distraction-free execution by active quadrant  
+- Desktop insights panel (done/open/late counters + productivity progress)  
+- Quick task creation and editing from home and command palette  
+- Show/hide completed tasks and fast quadrant switching  
+
+### Tray and Background Workflow
+
+- System tray integration on Windows  
+- Tray menu actions:
+  - Show app
+  - Quick add task
+  - Open command palette
+  - Quit
+- Minimize/close to tray behavior for background workflow continuity  
+
+### Keyboard-first Flow
+
+- Global hotkey `Ctrl + K` opens command palette even when app is unfocused  
+- In-app shortcut system for major desktop actions  
+- Keyboard shortcut help dialog available in app  
+- Command palette supports:
+  - New task
+  - Toggle focus mode
+  - Toggle show completed
+  - Open settings
+  - Show shortcuts
+  - Task search and open
+
+### Notifications on Windows
+
+- Native Windows reminder notifications for scheduled tasks  
+- Notification action buttons:
+  - **Mark done**
+  - **Open task**
+- Notification handling integrated with desktop task state updates  
+
+### Windows Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl + K` | Open Command Palette |
+| `Ctrl + N` | New task |
+| `Ctrl + F` | Toggle Focus Mode |
+| `Ctrl + H` | Toggle Show Completed |
+| `Ctrl + ,` | Open Settings |
+| `Ctrl + /` or `F1` | Show keyboard shortcuts |
+| `1` `2` `3` `4` | Select Eisenhower quadrant |
+
+### Current Windows Behavior
+
+- Windows build runs in a single main window  
+- Task editing opens in-app (multi-window editing is intentionally removed)  
+
+---
+
 ## Comparison With Typical Task Apps
 
 | Feature           | Focus                     | Typical Todo Apps |
