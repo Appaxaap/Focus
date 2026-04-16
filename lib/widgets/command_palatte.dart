@@ -29,7 +29,18 @@ class SearchResult {
 }
 
 class CommandPalette extends ConsumerStatefulWidget {
-  const CommandPalette({super.key});
+  final VoidCallback? onToggleFocusMode;
+  final VoidCallback? onToggleShowCompleted;
+  final VoidCallback? onOpenSettings;
+  final VoidCallback? onOpenShortcuts;
+
+  const CommandPalette({
+    super.key,
+    this.onToggleFocusMode,
+    this.onToggleShowCompleted,
+    this.onOpenSettings,
+    this.onOpenShortcuts,
+  });
 
   @override
   ConsumerState<CommandPalette> createState() => _CommandPaletteState();
@@ -75,6 +86,42 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
           );
         },
       ),
+      if (widget.onToggleFocusMode != null)
+        Command(
+          name: 'Toggle Focus Mode',
+          icon: Icons.center_focus_strong_rounded,
+          onExecute: () {
+            Navigator.pop(context);
+            widget.onToggleFocusMode?.call();
+          },
+        ),
+      if (widget.onToggleShowCompleted != null)
+        Command(
+          name: 'Toggle Show Completed',
+          icon: Icons.checklist_rtl_rounded,
+          onExecute: () {
+            Navigator.pop(context);
+            widget.onToggleShowCompleted?.call();
+          },
+        ),
+      if (widget.onOpenSettings != null)
+        Command(
+          name: 'Open Settings',
+          icon: Icons.settings_rounded,
+          onExecute: () {
+            Navigator.pop(context);
+            widget.onOpenSettings?.call();
+          },
+        ),
+      if (widget.onOpenShortcuts != null)
+        Command(
+          name: 'Show Keyboard Shortcuts',
+          icon: Icons.keyboard_rounded,
+          onExecute: () {
+            Navigator.pop(context);
+            widget.onOpenShortcuts?.call();
+          },
+        ),
     ];
 
     List<SearchResult> results = [];

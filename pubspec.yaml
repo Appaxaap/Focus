@@ -55,6 +55,8 @@ dependencies:
   flutter_screenutil: ^5.9.3
   window_manager: ^0.5.1
   desktop_window: ^0.4.2
+  tray_manager: ^0.5.1
+  hotkey_manager: ^0.2.3
 
 dev_dependencies:
   flutter_test:
@@ -85,6 +87,7 @@ flutter:
 
   assets:
     - assets/images/512x512_logo.png
+    - assets/images/tray_icon.ico
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

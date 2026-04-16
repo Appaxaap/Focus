@@ -27,13 +27,12 @@ class TaskEditScreen extends ConsumerStatefulWidget {
 }
 
 class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
-    with TickerProviderStateMixin {
+{
   late TextEditingController titleController;
   late TextEditingController notesController;
   late Quadrant? selectedQuadrant;
   late DateTime? selectedDate;
   late TimeOfDay? selectedTime;
-  late AnimationController _animationController;
 
   @override
   void initState() {
@@ -48,17 +47,12 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
         ? TimeOfDay.fromDateTime(widget.task!.dueDate!)
         : null;
 
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
   }
 
   @override
   void dispose() {
     titleController.dispose();
     notesController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
@@ -254,7 +248,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
                           selectedQuadrant = quadrant;
                         });
                       },
-                      animationController: _animationController,
                     ),
                     SizedBox(height: isShortScreen ? 24 : 40),
                     _buildAddTaskButton(isEditing, colorScheme, screenSize),
@@ -407,7 +400,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
     final notificationService = NotificationService();
     final bool isEditing = widget.task != null;
     final String taskId = widget.task?.id ?? const Uuid().v4();
-    final int notificationId = taskId.hashCode;
+    final int notificationId = notificationService.notificationIdForTask(taskId);
 
     // Cancel existing notification if editing
     if (isEditing) {

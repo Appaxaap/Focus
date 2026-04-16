@@ -8,9 +8,19 @@ import '../providers/app_icon_badge_provider.dart';
 import '../providers/show_completed_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
+import 'app_dialog.dart';
 
-const Color _macAccent = Color(0xFF8E63FF);
 const Color _macDanger = Color(0xFFFF4D57);
+
+bool _isDarkScheme(ColorScheme cs) => cs.brightness == Brightness.dark;
+
+Color _ink(ColorScheme cs, {double dark = 0.55, double light = 0.72}) {
+  return cs.onSurface.withValues(alpha: _isDarkScheme(cs) ? dark : light);
+}
+
+Color _panel(ColorScheme cs, {double dark = 0.72, double light = 0.90}) {
+  return cs.surface.withValues(alpha: _isDarkScheme(cs) ? dark : light);
+}
 
 void showDesktopSettingsFlyout(BuildContext context, GlobalKey anchorKey) {
   final RenderBox renderBox =
@@ -97,71 +107,33 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final accent = colorScheme.primary;
 
     return Material(
       color: Colors.transparent,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(16),
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             width: 300,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF1A1C22).withOpacity(0.82),
-                  const Color(0xFF111319).withOpacity(0.76),
-                ],
+              color: _panel(colorScheme),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _ink(colorScheme, dark: 0.10, light: 0.18),
+                width: 0.5,
               ),
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.white.withOpacity(0.18)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 38,
-                  offset: const Offset(0, 18),
-                ),
-                BoxShadow(
-                  color: _macAccent.withOpacity(0.1),
-                  blurRadius: 28,
-                  offset: const Offset(0, 6),
-                ),
-              ],
             ),
             padding: const EdgeInsets.all(16),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 18,
-                  right: 18,
-                  child: Container(
-                    height: 46,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withOpacity(0.12),
-                          Colors.white.withOpacity(0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ),
-                FadeTransition(
-                  opacity: _fadeAnim,
-                  child: SlideTransition(
-                    position: _slideAnim,
-                    child: _showAbout
-                        ? _buildAboutPanel(theme, colorScheme)
-                        : _buildMainPanel(theme, colorScheme),
-                  ),
-                ),
-              ],
+            child: FadeTransition(
+              opacity: _fadeAnim,
+              child: SlideTransition(
+                position: _slideAnim,
+                child: _showAbout
+                    ? _buildAboutPanel(theme, colorScheme)
+                    : _buildMainPanel(theme, colorScheme, accent),
+              ),
             ),
           ),
         ),
@@ -172,48 +144,42 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
   Widget _macToggle({
     required bool value,
     required ValueChanged<bool> onChanged,
+    required Color accent,
   }) {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        width: 76,
-        height: 42,
-        padding: const EdgeInsets.all(3),
+        width: 58,
+        height: 30,
+        padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: value
-                ? [_macAccent.withOpacity(0.7), _macAccent.withOpacity(0.45)]
-                : [Colors.white.withOpacity(0.16), Colors.white.withOpacity(0.07)],
+          color: value
+              ? accent.withValues(alpha: 0.24)
+              : _ink(Theme.of(context).colorScheme, dark: 0.08, light: 0.14),
+          border: Border.all(
+            color: value
+                ? accent.withValues(alpha: 0.38)
+                : _ink(Theme.of(context).colorScheme, dark: 0.14, light: 0.24),
+            width: 0.5,
           ),
-          border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.8),
-          boxShadow: [
-            if (value)
-              BoxShadow(
-                color: _macAccent.withOpacity(0.5),
-                blurRadius: 16,
-                spreadRadius: 1,
-              ),
-          ],
         ),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 180),
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           curve: Curves.easeOutCubic,
           child: Container(
-            width: 34,
-            height: 34,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F1F4),
+              color: Theme.of(context).colorScheme.surface,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 6,
+                  offset: const Offset(0, 1),
                 ),
               ],
             ),
@@ -228,33 +194,22 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
     bool selected = false,
     Color? accent,
   }) {
-    final highlight = accent ?? _macAccent;
+    final highlight = accent ?? colorScheme.primary;
     return BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.white.withOpacity(selected ? 0.16 : 0.1),
-          const Color(0xFF2A2D35).withOpacity(selected ? 0.55 : 0.38),
-        ],
-      ),
-      borderRadius: BorderRadius.circular(16),
+      color: selected
+          ? _ink(colorScheme, dark: 0.08, light: 0.12)
+          : _ink(colorScheme, dark: 0.05, light: 0.08),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(
         color: selected
-            ? highlight.withOpacity(0.45)
-            : Colors.white.withOpacity(0.15),
+            ? highlight.withValues(alpha: 0.40)
+            : _ink(colorScheme, dark: 0.10, light: 0.18),
+        width: 0.5,
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.22),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ],
     );
   }
 
-  Widget _buildMainPanel(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildMainPanel(ThemeData theme, ColorScheme colorScheme, Color accent) {
     final appTheme = ref.watch(themeProvider);
     final showCompletedAsync = ref.watch(showCompletedTasksProvider);
     final showCompleted = showCompletedAsync.value ?? false;
@@ -279,6 +234,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                 },
                 colorScheme: colorScheme,
                 theme: theme,
+                accent: accent,
               ),
             ),
             const SizedBox(width: 8),
@@ -293,25 +249,43 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                 },
                 colorScheme: colorScheme,
                 theme: theme,
+                accent: accent,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: _themeButton(
-                icon: Icons.info_outline_rounded,
-                label: 'About',
-                selected: false,
-                onTap: () => _navigateTo(true),
+                icon: Icons.brightness_3_rounded,
+                label: 'AMOLED',
+                selected: appTheme == AppTheme.amoled,
+                onTap: () {
+                  ref.read(themeProvider.notifier).setTheme(AppTheme.amoled);
+                  HapticFeedback.selectionClick();
+                },
                 colorScheme: colorScheme,
                 theme: theme,
+                accent: accent,
               ),
             ),
           ],
         ),
         const SizedBox(height: 10),
-        _showCompletedRow(showCompleted, theme, colorScheme),
+        SizedBox(
+          width: double.infinity,
+          child: _themeButton(
+            icon: Icons.info_outline_rounded,
+            label: 'About',
+            selected: false,
+            onTap: () => _navigateTo(true),
+            colorScheme: colorScheme,
+            theme: theme,
+            accent: accent,
+          ),
+        ),
         const SizedBox(height: 10),
-        _appIconBadgeRow(appIconBadgeEnabled, theme, colorScheme),
+        _showCompletedRow(showCompleted, theme, colorScheme, accent),
+        const SizedBox(height: 10),
+        _appIconBadgeRow(appIconBadgeEnabled, theme, colorScheme, accent),
         const SizedBox(height: 10),
         _clearCompletedRow(completedCount, theme, colorScheme),
       ],
@@ -325,6 +299,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
     required VoidCallback onTap,
     required ColorScheme colorScheme,
     required ThemeData theme,
+    required Color accent,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -334,7 +309,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
         decoration: _glassTile(
           colorScheme,
           selected: selected,
-          accent: _macAccent,
+          accent: accent,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -342,15 +317,17 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
             Icon(
               icon,
               size: 20,
-              color: selected ? _macAccent : colorScheme.onSurfaceVariant,
+              color: selected
+                  ? accent
+                  : _ink(colorScheme, dark: 0.55, light: 0.75),
             ),
             const SizedBox(height: 6),
             Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: selected
-                    ? _macAccent
-                    : colorScheme.onSurfaceVariant,
+                    ? accent
+                    : _ink(colorScheme, dark: 0.55, light: 0.75),
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 11,
               ),
@@ -361,7 +338,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               width: 5,
               height: 5,
               decoration: BoxDecoration(
-                color: selected ? _macAccent : Colors.transparent,
+                color: selected ? accent : Colors.transparent,
                 shape: BoxShape.circle,
               ),
             ),
@@ -375,6 +352,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
     bool showCompleted,
     ThemeData theme,
     ColorScheme colorScheme,
+    Color accent,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -389,7 +367,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                   'Show Completed',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
+                    color: _ink(colorScheme, dark: 0.92, light: 0.92),
                     fontSize: 13,
                   ),
                 ),
@@ -397,7 +375,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                 Text(
                   'Display finished tasks',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                    color: _ink(colorScheme, dark: 0.45, light: 0.62),
                     fontSize: 11,
                   ),
                 ),
@@ -406,6 +384,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
           ),
           _macToggle(
             value: showCompleted,
+            accent: accent,
             onChanged: (_) {
               ref.read(showCompletedTasksProvider.notifier).toggle();
               HapticFeedback.lightImpact();
@@ -440,7 +419,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: _macDanger.withOpacity(0.14),
+                  color: _macDanger.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -458,7 +437,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                       'Clear Completed',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
+                        color: _ink(colorScheme, dark: 0.92, light: 0.92),
                         fontSize: 13,
                       ),
                     ),
@@ -468,7 +447,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                           ? '$completedCount finished tasks'
                           : 'No tasks to clear',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                        color: _ink(colorScheme, dark: 0.45, light: 0.62),
                         fontSize: 11,
                       ),
                     ),
@@ -477,7 +456,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                color: _ink(colorScheme, dark: 0.40, light: 0.62),
                 size: 18,
               ),
             ],
@@ -491,6 +470,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
     bool appIconBadgeEnabled,
     ThemeData theme,
     ColorScheme colorScheme,
+    Color accent,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -505,7 +485,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                   'App Icon Badge',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
+                    color: _ink(colorScheme, dark: 0.92, light: 0.92),
                     fontSize: 13,
                   ),
                 ),
@@ -513,7 +493,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                 Text(
                   'Show due task count',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                    color: _ink(colorScheme, dark: 0.45, light: 0.62),
                     fontSize: 11,
                   ),
                 ),
@@ -522,6 +502,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
           ),
           _macToggle(
             value: appIconBadgeEnabled,
+            accent: accent,
             onChanged: (value) {
               ref.read(appIconBadgeProvider.notifier).setEnabled(value);
               HapticFeedback.lightImpact();
@@ -544,16 +525,17 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
+                  color: _ink(colorScheme, dark: 0.06, light: 0.10),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: colorScheme.outlineVariant.withOpacity(0.3),
+                    color: _ink(colorScheme, dark: 0.10, light: 0.18),
+                    width: 0.5,
                   ),
                 ),
                 child: Icon(
                   Icons.arrow_back_rounded,
                   size: 16,
-                  color: colorScheme.onSurface,
+                  color: _ink(colorScheme, dark: 0.75, light: 0.85),
                 ),
               ),
             ),
@@ -562,7 +544,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               'About Focus',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: colorScheme.onSurface,
+                color: _ink(colorScheme, dark: 0.92, light: 0.92),
               ),
             ),
           ],
@@ -577,24 +559,25 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               Text(
                 _version.isNotEmpty ? 'Version $_version' : 'Version 2.1.0',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                  color: _ink(colorScheme, dark: 0.45, light: 0.62),
                   fontSize: 12,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Made with love by Basim Basheer',
+                'Built as a quiet space for clear, intentional work.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface,
+                  color: _ink(colorScheme, dark: 0.92, light: 0.92),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'All data stays on your device',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                  color: _ink(colorScheme, dark: 0.45, light: 0.62),
                   fontSize: 11,
                 ),
                 textAlign: TextAlign.center,
@@ -648,7 +631,7 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
                 'Support Focus',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
+                  color: _ink(colorScheme, dark: 0.92, light: 0.92),
                   fontSize: 13,
                 ),
               ),
@@ -674,12 +657,12 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
+            Icon(icon, size: 18, color: _ink(colorScheme, dark: 0.6, light: 0.75)),
             const SizedBox(height: 5),
             Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: _ink(colorScheme, dark: 0.55, light: 0.75),
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
               ),
@@ -692,47 +675,58 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
 
   Future<void> _handleClear(int count) async {
     Navigator.pop(context);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (context) => AppDialogContainer(
+        child: Builder(
+          builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
         final theme = Theme.of(context);
-        return AlertDialog(
-          backgroundColor: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          title: Text(
+        return ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
             'Clear completed tasks?',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
-          content: Text(
-            'This will permanently remove $count completed '
-            '${count == 1 ? 'task' : 'tasks'}.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFFF4757),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              const SizedBox(height: 10),
+              Text(
+                'This will permanently remove $count completed '
+                '${count == 1 ? 'task' : 'tasks'}.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              child: const Text('Clear'),
-            ),
-          ],
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppDialogButton(
+                      label: 'Cancel',
+                      onTap: () => Navigator.pop(context, false),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: AppDialogButton(
+                      label: 'Clear',
+                      isDestructive: true,
+                      onTap: () => Navigator.pop(context, true),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
-      },
+          },
+        ),
+      ),
     );
 
     if (confirmed == true) {

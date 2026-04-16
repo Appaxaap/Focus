@@ -30,6 +30,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  late final ProviderSubscription<List<Task>> _taskSubscription;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -45,10 +46,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
     );
     _fadeController.forward();
+
+    _taskSubscription = ref.listenManual<List<Task>>(
+      taskProvider,
+      (previous, current) {
+        if (!mounted || previous == null || previous.length <= current.length) {
+          return;
+        }
+        final completedTask = previous.where(
+          (task) => !current.any((t) => t.id == task.id),
+        ).firstOrNull;
+        if (completedTask != null) {
+          _showTaskCompletedSnackbar(context, completedTask, ref);
+        }
+      },
+    );
   }
 
   @override
   void dispose() {
+    _taskSubscription.close();
     _fadeController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -81,17 +98,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final showCompleted = showCompletedAsync.value ?? false;
 
     final incompleteTasks = tasks.where((task) => !task.isCompleted).toList();
-
-    ref.listen<List<Task>>(taskProvider, (previous, current) {
-      if (previous != null && previous.length > current.length) {
-        final completedTask = previous.where(
-          (task) => !current.any((t) => t.id == task.id),
-        ).firstOrNull;
-        if (completedTask != null) {
-          _showTaskCompletedSnackbar(context, completedTask, ref);
-        }
-      }
-    });
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -288,9 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               _closeSearch();
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => TaskEditScreen(task: task),
-                ),
+                _fastRoute(TaskEditScreen(task: task)),
               );
             },
             child: Container(
@@ -1042,7 +1046,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _navigateToAddTask(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const TaskEditScreen()),
+      _fastRoute(const TaskEditScreen()),
+    );
+  }
+
+  PageRouteBuilder<void> _fastRoute(Widget page) {
+    return PageRouteBuilder<void>(
+      pageBuilder: (_, __, ___) => page,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      transitionsBuilder: (_, __, ___, child) => child,
     );
   }
 

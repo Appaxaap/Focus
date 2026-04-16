@@ -15,31 +15,13 @@ class DraggableArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: height,
-      color: backgroundColor ?? Colors.transparent,
-      child: Stack(
-        children: [
-          // Draggable region (invisible)
-          Positioned.fill(
-            child: GestureDetector(
-              onPanStart: (_) => windowManager.startDragging(),
-              onDoubleTap: () async {
-                bool isMaximized = await windowManager.isMaximized();
-                if (isMaximized) {
-                  await windowManager.unmaximize();
-                } else {
-                  await windowManager.maximize();
-                }
-              },
-              child: Container(
-                color: Colors.transparent,
-              ),
-            ),
-          ),
-          // Actual content
-          child,
-        ],
+      child: DragToMoveArea(
+        child: Container(
+          color: backgroundColor ?? Colors.transparent,
+          child: child,
+        ),
       ),
     );
   }

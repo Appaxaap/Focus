@@ -16,13 +16,20 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  void Function(NotificationResponse response)? onNotificationResponse;
 
   bool _isInitialized = false;
   bool _isInitializing = false;
   Completer<void>? _initializationCompleter;
 
   bool get isInitialized => _isInitialized;
-  bool get isSupported => !Platform.isWindows;
+  bool get isSupported =>
+      !kIsWeb &&
+      (Platform.isAndroid ||
+          Platform.isIOS ||
+          Platform.isMacOS ||
+          Platform.isWindows ||
+          Platform.isLinux);
 
   // Public readiness gate
   Future<void> get onReady async {
@@ -63,18 +70,32 @@ class NotificationService {
         requestBadgePermission: true,
         requestSoundPermission: true,
       );
+      final windowsIconPath =
+          '${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets\\images\\tray_icon.ico';
+      final windowsSettings = WindowsInitializationSettings(
+        appName: 'Focus',
+        appUserModelId: 'com.appaxaap.focus',
+        guid: '1f0ea55f-2695-4f68-9f5f-0b8d3e20b913',
+        iconPath: windowsIconPath,
+      );
 
-      await _notificationsPlugin.initialize(
-        const InitializationSettings(
+      final initialized = await _notificationsPlugin.initialize(
+        InitializationSettings(
           android: androidSettings,
           iOS: iosSettings,
+          macOS: iosSettings,
+          windows: windowsSettings,
         ),
         onDidReceiveNotificationResponse: (response) {
+          onNotificationResponse?.call(response);
           if (kDebugMode) {
             debugPrint('Notification tapped: ${response.payload}');
           }
         },
       );
+      if (initialized != true) {
+        throw StateError('Notification plugin initialization failed');
+      }
 
       _isInitialized = true;
       _initializationCompleter?.complete();
@@ -131,6 +152,10 @@ class NotificationService {
     if (!isSupported) return false;
 
     try {
+      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        return true;
+      }
+
       final notification = await Permission.notification.request();
       if (!notification.isGranted) return false;
 
@@ -168,6 +193,8 @@ class NotificationService {
     if (!isSupported) return;
 
     await onReady;
+    // Ensure one active reminder per notification ID to avoid duplicate toasts.
+    await _notificationsPlugin.cancel(id);
 
     final scheduled = tz.TZDateTime.from(scheduledDate, tz.local);
     final now = tz.TZDateTime.now(tz.local);
@@ -187,13 +214,31 @@ class NotificationService {
     );
 
     const iosDetails = DarwinNotificationDetails();
+    final taskPayload = payload ?? '';
+    final windowsDetails = WindowsNotificationDetails(
+      actions: [
+        WindowsAction(
+          content: 'Mark done',
+          arguments: 'mark_done::$taskPayload',
+        ),
+        WindowsAction(
+          content: 'Open task',
+          arguments: 'open_task::$taskPayload',
+        ),
+      ],
+    );
 
     await _notificationsPlugin.zonedSchedule(
       id,
       title,
       body,
       scheduled,
-      const NotificationDetails(android: androidDetails, iOS: iosDetails),
+      NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+        macOS: iosDetails,
+        windows: windowsDetails,
+      ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: payload,
     );
@@ -201,6 +246,50 @@ class NotificationService {
     if (kDebugMode) {
       debugPrint('Notification scheduled for $scheduled');
     }
+  }
+
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (!isSupported) return;
+    await onReady;
+
+    const androidDetails = AndroidNotificationDetails(
+      'task_reminders',
+      'Task Reminders',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    final taskPayload = payload ?? '';
+    final windowsDetails = WindowsNotificationDetails(
+      actions: [
+        WindowsAction(
+          content: 'Mark done',
+          arguments: 'mark_done::$taskPayload',
+        ),
+        WindowsAction(
+          content: 'Open task',
+          arguments: 'open_task::$taskPayload',
+        ),
+      ],
+    );
+
+    await _notificationsPlugin.show(
+      id,
+      title,
+      body,
+      NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+        macOS: iosDetails,
+        windows: windowsDetails,
+      ),
+      payload: payload,
+    );
   }
 
   Future<void> cancelNotification(int id) async {
@@ -224,5 +313,19 @@ class NotificationService {
     for (final n in pending) {
       debugPrint('ID ${n.id} | ${n.title}');
     }
+  }
+
+  /// Returns a deterministic positive int ID for a task.
+  /// Avoids relying on Dart's runtime hashCode for notification IDs.
+  int notificationIdForTask(String taskId) {
+    // 32-bit FNV-1a hash
+    const int fnvPrime = 0x01000193;
+    int hash = 0x811C9DC5;
+    for (final codeUnit in taskId.codeUnits) {
+      hash ^= codeUnit;
+      hash = (hash * fnvPrime) & 0xFFFFFFFF;
+    }
+    // Keep in signed 31-bit positive range for plugin/platform compatibility.
+    return hash & 0x7FFFFFFF;
   }
 }

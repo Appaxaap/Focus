@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focus/services/hive_service.dart';
 import 'package:focus/services/app_badge_service.dart';
 import 'package:focus/services/notification_service.dart';
+import 'package:focus/services/windows_shell_service.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:io';
@@ -37,6 +38,7 @@ void main() async {
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setPreventClose(true);
       await windowManager.show();
       await windowManager.focus();
     });
@@ -46,7 +48,7 @@ void main() async {
   tz.initializeTimeZones();
 
   // Initialize services.
-  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+  if (!kIsWeb && NotificationService().isSupported) {
     NotificationService().initialize();
   }
 
@@ -84,6 +86,16 @@ void main() async {
       child: const FocusApp(),
     ),
   );
+
+  if (!kIsWeb && Platform.isWindows) {
+    try {
+      await WindowsShellService.instance.initialize();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Windows shell init skipped: $e');
+      }
+    }
+  }
 }
 
 // Provider for the HiveService.
