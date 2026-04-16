@@ -15,6 +15,8 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Platform-Android-D1BCFF?style=flat&logo=android&labelColor=202124">
+  <img src="https://img.shields.io/badge/Platform-Windows-D1BCFF?style=flat&logo=windows&labelColor=202124">
+  <img src="https://img.shields.io/badge/Platform-Linux-D1BCFF?style=flat&logo=linux&labelColor=202124">
   <img src="https://img.shields.io/badge/Framework-Flutter-D1BCFF?style=flat&logo=flutter&labelColor=202124">
   <img src="https://img.shields.io/badge/License-GPL_v3.0-D1BCFF?style=flat&labelColor=202124">
   <img src="https://img.shields.io/github/downloads/Appaxaap/Focus/total?style=flat&color=D1BCFF&label=Downloads&labelColor=202124">
