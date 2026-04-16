@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+      - 'android-*'
 
 permissions:
   contents: write
@@ -38,36 +38,47 @@ jobs:
       - name: Build split APKs
         run: flutter build apk --release --split-per-abi
 
+      - name: Validate Android tag format
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ ! "${TAG}" =~ ^android-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid Android tag format: ${TAG}"
+            echo "Use: android-x.y.z (example: android-2.2.4)"
+            exit 1
+          fi
+          echo "ANDROID_VERSION=${TAG#android-}" >> "$GITHUB_ENV"
+
       - name: Rename APKs
         run: |
-          TAG=${GITHUB_REF_NAME}
+          VERSION=${ANDROID_VERSION}
+          PREFIX=Focus-android-${VERSION}
           UNIVERSAL=build/app/outputs/flutter-apk/app-release-unsigned.apk
           if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
             UNIVERSAL=build/app/outputs/flutter-apk/app-release.apk
           fi
           mv "${UNIVERSAL}" \
-             build/app/outputs/flutter-apk/Focus-${TAG}-universal.apk
+             build/app/outputs/flutter-apk/${PREFIX}-universal.apk
           ARM64=build/app/outputs/flutter-apk/app-arm64-v8a-release-unsigned.apk
           if [ -f "build/app/outputs/flutter-apk/app-arm64-v8a-release.apk" ]; then
             ARM64=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           fi
           mv "${ARM64}" \
-             build/app/outputs/flutter-apk/Focus-${TAG}-arm64-v8a.apk
+             build/app/outputs/flutter-apk/${PREFIX}-arm64-v8a.apk
           ARMEABI=build/app/outputs/flutter-apk/app-armeabi-v7a-release-unsigned.apk
           if [ -f "build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk" ]; then
             ARMEABI=build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
           fi
           mv "${ARMEABI}" \
-             build/app/outputs/flutter-apk/Focus-${TAG}-armeabi-v7a.apk
+             build/app/outputs/flutter-apk/${PREFIX}-armeabi-v7a.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Focus ${{ github.ref_name }}"
+          name: "Focus Android v${{ env.ANDROID_VERSION }}"
           body_path: RELEASE_NOTES.md
           draft: false
           prerelease: false
           files: |
-            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-universal.apk
-            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-arm64-v8a.apk
-            build/app/outputs/flutter-apk/Focus-${{ github.ref_name }}-armeabi-v7a.apk
+            build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-universal.apk
+            build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-arm64-v8a.apk
+            build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-armeabi-v7a.apk

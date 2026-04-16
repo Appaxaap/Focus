@@ -1,3 +1,19 @@
+## Focus Android v2.2.4
+
+### Fixes
+
+- Fixed Android build failure in settings flow (`Platform` usage/import issue).
+- Introduced Android-specific tag convention for releases: `android-x.y.z`.
+- Standardized APK artifact naming for all Android releases:
+  - `Focus-android-x.y.z-universal.apk`
+  - `Focus-android-x.y.z-arm64-v8a.apk`
+  - `Focus-android-x.y.z-armeabi-v7a.apk`
+
+### Notes
+
+- Windows and Android are now treated as separate release tracks.
+- Android updater/discovery can safely match Android releases by tag pattern.
+
 ## Focus for Windows v3.0.0
 
 ### Release Title

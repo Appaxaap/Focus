@@ -77,6 +77,17 @@ This approach helps reduce cognitive overload and improve daily decision making.
 
 ---
 
+## Release Track Convention
+
+- Android tags: `android-x.y.z` (example: `android-2.2.4`)
+- Windows tags: `windows-x.y.z` (example: `windows-3.0.0`)
+- Android APK naming is kept consistent:
+  - `Focus-android-x.y.z-universal.apk`
+  - `Focus-android-x.y.z-arm64-v8a.apk`
+  - `Focus-android-x.y.z-armeabi-v7a.apk`
+
+---
+
 ## Windows Features
 
 - Native desktop layout optimized for keyboard and large screens  
