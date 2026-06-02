@@ -37,7 +37,7 @@ Color _getContainerBackgroundColor(BuildContext context) {
   if (Theme.of(context).brightness == Brightness.dark) {
     return baseColor.withAlpha((255 * 0.4).toInt()); // 40% opacity
   } else {
-    return Theme.of(context).colorScheme.surfaceVariant;
+    return Theme.of(context).colorScheme.surfaceContainerHighest;
   }
 }
 
@@ -57,11 +57,11 @@ class QuadrantSelector extends ConsumerStatefulWidget {
   animationController; // Optional external controller
 
   const QuadrantSelector({
-    Key? key,
+    super.key,
     this.initialQuadrant,
     this.onQuadrantSelected,
     this.animationController,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<QuadrantSelector> createState() => _QuadrantSelectorState();

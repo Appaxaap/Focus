@@ -36,7 +36,7 @@ extension QuadrantExtension on Quadrant {
 
   /// Short string representation, e.g., "urgentImportant"
   String get key {
-    return this.toString().split('.').last;
+    return toString().split('.').last;
   }
 
   /// Returns a color associated with each quadrant

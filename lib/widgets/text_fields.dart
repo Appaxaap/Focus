@@ -16,7 +16,7 @@ Color getContainerBackgroundColor(BuildContext context) {
   if (Theme.of(context).brightness == Brightness.dark) {
     return baseColor.withAlpha((255 * 0.4).toInt()); // 40% opacity
   } else {
-    return Theme.of(context).colorScheme.surfaceVariant;
+    return Theme.of(context).colorScheme.surfaceContainerHighest;
   }
 }
 
@@ -36,11 +36,11 @@ class CustomTitleTextField extends StatelessWidget {
   final VoidCallback? onTap;
 
   const CustomTitleTextField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.colorScheme,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,7 @@ class CustomTitleTextField extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Enter task title...',
                   hintStyle: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: 16,
                   ),
                   border: InputBorder.none,
@@ -111,10 +111,10 @@ class CustomNotesTextField extends StatelessWidget {
   final ColorScheme colorScheme;
 
   const CustomNotesTextField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.colorScheme,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +165,7 @@ class CustomNotesTextField extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Add notes or description',
                   hintStyle: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: 16,
                   ),
                   border: InputBorder.none,
@@ -189,13 +189,13 @@ class CustomDateTimeField extends StatelessWidget {
   final VoidCallback? onClear;
 
   const CustomDateTimeField({
-    Key? key,
+    super.key,
     required this.selectedDate,
     required this.selectedTime,
     required this.onTap,
     required this.colorScheme,
     this.onClear,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +260,7 @@ class CustomDateTimeField extends StatelessWidget {
                                   : ''),
                     style: TextStyle(
                       color: selectedDate == null
-                          ? colorScheme.onSurface.withOpacity(0.6)
+                          ? colorScheme.onSurface.withValues(alpha: 0.6)
                           : colorScheme.onSurface,
                       fontSize: 16,
                     ),

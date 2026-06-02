@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../providers/show_completed_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -47,20 +48,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
     _fadeController.forward();
 
-    _taskSubscription = ref.listenManual<List<Task>>(
-      taskProvider,
-      (previous, current) {
-        if (!mounted || previous == null || previous.length <= current.length) {
-          return;
-        }
-        final completedTask = previous.where(
-          (task) => !current.any((t) => t.id == task.id),
-        ).firstOrNull;
-        if (completedTask != null) {
-          _showTaskCompletedSnackbar(context, completedTask, ref);
-        }
-      },
-    );
+    _taskSubscription = ref.listenManual<List<Task>>(taskProvider, (
+      previous,
+      current,
+    ) {
+      if (!mounted || previous == null || previous.length <= current.length) {
+        return;
+      }
+      final completedTask = previous
+          .where((task) => !current.any((t) => t.id == task.id))
+          .firstOrNull;
+      if (completedTask != null) {
+        _showTaskCompletedSnackbar(context, completedTask, ref);
+      }
+    });
   }
 
   @override
@@ -97,68 +98,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final showCompletedAsync = ref.watch(showCompletedTasksProvider);
     final showCompleted = showCompletedAsync.value ?? false;
 
-    final incompleteTasks = tasks.where((task) => !task.isCompleted).toList();
-
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: _isSearching
-                      ? _buildSearchBar(colorScheme, theme)
-                      : Row(
-                          key: const ValueKey('header'),
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        bottom: false,
+        child: Stack(
+          children: [
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      key: const ValueKey('header'),
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Focus',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Eisenhower Matrix App',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              'Focus',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
-                            GroupedButtons(
-                              viewMode: viewMode,
-                              onSearchPressed: _openSearch,
-                              onFilterPressed: () async =>
-                                  _showFilterDialog(context, ref),
-                              onSettingsPressed: () async =>
-                                  showSettingsBottomSheet(context),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Eisenhower Matrix App',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
-                ),
-                const SizedBox(height: 24),
+                        GroupedButtons(
+                          viewMode: viewMode,
+                          onSearchPressed: _openSearch,
+                          onFilterPressed: () async =>
+                              _showFilterDialog(context, ref),
+                          onSettingsPressed: () async =>
+                              showSettingsBottomSheet(context),
+                          showSearchButton: false,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
 
-                // Main Content
-                Expanded(
-                  child: _isSearching
-                      ? _buildSearchResults(tasks, theme, colorScheme)
-                      : viewMode == ViewMode.card
-                          ? _buildCardView(
-                              showCompleted ? tasks : incompleteTasks,
-                              colorScheme,
-                            )
+                    // Main Content
+                    Expanded(
+                      child: _isSearching
+                          ? _buildSearchResults(tasks, theme, colorScheme)
+                          : viewMode == ViewMode.card
+                          ? _buildCardView(tasks, showCompleted, colorScheme)
                           : _buildListView(
                               tasks,
                               filter,
@@ -166,22 +161,100 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               theme,
                               colorScheme,
                             ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 12,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(32),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: _isSearching
+                          ? _buildSearchBar(colorScheme, theme)
+                          : _buildTopSearchActionBar(colorScheme, theme),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopSearchActionBar(ColorScheme colorScheme, ThemeData theme) {
+    return Row(
+      key: const ValueKey('top_search_action_bar'),
+      children: [
+        Expanded(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(40),
+              onTap: _openSearch,
+              child: Ink(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(40),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.search_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Search for anything...',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ),
-
-      // floating button for task adding
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToAddTask(context),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: 2,
-        child: const Icon(Icons.add, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        const SizedBox(width: 12),
+        Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => _navigateToAddTask(context),
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.surfaceContainerHigh,
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
+              child: Icon(Icons.add_rounded, color: colorScheme.onSurface),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -267,7 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 12),
             Text(
@@ -292,10 +365,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             borderRadius: BorderRadius.circular(12),
             onTap: () {
               _closeSearch();
-              Navigator.push(
-                context,
-                _fastRoute(TaskEditScreen(task: task)),
-              );
+              Navigator.push(context, _fastRoute(TaskEditScreen(task: task)));
             },
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -303,7 +373,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 color: colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.3),
+                  color: colorScheme.outline.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -326,7 +396,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: task.isCompleted
-                                ? colorScheme.onSurface.withOpacity(0.4)
+                                ? colorScheme.onSurface.withValues(alpha: 0.4)
                                 : colorScheme.onSurface,
                             decoration: task.isCompleted
                                 ? TextDecoration.lineThrough
@@ -353,7 +423,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: quadrantColor.withOpacity(0.15),
+                      color: quadrantColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -373,8 +443,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildCardView(List<Task> tasks, ColorScheme colorScheme) {
+  Widget _buildCardView(
+    List<Task> tasks,
+    bool showCompleted,
+    ColorScheme colorScheme,
+  ) {
     final quadrantNames = ref.watch(quadrantNamesProvider);
+    final byQuadrant = {
+      for (final quadrant in Quadrant.values) quadrant: <Task>[],
+    };
+    for (final task in tasks) {
+      if (!showCompleted && task.isCompleted) continue;
+      byQuadrant[task.quadrant]!.add(task);
+    }
+
+    final q1 = byQuadrant[Quadrant.urgentImportant]!;
+    final q2 = byQuadrant[Quadrant.notUrgentImportant]!;
+    final q3 = byQuadrant[Quadrant.urgentNotImportant]!;
+    final q4 = byQuadrant[Quadrant.notUrgentNotImportant]!;
+
     return Column(
       children: [
         Expanded(
@@ -386,19 +473,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   title: quadrantNames[Quadrant.urgentImportant] ?? 'Do First',
                   description: 'Urgent • Important',
                   accentColor: const Color(0xFFFF4757),
-                  taskCount: tasks
-                      .where(
-                        (task) => task.quadrant == Quadrant.urgentImportant,
-                      )
-                      .length,
+                  taskCount: q1.length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.urgentImportant,
-                    tasks: tasks
-                        .where(
-                          (task) => task.quadrant == Quadrant.urgentImportant,
-                        )
-                        .toList(),
+                    tasks: q1,
                   ),
                 ),
               ),
@@ -406,23 +485,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               Expanded(
                 child: _buildMatrixCard(
                   quadrant: Quadrant.notUrgentImportant,
-                  title: quadrantNames[Quadrant.notUrgentImportant] ?? 'Schedule',
+                  title:
+                      quadrantNames[Quadrant.notUrgentImportant] ?? 'Schedule',
                   description: 'Not Urgent • Important',
                   accentColor: const Color(0xFF2ED573),
-                  taskCount: tasks
-                      .where(
-                        (task) => task.quadrant == Quadrant.notUrgentImportant,
-                      )
-                      .length,
+                  taskCount: q2.length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.notUrgentImportant,
-                    tasks: tasks
-                        .where(
-                          (task) =>
-                              task.quadrant == Quadrant.notUrgentImportant,
-                        )
-                        .toList(),
+                    tasks: q2,
                   ),
                 ),
               ),
@@ -436,23 +507,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               Expanded(
                 child: _buildMatrixCard(
                   quadrant: Quadrant.urgentNotImportant,
-                  title: quadrantNames[Quadrant.urgentNotImportant] ?? 'Delegate',
+                  title:
+                      quadrantNames[Quadrant.urgentNotImportant] ?? 'Delegate',
                   description: 'Urgent • Not Important',
                   accentColor: const Color(0xFFFFA726),
-                  taskCount: tasks
-                      .where(
-                        (task) => task.quadrant == Quadrant.urgentNotImportant,
-                      )
-                      .length,
+                  taskCount: q3.length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.urgentNotImportant,
-                    tasks: tasks
-                        .where(
-                          (task) =>
-                              task.quadrant == Quadrant.urgentNotImportant,
-                        )
-                        .toList(),
+                    tasks: q3,
                   ),
                 ),
               ),
@@ -460,24 +523,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               Expanded(
                 child: _buildMatrixCard(
                   quadrant: Quadrant.notUrgentNotImportant,
-                  title: quadrantNames[Quadrant.notUrgentNotImportant] ?? 'Eliminate',
+                  title:
+                      quadrantNames[Quadrant.notUrgentNotImportant] ??
+                      'Eliminate',
                   description: 'Not Urgent • Not Important',
                   accentColor: const Color(0xFF747D8C),
-                  taskCount: tasks
-                      .where(
-                        (task) =>
-                            task.quadrant == Quadrant.notUrgentNotImportant,
-                      )
-                      .length,
+                  taskCount: q4.length,
                   colorScheme: colorScheme,
                   child: QuadrantCard(
                     quadrant: Quadrant.notUrgentNotImportant,
-                    tasks: tasks
-                        .where(
-                          (task) =>
-                              task.quadrant == Quadrant.notUrgentNotImportant,
-                        )
-                        .toList(),
+                    tasks: q4,
                   ),
                 ),
               ),
@@ -495,66 +550,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    List<Task> filteredTasks = tasks;
     final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfTomorrow = startOfToday.add(const Duration(days: 1));
+    final weeklyCutoff = startOfTomorrow.add(const Duration(days: 7));
 
-    switch (filter) {
-      case TaskViewFilter.Daily:
-        filteredTasks = tasks
-            .where(
-              (task) => task.dueDate != null && task.dueDate!.isSameDay(now),
-            )
-            .toList();
-        break;
-      case TaskViewFilter.Weekly:
-        filteredTasks = tasks
-            .where(
-              (task) =>
-                  task.dueDate != null &&
-                  task.dueDate!.isAfter(
-                    now.subtract(const Duration(days: 1)),
-                  ) &&
-                  task.dueDate!.isBefore(now.add(const Duration(days: 7))),
-            )
-            .toList();
-        break;
-      case TaskViewFilter.Monthly:
-        filteredTasks = tasks
-            .where(
-              (task) =>
-                  task.dueDate != null &&
-                  task.dueDate!.year == now.year &&
-                  task.dueDate!.month == now.month,
-            )
-            .toList();
-        break;
-      case TaskViewFilter.All:
-      default:
-        if (!showCompleted) {
-          filteredTasks = tasks.where((task) => !task.isCompleted).toList();
-        }
-        break;
-    }
+    final completedTasks = <Task>[];
+    final quadrantGroups = {
+      for (final quadrant in Quadrant.values) quadrant: <Task>[],
+    };
 
-    // Separate completed and incomplete tasks
-    final completedTasks = filteredTasks
-        .where((task) => task.isCompleted)
-        .toList();
-    final incompleteTasks = filteredTasks
-        .where((task) => !task.isCompleted)
-        .toList();
+    for (final task in tasks) {
+      var matchesFilter = true;
+      final dueDate = task.dueDate;
 
-    // Use only incomplete tasks for quadrant grouping
-    final quadrantGroups = <Quadrant, List<Task>>{};
-    for (final quadrant in Quadrant.values) {
-      quadrantGroups[quadrant] = incompleteTasks
-          .where((task) => task.quadrant == quadrant)
-          .toList();
+      switch (filter) {
+        case TaskViewFilter.daily:
+          matchesFilter = dueDate != null && dueDate.isSameDay(now);
+          break;
+        case TaskViewFilter.weekly:
+          matchesFilter =
+              dueDate != null &&
+              dueDate.isAfter(
+                startOfToday.subtract(const Duration(seconds: 1)),
+              ) &&
+              dueDate.isBefore(weeklyCutoff);
+          break;
+        case TaskViewFilter.monthly:
+          matchesFilter =
+              dueDate != null &&
+              dueDate.year == now.year &&
+              dueDate.month == now.month;
+          break;
+        case TaskViewFilter.all:
+          matchesFilter = true;
+          break;
+      }
+
+      if (!matchesFilter) continue;
+      if (task.isCompleted) {
+        if (showCompleted) completedTasks.add(task);
+        continue;
+      }
+      quadrantGroups[task.quadrant]!.add(task);
     }
 
     final quadrantNames = ref.watch(quadrantNamesProvider);
+    final hasIncompleteTasks = quadrantGroups.values.any(
+      (group) => group.isNotEmpty,
+    );
+    final hasAnyTasks = completedTasks.isNotEmpty || hasIncompleteTasks;
     // Check if there are any tasks to show (completed or incomplete)
-    if (filteredTasks.isEmpty) {
+    if (!hasAnyTasks) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -563,19 +610,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: colorScheme.onSurface.withOpacity(0.1),
+                color: colorScheme.onSurface.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.check,
-                color: colorScheme.onSurface.withOpacity(0.4),
+                color: colorScheme.onSurface.withValues(alpha: 0.4),
                 size: 28,
               ),
             ),
             const SizedBox(height: 6),
 
             Text(
-              filter == TaskViewFilter.All && !showCompleted
+              filter == TaskViewFilter.all && !showCompleted
                   ? 'No tasks found'
                   : 'No tasks found for this filter',
               textAlign: TextAlign.center,
@@ -595,13 +642,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   horizontal: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.onSurface.withOpacity(0.1),
+                  color: colorScheme.onSurface.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   'Tap to add task',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: 16,
                   ),
                 ),
@@ -630,7 +677,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             theme,
             colorScheme,
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -646,7 +693,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: colorScheme.outlineVariant.withOpacity(0.3),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -657,14 +704,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer.withOpacity(0.2),
+              color: colorScheme.primaryContainer.withValues(alpha: 0.2),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
               ),
               border: Border(
                 bottom: BorderSide(
-                  color: colorScheme.outlineVariant.withOpacity(0.2),
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -737,7 +784,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: colorScheme.outlineVariant.withOpacity(0.3),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -749,24 +796,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               HapticFeedback.mediumImpact();
               showAppDialog(
                 context: context,
-                builder: (_) => QuadrantEditDialog(
-                  quadrant: quadrant,
-                  currentName: title,
-                ),
+                builder: (_) =>
+                    QuadrantEditDialog(quadrant: quadrant, currentName: title),
               );
             },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
+                color: accentColor.withValues(alpha: 0.1),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                 ),
                 border: Border(
                   bottom: BorderSide(
-                    color: colorScheme.outlineVariant.withOpacity(0.2),
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -808,7 +853,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.2),
+                      color: accentColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Text(
@@ -856,7 +901,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: colorScheme.outlineVariant.withOpacity(0.3),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -869,24 +914,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               HapticFeedback.mediumImpact();
               showAppDialog(
                 context: context,
-                builder: (_) => QuadrantEditDialog(
-                  quadrant: quadrant,
-                  currentName: title,
-                ),
+                builder: (_) =>
+                    QuadrantEditDialog(quadrant: quadrant, currentName: title),
               );
             },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
+                color: accentColor.withValues(alpha: 0.1),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                 ),
                 border: Border(
                   bottom: BorderSide(
-                    color: colorScheme.outlineVariant.withOpacity(0.2),
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -922,7 +965,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: accentColor.withOpacity(0.2),
+                            color: accentColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -967,8 +1010,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 onWillAcceptWithDetails: (details) =>
                     details.data.quadrant != quadrant,
                 onAcceptWithDetails: (details) {
-                  final updatedTask =
-                      details.data.copyWith(quadrant: quadrant);
+                  final updatedTask = details.data.copyWith(quadrant: quadrant);
                   ref.read(taskProvider.notifier).updateTask(updatedTask);
                   HapticFeedback.mediumImpact();
                 },
@@ -980,7 +1022,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isDraggingOver
-                          ? accentColor.withOpacity(0.08)
+                          ? accentColor.withValues(alpha: 0.08)
                           : Colors.transparent,
                       borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(16),
@@ -988,7 +1030,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                       border: isDraggingOver
                           ? Border.all(
-                              color: accentColor.withOpacity(0.4),
+                              color: accentColor.withValues(alpha: 0.4),
                               width: 1.5,
                             )
                           : null,
@@ -1044,10 +1086,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _navigateToAddTask(BuildContext context) {
-    Navigator.push(
-      context,
-      _fastRoute(const TaskEditScreen()),
-    );
+    Navigator.push(context, _fastRoute(const TaskEditScreen()));
   }
 
   PageRouteBuilder<void> _fastRoute(Widget page) {
@@ -1126,7 +1165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -1137,13 +1176,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   String _getFilterDisplayName(TaskViewFilter filter) {
     switch (filter) {
-      case TaskViewFilter.All:
+      case TaskViewFilter.all:
         return 'All Tasks';
-      case TaskViewFilter.Daily:
+      case TaskViewFilter.daily:
         return 'Today';
-      case TaskViewFilter.Weekly:
+      case TaskViewFilter.weekly:
         return 'This Week';
-      case TaskViewFilter.Monthly:
+      case TaskViewFilter.monthly:
         return 'This Month';
     }
   }
@@ -1181,7 +1220,7 @@ void _showTaskCompletedSnackbar(
                 Text(
                   completedTask.title,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onPrimary.withOpacity(0.8),
+                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1200,9 +1239,9 @@ void _showTaskCompletedSnackbar(
         label: 'UNDO',
         textColor: colorScheme.onPrimary,
         onPressed: () {
-          ref.read(taskProvider.notifier).updateTask(
-            completedTask.copyWith(isCompleted: false),
-          );
+          ref
+              .read(taskProvider.notifier)
+              .updateTask(completedTask.copyWith(isCompleted: false));
           HapticFeedback.selectionClick();
         },
       ),

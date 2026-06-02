@@ -13,53 +13,87 @@ class WindowsShellService with TrayListener, WindowListener {
   static final WindowsShellService instance = WindowsShellService._();
 
   bool _initialized = false;
+  bool _trayReady = false;
+  bool _hotkeyReady = false;
+  HotKey? _registeredHotKey;
   final HotKey _openPaletteHotKey = HotKey(
     key: PhysicalKeyboardKey.keyK,
     modifiers: [HotKeyModifier.control],
     scope: HotKeyScope.system,
   );
+  bool get _isSupportedDesktop => Platform.isWindows || Platform.isLinux;
 
   Future<void> initialize() async {
-    if (_initialized || kIsWeb || !Platform.isWindows) return;
+    if (_initialized || kIsWeb || !_isSupportedDesktop) return;
+
+    windowManager.addListener(this);
 
     try {
       trayManager.addListener(this);
-      windowManager.addListener(this);
-
       try {
-        await trayManager.setIcon('assets/images/tray_icon.ico');
+        if (Platform.isWindows) {
+          await trayManager.setIcon('assets/images/tray_icon.ico');
+        } else {
+          await trayManager.setIcon('assets/images/512x512_logo.png');
+        }
       } catch (_) {
-        // Fallback for systems that fail to render ICO tray assets.
+        // Fallback for systems that fail to render the preferred tray asset.
         await trayManager.setIcon('assets/images/512x512_logo.png');
       }
-      await trayManager.setToolTip('Focus');
-      await trayManager.setContextMenu(
-        Menu(
-          items: [
-            MenuItem(key: 'show', label: 'Show Focus'),
-            MenuItem.separator(),
-            MenuItem(key: 'quick_add', label: 'Quick Add Task'),
-            MenuItem(key: 'command_palette', label: 'Open Command Palette'),
-            MenuItem.separator(),
-            MenuItem(key: 'quit', label: 'Quit'),
-          ],
-        ),
-      );
-
-      await hotKeyManager.register(
-        _openPaletteHotKey,
-        keyDownHandler: (_) async {
-          await windowManager.show();
-          await windowManager.focus();
-          DesktopEventBus.instance.emit(
-            DesktopShellEventType.openCommandPalette,
-          );
-        },
-      );
+      try {
+        await trayManager.setToolTip('Focus');
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Tray tooltip unavailable on this platform: $e');
+        }
+      }
+      try {
+        await trayManager.setContextMenu(
+          Menu(
+            items: [
+              MenuItem(key: 'show', label: 'Show Focus'),
+              MenuItem.separator(),
+              MenuItem(key: 'quick_add', label: 'Quick Add Task'),
+              MenuItem(key: 'command_palette', label: 'Open Command Palette'),
+              MenuItem.separator(),
+              MenuItem(key: 'quit', label: 'Quit'),
+            ],
+          ),
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Tray context menu unavailable on this platform: $e');
+        }
+      }
+      _trayReady = true;
     } catch (e, s) {
       if (kDebugMode) {
-        debugPrint('WindowsShellService initialize failed: $e');
+        debugPrint('Desktop tray integration unavailable: $e');
         debugPrint('$s');
+      }
+      trayManager.removeListener(this);
+      _trayReady = false;
+    }
+
+    if (Platform.isWindows) {
+      try {
+        await hotKeyManager.register(
+          _openPaletteHotKey,
+          keyDownHandler: (_) async {
+            await windowManager.show();
+            await windowManager.focus();
+            DesktopEventBus.instance.emit(
+              DesktopShellEventType.openCommandPalette,
+            );
+          },
+        );
+        _registeredHotKey = _openPaletteHotKey;
+        _hotkeyReady = true;
+      } catch (e, s) {
+        if (kDebugMode) {
+          debugPrint('Desktop global hotkey unavailable: $e');
+          debugPrint('$s');
+        }
       }
     }
 
@@ -68,10 +102,17 @@ class WindowsShellService with TrayListener, WindowListener {
 
   Future<void> dispose() async {
     if (!_initialized) return;
-    await hotKeyManager.unregister(_openPaletteHotKey);
-    await trayManager.destroy();
-    trayManager.removeListener(this);
+    if (_hotkeyReady && _registeredHotKey != null) {
+      await hotKeyManager.unregister(_registeredHotKey!);
+    }
+    if (_trayReady) {
+      await trayManager.destroy();
+      trayManager.removeListener(this);
+    }
     windowManager.removeListener(this);
+    _registeredHotKey = null;
+    _trayReady = false;
+    _hotkeyReady = false;
     _initialized = false;
   }
 
@@ -101,7 +142,7 @@ class WindowsShellService with TrayListener, WindowListener {
 
   @override
   Future<void> onWindowClose() async {
-    if (!Platform.isWindows) return;
+    if (!_isSupportedDesktop) return;
     final isPreventClose = await windowManager.isPreventClose();
     if (isPreventClose) {
       await windowManager.hide();
@@ -110,7 +151,7 @@ class WindowsShellService with TrayListener, WindowListener {
 
   @override
   void onWindowMinimize() {
-    if (Platform.isWindows) {
+    if (_isSupportedDesktop) {
       windowManager.hide();
     }
   }

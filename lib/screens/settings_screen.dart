@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../providers/task_providers.dart';
+import '../providers/task_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -7,7 +8,12 @@ import 'dart:convert';
 import 'dart:io';
 import '../main.dart';
 import '../providers/theme_provider.dart';
+import '../providers/ui_preferences_provider.dart';
+import '../services/nearby_sync_client_service.dart';
+import 'nearby_sync_screen.dart';
 import '../widgets/app_dialog.dart';
+import '../config/feature_flags.dart';
+import '../config/release_info.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -20,6 +26,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  final TextEditingController _nearbyEndpointController =
+      TextEditingController();
+  final TextEditingController _nearbyPairingCodeController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -38,6 +48,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
   @override
   void dispose() {
+    _nearbyEndpointController.dispose();
+    _nearbyPairingCodeController.dispose();
     _fadeController.dispose();
     super.dispose();
   }
@@ -55,6 +67,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final colorScheme = theme.colorScheme;
     final appTheme = ref.watch(themeProvider);
     final showCompleted = ref.watch(showCompletedTasksProvider);
+    final uiPrefs = ref.watch(uiPreferencesProvider);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -101,6 +114,69 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ),
               const SizedBox(height: 16),
 
+              _buildSectionCard(
+                context: context,
+                icon: Icons.tune_rounded,
+                title: 'Accessibility & Density',
+                subtitle: 'Motion and compact layout preferences',
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      title: Text(
+                        'Reduced motion',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Use simpler transitions and fewer animations',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
+                        ),
+                      ),
+                      value: uiPrefs.reducedMotion,
+                      onChanged: (value) {
+                        ref
+                            .read(uiPreferencesProvider.notifier)
+                            .setReducedMotion(value);
+                        HapticFeedback.selectionClick();
+                      },
+                      activeTrackColor: colorScheme.primary,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    SwitchListTile.adaptive(
+                      title: Text(
+                        'Compact mode',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Tighter spacing for dense task lists',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
+                        ),
+                      ),
+                      value: uiPrefs.compactDensity,
+                      onChanged: (value) {
+                        ref
+                            .read(uiPreferencesProvider.notifier)
+                            .setCompactDensity(value);
+                        HapticFeedback.selectionClick();
+                      },
+                      activeTrackColor: colorScheme.primary,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Tasks Section
               _buildSectionCard(
                 context: context,
@@ -120,7 +196,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       subtitle: Text(
                         'Display finished tasks in your list',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                       value: showCompleted,
@@ -129,7 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             value;
                         HapticFeedback.selectionClick();
                       },
-                      activeColor: colorScheme.primary,
+                      activeTrackColor: colorScheme.primary,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                   ],
@@ -147,6 +225,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                   children: [
                     const SizedBox(height: 16),
                     _buildActionButtons(context, ref),
+                    const SizedBox(height: 12),
+                    if (kEnableNearbySync)
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const NearbySyncScreen(),
+                            ),
+                          ),
+                          icon: const Icon(Icons.sync_alt_rounded),
+                          label: const Text('Nearby Sync (Desktop -> Mobile)'),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -172,6 +264,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       onTap: () {
                         _showAboutAppDialog(context);
                       },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.privacy_tip_outlined),
+                      title: Text(
+                        'Data & Privacy',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      onTap: () => _showDataPrivacyDialog(context),
                     ),
                     ListTile(
                       leading: const Icon(Icons.person_outline),
@@ -212,7 +314,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: colorScheme.outlineVariant.withOpacity(0.5),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 0.5,
         ),
       ),
@@ -291,7 +393,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
           ],
           selected: {currentTheme},
           onSelectionChanged: (Set<AppTheme> selection) {
-            ref.read(themeProvider.notifier).state = selection.first;
+            ref.read(themeProvider.notifier).setTheme(selection.first);
             HapticFeedback.selectionClick();
           },
           style: SegmentedButton.styleFrom(
@@ -306,7 +408,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         Text(
           'Choose your preferred theme mode',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -383,9 +485,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     try {
       final hiveService = ref.read(hiveServiceProvider);
       final backupData = await hiveService.exportData();
+      if (!context.mounted) return;
 
       if (!Platform.isAndroid) {
-        _showSuccessSnackbar(context, 'Backup export is only supported on Android', isError: true);
+        _showSuccessSnackbar(
+          context,
+          'Backup export is only supported on Android',
+          isError: true,
+        );
         return;
       }
 
@@ -403,7 +510,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       final backupFile = File('${directory.path}/focus_backup_$timestamp.json');
 
       await backupFile.writeAsString(backupData);
-      _showSuccessSnackbar(context, 'Backup saved to Downloads/focus_backup_$timestamp.json');
+      if (!context.mounted) return;
+      _showSuccessSnackbar(
+        context,
+        'Backup saved to Downloads/focus_backup_$timestamp.json',
+      );
     } catch (e, s) {
       debugPrint('Error exporting backup: $e\n$s');
       _showSuccessSnackbar(context, 'Failed to export backup', isError: true);
@@ -419,6 +530,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         allowedExtensions: ['json'],
         dialogTitle: 'Select Backup File',
       );
+      if (!context.mounted) return;
 
       if (result == null || result.files.isEmpty) {
         _showSuccessSnackbar(context, 'No file selected', isError: true);
@@ -427,6 +539,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
       final file = File(result.files.single.path!);
       final jsonString = await file.readAsString();
+      if (!context.mounted) return;
       final decoded = jsonDecode(jsonString);
 
       final List<dynamic> jsonList;
@@ -435,19 +548,193 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       } else if (decoded is List) {
         jsonList = decoded;
       } else {
-        _showSuccessSnackbar(context, 'Invalid backup file format', isError: true);
+        _showSuccessSnackbar(
+          context,
+          'Invalid backup file format',
+          isError: true,
+        );
         return;
       }
 
       await hiveService.importData(
         jsonList.map((e) => e as Map<String, dynamic>).toList(),
       );
+      if (!context.mounted) return;
 
       _showSuccessSnackbar(context, 'Backup restored successfully!');
     } catch (e, s) {
       debugPrint('Error restoring backup: $e\n$s');
       _showSuccessSnackbar(context, 'Failed to restore backup', isError: true);
     }
+  }
+
+  // ignore: unused_element
+  Future<void> _showNearbySyncDialog(BuildContext parentContext) async {
+    _nearbyEndpointController.text = _nearbyEndpointController.text.trim();
+    _nearbyPairingCodeController.text = _nearbyPairingCodeController.text
+        .trim();
+
+    await showAppDialog(
+      context: parentContext,
+      builder: (context) {
+        final cs = Theme.of(context).colorScheme;
+        bool syncing = false;
+        String? lastMessage;
+        bool isError = false;
+
+        return StatefulBuilder(
+          builder: (context, setLocalState) {
+            Future<void> runSync() async {
+              if (syncing) return;
+              final endpoint = _nearbyEndpointController.text.trim();
+              final pairCode = _nearbyPairingCodeController.text.trim();
+              if (endpoint.isEmpty || pairCode.isEmpty) {
+                setLocalState(() {
+                  isError = true;
+                  lastMessage = 'Enter endpoint and pairing code.';
+                });
+                return;
+              }
+
+              setLocalState(() {
+                syncing = true;
+                isError = false;
+                lastMessage = null;
+              });
+
+              try {
+                final hiveService = ref.read(hiveServiceProvider);
+                final result = await NearbySyncClientService.instance
+                    .pullFromDesktop(
+                      endpoint: endpoint,
+                      pairingCode: pairCode,
+                      hiveService: hiveService,
+                    );
+
+                await ref.read(taskProvider.notifier).refresh();
+                if (!context.mounted) return;
+                setLocalState(() {
+                  isError = false;
+                  lastMessage = result.upsertedCount == 0
+                      ? 'Already up to date. ${result.receivedCount} tasks checked.'
+                      : 'Connected and synced ${result.upsertedCount}/${result.receivedCount} tasks.';
+                });
+                return;
+              } catch (e) {
+                if (!context.mounted) return;
+                setLocalState(() {
+                  isError = true;
+                  lastMessage = 'Sync failed: $e';
+                });
+              } finally {
+                if (context.mounted) {
+                  setLocalState(() {
+                    syncing = false;
+                  });
+                }
+              }
+            }
+
+            return AppDialogContainer(
+              child: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Nearby Sync',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Use desktop endpoint and pairing code from Nearby Sync settings on Windows.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: cs.onSurface.withValues(alpha: 0.76),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _nearbyEndpointController,
+                      decoration: const InputDecoration(
+                        labelText: 'Desktop endpoint',
+                        hintText: '192.168.1.4:53124',
+                        prefixIcon: Icon(Icons.computer_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _nearbyPairingCodeController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      decoration: const InputDecoration(
+                        labelText: 'Pairing code',
+                        hintText: '123456',
+                        prefixIcon: Icon(Icons.password_rounded),
+                        counterText: '',
+                      ),
+                    ),
+                    if (lastMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        lastMessage!,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: isError ? cs.error : cs.primary,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppDialogButton(
+                            label: syncing ? 'Syncing...' : 'Sync now',
+                            isPrimary: true,
+                            onTap: syncing ? () {} : runSync,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AppDialogButton(
+                            label: 'Close',
+                            onTap: () {
+                              if (syncing) {
+                                setLocalState(() {
+                                  isError = true;
+                                  lastMessage =
+                                      'Please wait for sync to finish before closing.';
+                                });
+                                return;
+                              }
+                              _safeCloseDialog(context);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _safeCloseDialog(BuildContext dialogContext) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final nav = Navigator.of(dialogContext);
+      if (nav.canPop()) nav.pop();
+    });
   }
 
   Future<void> _confirmClearData(BuildContext context, WidgetRef ref) async {
@@ -457,8 +744,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_outlined,
-                color: Theme.of(context).colorScheme.error, size: 40),
+            Icon(
+              Icons.warning_outlined,
+              color: Theme.of(context).colorScheme.error,
+              size: 40,
+            ),
             const SizedBox(height: 20),
             Text(
               'Clear All Data?',
@@ -525,8 +815,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.apps_outlined,
-                color: Theme.of(context).colorScheme.primary, size: 40),
+            Icon(
+              Icons.apps_outlined,
+              color: Theme.of(context).colorScheme.primary,
+              size: 40,
+            ),
             const SizedBox(height: 16),
             Text(
               'About Focus',
@@ -542,7 +835,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               'to help you prioritize what matters most.\n\n'
               '- Task categorization into quadrants\n'
               '- Backup and restore functionality\n'
-              '- Completed tasks toggle',
+              '- Completed tasks toggle\n\n'
+              'Changelog: $kChangelogUrl\n'
+              'Release hash: $kSignedReleaseHash',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -569,8 +864,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_outline,
-                color: Theme.of(context).colorScheme.primary, size: 40),
+            Icon(
+              Icons.person_outline,
+              color: Theme.of(context).colorScheme.primary,
+              size: 40,
+            ),
             const SizedBox(height: 16),
             Text(
               'About Developer',
@@ -593,6 +891,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               ),
             ),
             const SizedBox(height: 28),
+            AppDialogButton(
+              label: 'OK',
+              isPrimary: true,
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDataPrivacyDialog(BuildContext context) {
+    showAppDialog(
+      context: context,
+      builder: (context) => AppDialogContainer(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Data & Privacy',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Focus is local-first and privacy-oriented:\n\n'
+              '• Tasks and settings are stored on your device.\n'
+              '• No analytics/telemetry pipeline is enabled by default.\n'
+              '• Backup exports are generated by you and saved locally.\n'
+              '• Nearby sync is currently disabled in this release.\n\n'
+              'Changelog: $kChangelogUrl\n'
+              'Release hash: $kSignedReleaseHash',
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
             AppDialogButton(
               label: 'OK',
               isPrimary: true,

@@ -102,7 +102,7 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
                     child: Icon(
                       Icons.wb_sunny_outlined,
                       size: 60,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -118,7 +118,7 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
                     message,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w400,
                       height: 1.5,
                     ),
@@ -129,7 +129,7 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
                     duration: const Duration(milliseconds: 500),
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.9),
+                        backgroundColor: Colors.white.withValues(alpha: 0.9),
                         foregroundColor: colorScheme.primary,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 32, vertical: 16),

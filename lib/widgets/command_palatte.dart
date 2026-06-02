@@ -273,7 +273,7 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
                             ),
                             onTap: result.onExecute,
                             tileColor: isSelected
-                                ? colorScheme.primary.withOpacity(0.1)
+                                ? colorScheme.primary.withValues(alpha: 0.1)
                                 : null,
                           );
                         },

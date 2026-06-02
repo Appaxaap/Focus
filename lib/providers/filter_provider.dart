@@ -1,12 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum TaskViewFilter {
-  Daily,
-  Weekly,
-  Monthly,
-  All,
-}
+enum TaskViewFilter { daily, weekly, monthly, all }
 
 final filterProvider = StateProvider<TaskViewFilter>((ref) {
-  return TaskViewFilter.All;
+  return TaskViewFilter.all;
 });

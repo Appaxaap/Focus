@@ -7,7 +7,7 @@ project(runner LANGUAGES CXX)
 set(BINARY_NAME "focus")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.example.focus")
+set(APPLICATION_ID "com.codecx.focus")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -42,6 +42,12 @@ endif()
 function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_14)
   target_compile_options(${TARGET} PRIVATE -Wall -Werror)
+  # Newer Clang toolchains (e.g. Fedora/Nobara) can report
+  # -Wsometimes-uninitialized in third-party plugin sources.
+  # Keep warnings-as-errors enabled, but don't fail builds on this specific
+  # compiler warning coming from plugin code.
+  target_compile_options(${TARGET} PRIVATE
+    "$<$<CXX_COMPILER_ID:Clang>:-Wno-error=sometimes-uninitialized>")
   target_compile_options(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-O3>")
   target_compile_definitions(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
 endfunction()

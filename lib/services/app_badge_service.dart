@@ -6,11 +6,17 @@ import 'package:flutter/foundation.dart';
 import '../models/task_models.dart';
 
 class AppBadgeService {
+  static bool _badgeUnavailable = false;
+
   Future<void> syncBadge({
     required List<Task> tasks,
     required bool enabled,
   }) async {
-    if (!_supportsBadges || !enabled) {
+    // Hard-stop on unsupported platforms (Android in this app).
+    // Do not call plugin methods at all.
+    if (!_supportsBadges) return;
+
+    if (!enabled || _badgeUnavailable) {
       await _clearBadge();
       return;
     }
@@ -39,16 +45,24 @@ class AppBadgeService {
   }
 
   Future<void> _setBadgeCount(int count) async {
+    if (_badgeUnavailable) return;
     try {
       await AppBadgePlus.updateBadge(count);
-    } catch (_) {}
+    } catch (e) {
+      _badgeUnavailable = true;
+      debugPrint('Badge updates disabled for this session: $e');
+    }
   }
 
   Future<void> _clearBadge() async {
+    if (_badgeUnavailable) return;
     try {
       await AppBadgePlus.updateBadge(0);
-    } catch (_) {}
+    } catch (e) {
+      _badgeUnavailable = true;
+      debugPrint('Badge updates disabled for this session: $e');
+    }
   }
 
-  bool get _supportsBadges => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+  bool get _supportsBadges => !kIsWeb && Platform.isIOS;
 }

@@ -42,7 +42,7 @@ class AboutScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     colorScheme.primaryContainer,
-                    colorScheme.primaryContainer.withOpacity(0.8),
+                    colorScheme.primaryContainer.withValues(alpha: 0.8),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -50,7 +50,7 @@ class AboutScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.shadow.withOpacity(0.1),
+                    color: colorScheme.shadow.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -65,7 +65,7 @@ class AboutScreen extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           colorScheme.primary,
-                          colorScheme.primary.withOpacity(0.8),
+                          colorScheme.primary.withValues(alpha: 0.8),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -73,7 +73,7 @@ class AboutScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -97,7 +97,7 @@ class AboutScreen extends StatelessWidget {
                   Text(
                     'Task management based on the Eisenhower Matrix',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                      color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -234,12 +234,12 @@ class AboutScreen extends StatelessWidget {
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.outlineVariant.withOpacity(0.5),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -272,12 +272,12 @@ class AboutScreen extends StatelessWidget {
           color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.5),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.05),
+              color: colorScheme.shadow.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -403,7 +403,7 @@ class AboutScreen extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 colorScheme.secondary,
-                colorScheme.secondary.withOpacity(0.8),
+                colorScheme.secondary.withValues(alpha: 0.8),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -515,7 +515,7 @@ class AboutScreen extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.5),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -592,7 +592,7 @@ class AboutScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -666,7 +666,7 @@ class AboutScreen extends StatelessWidget {
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.outlineVariant.withOpacity(0.5),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
       ),

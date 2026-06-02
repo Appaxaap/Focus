@@ -14,13 +14,11 @@ Future<T?> showAppDialog<T>({
     builder: (context) => Dialog(
       backgroundColor: Colors.transparent,
       child: TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 350),
+        duration: const Duration(milliseconds: 160),
         tween: Tween(begin: 0.0, end: 1.0),
-        curve: const Cubic(0.05, 0.7, 0.1, 1.0),
-        builder: (context, scale, child) => Transform.scale(
-          scale: scale,
-          child: child,
-        ),
+        curve: Curves.easeOutCubic,
+        builder: (context, scale, child) =>
+            Transform.scale(scale: scale, child: child),
         child: builder(context),
       ),
     ),
@@ -35,16 +33,23 @@ class AppDialogContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
+        color: isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface,
         borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: isDark
+              ? colorScheme.outlineVariant.withValues(alpha: 0.35)
+              : colorScheme.outlineVariant.withValues(alpha: 0.55),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.14),
+            blurRadius: isDark ? 24 : 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -70,12 +75,15 @@ class AppDialogButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
 
     final bgColor = isDestructive
         ? Colors.red.shade600
         : isPrimary
-            ? colorScheme.primary
-            : colorScheme.surfaceContainerHighest;
+        ? colorScheme.primary
+        : (isDark
+              ? colorScheme.surfaceContainerHighest
+              : colorScheme.surfaceContainerHigh);
 
     final textColor = (isDestructive || isPrimary)
         ? Colors.white
@@ -103,6 +111,41 @@ class AppDialogButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class AppDialogTitle extends StatelessWidget {
+  final String text;
+
+  const AppDialogTitle(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: colorScheme.onSurface,
+      ),
+    );
+  }
+}
+
+class AppDialogMessage extends StatelessWidget {
+  final String text;
+
+  const AppDialogMessage(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Text(
+      text,
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
     );
   }
 }

@@ -1,6 +1,5 @@
-import 'dart:io';
-import 'dart:ui' as ui;
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -13,14 +12,19 @@ import 'package:window_manager/window_manager.dart';
 import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
 import '../providers/filter_provider.dart';
+import '../providers/quadrant_names_provider.dart';
 import '../providers/show_completed_provider.dart';
 import '../providers/task_provider.dart';
+import '../providers/ui_preferences_provider.dart';
 import '../services/desktop_event_bus.dart';
+import '../services/desktop_offline_sync_service.dart';
 import '../services/notification_service.dart';
+import '../config/feature_flags.dart';
 import '../widgets/command_palatte.dart';
 import '../widgets/desktop_settings_flyout.dart';
 import '../widgets/draggle_area.dart';
 import '../widgets/app_dialog.dart';
+import '../widgets/quadrant_edit_dialog.dart';
 import '../widgets/task_tile.dart';
 import '../widgets/window_controls.dart';
 
@@ -70,20 +74,35 @@ const Color _q4 = Color(0xFF747D8C);
 
 Color _quadrantColor(Quadrant q) {
   switch (q) {
-    case Quadrant.urgentImportant:       return _q1;
-    case Quadrant.notUrgentImportant:    return _q2;
-    case Quadrant.urgentNotImportant:    return _q3;
-    case Quadrant.notUrgentNotImportant: return _q4;
+    case Quadrant.urgentImportant:
+      return _q1;
+    case Quadrant.notUrgentImportant:
+      return _q2;
+    case Quadrant.urgentNotImportant:
+      return _q3;
+    case Quadrant.notUrgentNotImportant:
+      return _q4;
   }
 }
 
 String _quadrantName(Quadrant q) {
   switch (q) {
-    case Quadrant.urgentImportant:       return 'Do First';
-    case Quadrant.notUrgentImportant:    return 'Schedule';
-    case Quadrant.urgentNotImportant:    return 'Delegate';
-    case Quadrant.notUrgentNotImportant: return 'Eliminate';
+    case Quadrant.urgentImportant:
+      return 'Do First';
+    case Quadrant.notUrgentImportant:
+      return 'Schedule';
+    case Quadrant.urgentNotImportant:
+      return 'Delegate';
+    case Quadrant.notUrgentNotImportant:
+      return 'Eliminate';
   }
+}
+
+String _quadrantDisplayName(Map<Quadrant, String> names, Quadrant quadrant) {
+  final customName = names[quadrant]?.trim();
+  return customName == null || customName.isEmpty
+      ? _quadrantName(quadrant)
+      : customName;
 }
 
 bool _isDarkScheme(ColorScheme cs) => cs.brightness == Brightness.dark;
@@ -92,11 +111,7 @@ Color _surfaceTone(ColorScheme cs, {double dark = 0.72, double light = 0.86}) {
   return cs.surface.withValues(alpha: _isDarkScheme(cs) ? dark : light);
 }
 
-Color _surfaceInk(
-  ColorScheme cs, {
-  double dark = 0.55,
-  double light = 0.72,
-}) {
+Color _surfaceInk(ColorScheme cs, {double dark = 0.55, double light = 0.72}) {
   return cs.onSurface.withValues(alpha: _isDarkScheme(cs) ? dark : light);
 }
 
@@ -109,17 +124,13 @@ BoxDecoration _glassBox(
     color: _surfaceTone(cs),
     borderRadius: BorderRadius.circular(radius),
     border: Border.all(
-      color: _surfaceInk(
-        cs,
-        dark: borderOpacity,
-        light: borderOpacity + 0.06,
-      ),
+      color: _surfaceInk(cs, dark: borderOpacity, light: borderOpacity + 0.06),
       width: 0.5,
     ),
   );
 }
 
-ui.ImageFilter _blurFilter() => ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24);
+ui.ImageFilter _blurFilter() => ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10);
 
 class _PillButton extends StatelessWidget {
   final String label;
@@ -233,10 +244,14 @@ class _FilterChips extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filter  = ref.watch(filterProvider);
+    final filter = ref.watch(filterProvider);
     final cs = Theme.of(context).colorScheme;
-    final filters = [TaskViewFilter.All, TaskViewFilter.Daily, TaskViewFilter.Weekly];
-    final labels  = ['All', 'Today', 'Week'];
+    final filters = [
+      TaskViewFilter.all,
+      TaskViewFilter.daily,
+      TaskViewFilter.weekly,
+    ];
+    final labels = ['All', 'Today', 'Week'];
 
     return Container(
       padding: const EdgeInsets.all(3),
@@ -253,12 +268,19 @@ class _FilterChips extends ConsumerWidget {
         children: List.generate(filters.length, (i) {
           final selected = filter == filters[i];
           return GestureDetector(
-            onTap: () {
-              ref.read(filterProvider.notifier).state = filters[i];
-              HapticFeedback.selectionClick();
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) {
+              if (filter != filters[i]) {
+                ref.read(filterProvider.notifier).state = filters[i];
+              }
+              if (!kIsWeb &&
+                  (defaultTargetPlatform == TargetPlatform.android ||
+                      defaultTargetPlatform == TargetPlatform.iOS)) {
+                HapticFeedback.selectionClick();
+              }
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
+              duration: const Duration(milliseconds: 70),
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 3),
               decoration: BoxDecoration(
                 color: selected
@@ -292,16 +314,20 @@ class _FilterChips extends ConsumerWidget {
 
 class _QuadrantItem extends StatelessWidget {
   final Quadrant quadrant;
+  final String name;
   final bool selected;
   final int count;
   final VoidCallback onTap;
+  final VoidCallback onRename;
   final ValueChanged<Task>? onTaskDropped;
 
   const _QuadrantItem({
     required this.quadrant,
+    required this.name,
     required this.selected,
     required this.count,
     required this.onTap,
+    required this.onRename,
     this.onTaskDropped,
   });
 
@@ -326,15 +352,15 @@ class _QuadrantItem extends StatelessWidget {
               color: dropActive
                   ? color.withValues(alpha: 0.15)
                   : highlighted
-                      ? _surfaceInk(cs, dark: 0.08, light: 0.14)
-                      : Colors.transparent,
+                  ? _surfaceInk(cs, dark: 0.08, light: 0.14)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: dropActive
                     ? color.withValues(alpha: 0.45)
                     : highlighted
-                        ? _surfaceInk(cs, dark: 0.10, light: 0.18)
-                        : Colors.transparent,
+                    ? _surfaceInk(cs, dark: 0.10, light: 0.18)
+                    : Colors.transparent,
                 width: 0.5,
               ),
             ),
@@ -343,23 +369,52 @@ class _QuadrantItem extends StatelessWidget {
                 Container(
                   width: 7,
                   height: 7,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _quadrantName(quadrant),
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12.5,
-                      fontWeight: highlighted ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: highlighted
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: highlighted
                           ? _surfaceInk(cs, dark: 0.92, light: 0.92)
                           : _surfaceInk(cs, dark: 0.45, light: 0.68),
                     ),
                   ),
                 ),
+                if (highlighted) ...[
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Rename quadrant',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: onRename,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.edit_rounded,
+                          size: 12,
+                          color: _surfaceInk(cs, dark: 0.45, light: 0.68),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: _surfaceInk(cs, dark: 0.06, light: 0.10),
                     borderRadius: BorderRadius.circular(999),
@@ -388,11 +443,13 @@ class _QuadrantItem extends StatelessWidget {
 class _TaskRow extends StatefulWidget {
   final Task task;
   final WidgetRef ref;
+  final Map<Quadrant, String> quadrantNames;
   final ValueChanged<Quadrant> onMoveToQuadrant;
 
   const _TaskRow({
     required this.task,
     required this.ref,
+    required this.quadrantNames,
     required this.onMoveToQuadrant,
     super.key,
   });
@@ -406,7 +463,7 @@ class _TaskRowState extends State<_TaskRow> {
 
   @override
   Widget build(BuildContext context) {
-    final cs   = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
     final task = widget.task;
 
     Widget taskDragHandle(Widget child) {
@@ -465,7 +522,7 @@ class _TaskRowState extends State<_TaskRow> {
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
         decoration: BoxDecoration(
@@ -515,7 +572,12 @@ class _TaskRowState extends State<_TaskRow> {
                                 .map(
                                   (q) => PopupMenuItem<Quadrant>(
                                     value: q,
-                                    child: Text(_quadrantName(q)),
+                                    child: Text(
+                                      _quadrantDisplayName(
+                                        widget.quadrantNames,
+                                        q,
+                                      ),
+                                    ),
                                   ),
                                 )
                                 .toList(),
@@ -533,10 +595,12 @@ class _TaskRowState extends State<_TaskRow> {
                             onTap: () {
                               widget.ref
                                   .read(taskProvider.notifier)
-                                  .updateTask(task.copyWith(
-                                    isCompleted: true,
-                                    updatedAt: DateTime.now(),
-                                  ));
+                                  .updateTask(
+                                    task.copyWith(
+                                      isCompleted: true,
+                                      updatedAt: DateTime.now(),
+                                    ),
+                                  );
                             },
                           ),
                           const Spacer(),
@@ -638,59 +702,63 @@ class _StatChip extends StatelessWidget {
 }
 
 class _SearchPill extends StatelessWidget {
-  const _SearchPill();
+  final VoidCallback onTap;
+  const _SearchPill({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
-      width: 190,
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: _surfaceInk(cs, dark: 0.06, light: 0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: _surfaceInk(cs, dark: 0.10, light: 0.18),
-          width: 0.5,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 190,
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: _surfaceInk(cs, dark: 0.06, light: 0.10),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: _surfaceInk(cs, dark: 0.10, light: 0.18),
+            width: 0.5,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.search_rounded,
-            size: 13,
-            color: _surfaceInk(cs, dark: 0.35, light: 0.58),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              'Search tasks…',
-              style: TextStyle(
-                fontSize: 11.5,
-                color: _surfaceInk(cs, dark: 0.35, light: 0.58),
+        child: Row(
+          children: [
+            Icon(
+              Icons.search_rounded,
+              size: 13,
+              color: _surfaceInk(cs, dark: 0.35, light: 0.58),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Search tasks…',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: _surfaceInk(cs, dark: 0.35, light: 0.58),
+                ),
               ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-            decoration: BoxDecoration(
-              color: _surfaceInk(cs, dark: 0.06, light: 0.10),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color: _surfaceInk(cs, dark: 0.08, light: 0.16),
-                width: 0.5,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: _surfaceInk(cs, dark: 0.06, light: 0.10),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: _surfaceInk(cs, dark: 0.08, light: 0.16),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                'Ctrl+K',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: _surfaceInk(cs, dark: 0.35, light: 0.58),
+                ),
               ),
             ),
-            child: Text(
-              'Ctrl+K',
-              style: TextStyle(
-                fontSize: 10,
-                color: _surfaceInk(cs, dark: 0.35, light: 0.58),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -727,6 +795,70 @@ class _SettingsPill extends StatelessWidget {
   }
 }
 
+class _NearbySyncPill extends StatelessWidget {
+  const _NearbySyncPill();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final syncService = DesktopOfflineSyncService.instance;
+
+    return ValueListenableBuilder<DesktopSyncStatus>(
+      valueListenable: syncService.statusNotifier,
+      builder: (context, status, _) {
+        final isHosting = status.isHosting;
+        final recentlyConnected =
+            status.lastClientSyncedAt != null &&
+            DateTime.now().difference(status.lastClientSyncedAt!) <
+                const Duration(minutes: 2);
+        final dotColor = !isHosting
+            ? _surfaceInk(cs, dark: 0.35, light: 0.58)
+            : (recentlyConnected
+                  ? const Color(0xFF2ED573)
+                  : const Color(0xFFFFA726));
+        final label = !isHosting
+            ? 'Nearby: Offline'
+            : (recentlyConnected ? 'Nearby: Connected' : 'Nearby: Hosting');
+
+        return Container(
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 11),
+          decoration: BoxDecoration(
+            color: _surfaceInk(cs, dark: 0.06, light: 0.10),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: _surfaceInk(cs, dark: 0.10, light: 0.18),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: _surfaceInk(cs, dark: 0.55, light: 0.75),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class DesktopHomeScreen extends ConsumerStatefulWidget {
   const DesktopHomeScreen({super.key});
 
@@ -739,11 +871,14 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   late final ProviderSubscription<List<Task>> _taskSubscription;
+  final DesktopOfflineSyncService _offlineSyncService =
+      DesktopOfflineSyncService.instance;
   StreamSubscription<DesktopShellEvent>? _desktopShellSub;
   Timer? _dueReminderTimer;
+  Timer? _dueToastTimer;
+  OverlayEntry? _dueToastEntry;
   final FocusNode _homeFocusNode = FocusNode();
   final Set<String> _dueReminderShown = <String>{};
-
   Quadrant _selectedQuadrant = Quadrant.urgentImportant;
   bool _isFocusMode = false;
 
@@ -752,28 +887,33 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   @override
   void initState() {
     super.initState();
+    final reducedMotion = ref.read(uiPreferencesProvider).reducedMotion;
     _fadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: Duration(milliseconds: reducedMotion ? 90 : 380),
     );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
+    if (kEnableNearbySync) {
+      _offlineSyncService.initialize();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _homeFocusNode.requestFocus();
     });
 
-    _taskSubscription = ref.listenManual<List<Task>>(
-      taskProvider,
-      (prev, curr) {
-        if (!mounted || prev == null || prev.length <= curr.length) return;
-        final completed = prev.where(
-          (t) => !curr.any((c) => c.id == t.id),
-        ).firstOrNull;
-        if (completed != null) {
-          _showSnackbar(context, completed);
-        }
-      },
-    );
+    _taskSubscription = ref.listenManual<List<Task>>(taskProvider, (
+      prev,
+      curr,
+    ) {
+      if (!mounted || prev == null) return;
+      final completed = curr
+          .where((t) => t.isCompleted)
+          .where((t) => prev.any((p) => p.id == t.id && !p.isCompleted))
+          .firstOrNull;
+      if (completed != null) {
+        _showSnackbar(context, completed);
+      }
+    });
 
     _desktopShellSub = DesktopEventBus.instance.stream.listen((event) async {
       if (!mounted) return;
@@ -788,6 +928,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
         case DesktopShellEventType.quickAddTask:
           await windowManager.show();
           await windowManager.focus();
+          if (!mounted) return;
           _navigateToAddTask(context);
           break;
       }
@@ -800,7 +941,9 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
       const Duration(seconds: 45),
       (_) => _checkDueReminderFallback(),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkDueReminderFallback());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _checkDueReminderFallback(),
+    );
   }
 
   @override
@@ -808,6 +951,9 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     _taskSubscription.close();
     _desktopShellSub?.cancel();
     _dueReminderTimer?.cancel();
+    _dueToastTimer?.cancel();
+    _dueToastEntry?.remove();
+    _dueToastEntry = null;
     NotificationService().onNotificationResponse = null;
     _homeFocusNode.dispose();
     _fadeCtrl.dispose();
@@ -848,11 +994,10 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
       final tasks = ref.read(taskProvider);
       final task = tasks.where((t) => t.id == taskId).firstOrNull;
       if (task != null && !task.isCompleted) {
-        ref.read(taskProvider.notifier).updateTask(
-              task.copyWith(
-                isCompleted: true,
-                updatedAt: DateTime.now(),
-              ),
+        ref
+            .read(taskProvider.notifier)
+            .updateTask(
+              task.copyWith(isCompleted: true, updatedAt: DateTime.now()),
             );
       }
       return;
@@ -861,10 +1006,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     if (action == 'open_task') {
       final tasks = ref.read(taskProvider);
       final task = tasks.where((t) => t.id == taskId).firstOrNull;
-      Navigator.push(
-        context,
-        _fastRoute(DesktopTaskEditScreen(task: task)),
-      );
+      Navigator.push(context, _fastRoute(DesktopTaskEditScreen(task: task)));
       return;
     }
   }
@@ -880,78 +1022,152 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     for (final task in dueNow) {
       if (_dueReminderShown.contains(task.id)) continue;
       _dueReminderShown.add(task.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Reminder: ${task.title} is due'),
-          behavior: SnackBarBehavior.floating,
-          action: SnackBarAction(
-            label: 'Open',
-            onPressed: () {
-              Navigator.push(
-                context,
-                _fastRoute(DesktopTaskEditScreen(task: task)),
-              );
-            },
-          ),
-        ),
+      final notificationService = NotificationService();
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
+        notificationService.showNow(
+          id: notificationService.notificationIdForTask(task.id),
+          title: 'Task Due: ${task.title}',
+          body: task.notes ?? 'Your task is due now.',
+          payload: task.id,
+        );
+      }
+      _showDueToast(
+        'Reminder: ${task.title} is due',
+        onOpen: () {
+          Navigator.push(
+            context,
+            _fastRoute(DesktopTaskEditScreen(task: task)),
+          );
+        },
       );
       break;
     }
   }
 
+  void _showDueToast(String message, {VoidCallback? onOpen}) {
+    if (!mounted) return;
+    final overlay = Overlay.of(context);
+    final cs = Theme.of(context).colorScheme;
+
+    _dueToastTimer?.cancel();
+    _dueToastEntry?.remove();
+
+    _dueToastEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 18,
+        left: 0,
+        right: 0,
+        child: Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 560),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outlineVariant),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.alarm_rounded, color: cs.primary, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      message,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (onOpen != null)
+                    TextButton(
+                      onPressed: () {
+                        _dueToastTimer?.cancel();
+                        _dueToastEntry?.remove();
+                        _dueToastEntry = null;
+                        onOpen();
+                      },
+                      child: const Text('Open'),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_dueToastEntry!);
+    _dueToastTimer = Timer(const Duration(seconds: 2), () {
+      _dueToastEntry?.remove();
+      _dueToastEntry = null;
+    });
+  }
+
   Map<ShortcutActivator, Intent> get _shortcuts => {
-        const SingleActivator(LogicalKeyboardKey.keyK, control: true):
-            const OpenCommandPaletteIntent(),
-        const CharacterActivator('k', control: true):
-            const OpenCommandPaletteIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
-            const OpenCommandPaletteIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyF, control: true):
-            const ToggleFocusModeIntent(),
-        const CharacterActivator('f', control: true):
-            const ToggleFocusModeIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
-            const ToggleFocusModeIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyN, control: true):
-            const AddTaskIntent(),
-        const CharacterActivator('n', control: true):
-            const AddTaskIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyN, meta: true):
-            const AddTaskIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyH, control: true):
-            const ToggleShowCompletedIntent(),
-        const CharacterActivator('h', control: true):
-            const ToggleShowCompletedIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyH, meta: true):
-            const ToggleShowCompletedIntent(),
-        const SingleActivator(LogicalKeyboardKey.comma, control: true):
-            const OpenSettingsIntent(),
-        const CharacterActivator(',', control: true):
-            const OpenSettingsIntent(),
-        const SingleActivator(LogicalKeyboardKey.comma, meta: true):
-            const OpenSettingsIntent(),
-        const SingleActivator(LogicalKeyboardKey.slash, control: true):
-            const OpenShortcutHelpIntent(),
-        const CharacterActivator('/', control: true):
-            const OpenShortcutHelpIntent(),
-        const SingleActivator(LogicalKeyboardKey.slash, meta: true):
-            const OpenShortcutHelpIntent(),
-        const SingleActivator(LogicalKeyboardKey.f1):
-            const OpenShortcutHelpIntent(),
-        const SingleActivator(LogicalKeyboardKey.digit1):
-            const SelectQuadrantIntent(Quadrant.urgentImportant),
-        const SingleActivator(LogicalKeyboardKey.digit2):
-            const SelectQuadrantIntent(Quadrant.notUrgentImportant),
-        const SingleActivator(LogicalKeyboardKey.digit3):
-            const SelectQuadrantIntent(Quadrant.urgentNotImportant),
-        const SingleActivator(LogicalKeyboardKey.digit4):
-            const SelectQuadrantIntent(Quadrant.notUrgentNotImportant),
-      };
+    const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+        const OpenCommandPaletteIntent(),
+    const CharacterActivator('k', control: true):
+        const OpenCommandPaletteIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+        const OpenCommandPaletteIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+        const ToggleFocusModeIntent(),
+    const CharacterActivator('f', control: true): const ToggleFocusModeIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+        const ToggleFocusModeIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyN, control: true):
+        const AddTaskIntent(),
+    const CharacterActivator('n', control: true): const AddTaskIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyN, meta: true):
+        const AddTaskIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyH, control: true):
+        const ToggleShowCompletedIntent(),
+    const CharacterActivator('h', control: true):
+        const ToggleShowCompletedIntent(),
+    const SingleActivator(LogicalKeyboardKey.keyH, meta: true):
+        const ToggleShowCompletedIntent(),
+    const SingleActivator(LogicalKeyboardKey.comma, control: true):
+        const OpenSettingsIntent(),
+    const CharacterActivator(',', control: true): const OpenSettingsIntent(),
+    const SingleActivator(LogicalKeyboardKey.comma, meta: true):
+        const OpenSettingsIntent(),
+    const SingleActivator(LogicalKeyboardKey.slash, control: true):
+        const OpenShortcutHelpIntent(),
+    const CharacterActivator('/', control: true):
+        const OpenShortcutHelpIntent(),
+    const SingleActivator(LogicalKeyboardKey.slash, meta: true):
+        const OpenShortcutHelpIntent(),
+    const SingleActivator(LogicalKeyboardKey.f1):
+        const OpenShortcutHelpIntent(),
+    const SingleActivator(LogicalKeyboardKey.digit1):
+        const SelectQuadrantIntent(Quadrant.urgentImportant),
+    const SingleActivator(LogicalKeyboardKey.digit2):
+        const SelectQuadrantIntent(Quadrant.notUrgentImportant),
+    const SingleActivator(LogicalKeyboardKey.digit3):
+        const SelectQuadrantIntent(Quadrant.urgentNotImportant),
+    const SingleActivator(LogicalKeyboardKey.digit4):
+        const SelectQuadrantIntent(Quadrant.notUrgentNotImportant),
+  };
 
-  KeyEventResult _handleHomeKeyEvent(FocusNode node, RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
+  KeyEventResult _handleHomeKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-    final isCtrlOrMeta = event.isControlPressed || event.isMetaPressed;
+    final keyboard = HardwareKeyboard.instance;
+    final isCtrlOrMeta = keyboard.isControlPressed || keyboard.isMetaPressed;
     if (!isCtrlOrMeta) return KeyEventResult.ignored;
 
     switch (event.logicalKey) {
@@ -979,46 +1195,65 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   }
 
   Map<Type, Action<Intent>> _actions(BuildContext ctx) => {
-        OpenCommandPaletteIntent: CallbackAction<OpenCommandPaletteIntent>(
-          onInvoke: (_) => _openCommandPalette(),
-        ),
-        ToggleFocusModeIntent: CallbackAction<ToggleFocusModeIntent>(
-          onInvoke: (_) => _toggleFocusMode(),
-        ),
-        AddTaskIntent: CallbackAction<AddTaskIntent>(
-          onInvoke: (_) => _navigateToAddTask(ctx),
-        ),
-        ToggleShowCompletedIntent: CallbackAction<ToggleShowCompletedIntent>(
-          onInvoke: (_) =>
-              ref.read(showCompletedTasksProvider.notifier).toggle(),
-        ),
-        OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(
-          onInvoke: (_) => showDesktopSettingsFlyout(context, _settingsKey),
-        ),
-        OpenShortcutHelpIntent: CallbackAction<OpenShortcutHelpIntent>(
-          onInvoke: (_) {
-            _showShortcutsHelp();
-            return null;
-          },
-        ),
-        SelectQuadrantIntent: CallbackAction<SelectQuadrantIntent>(
-          onInvoke: (i) {
-            setState(() => _selectedQuadrant = i.quadrant);
-            HapticFeedback.selectionClick();
-            return null;
-          },
-        ),
-      };
+    OpenCommandPaletteIntent: CallbackAction<OpenCommandPaletteIntent>(
+      onInvoke: (_) => _openCommandPalette(),
+    ),
+    ToggleFocusModeIntent: CallbackAction<ToggleFocusModeIntent>(
+      onInvoke: (_) => _toggleFocusMode(),
+    ),
+    AddTaskIntent: CallbackAction<AddTaskIntent>(
+      onInvoke: (_) => _navigateToAddTask(ctx),
+    ),
+    ToggleShowCompletedIntent: CallbackAction<ToggleShowCompletedIntent>(
+      onInvoke: (_) => ref.read(showCompletedTasksProvider.notifier).toggle(),
+    ),
+    OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(
+      onInvoke: (_) => showDesktopSettingsFlyout(context, _settingsKey),
+    ),
+    OpenShortcutHelpIntent: CallbackAction<OpenShortcutHelpIntent>(
+      onInvoke: (_) {
+        _showShortcutsHelp();
+        return null;
+      },
+    ),
+    SelectQuadrantIntent: CallbackAction<SelectQuadrantIntent>(
+      onInvoke: (i) {
+        setState(() => _selectedQuadrant = i.quadrant);
+        HapticFeedback.selectionClick();
+        return null;
+      },
+    ),
+  };
 
   void _toggleFocusMode() {
     setState(() => _isFocusMode = !_isFocusMode);
     HapticFeedback.mediumImpact();
   }
 
-  void _navigateToAddTask(BuildContext ctx) {
+  void _navigateToAddTask(
+    BuildContext ctx, {
+    Quadrant? initialQuadrant,
+    DateTime? suggestedDueDate,
+  }) {
     Navigator.push(
       ctx,
-      _fastRoute(const DesktopTaskEditScreen()),
+      _fastRoute(
+        DesktopTaskEditScreen(
+          initialQuadrant: initialQuadrant,
+          suggestedDueDate: suggestedDueDate,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRenameQuadrantDialog(Quadrant quadrant) async {
+    final names = ref.read(quadrantNamesProvider);
+    await showAppDialog<void>(
+      context: context,
+      builder: (_) => QuadrantEditDialog(
+        quadrant: quadrant,
+        currentName: _quadrantDisplayName(names, quadrant),
+      ),
     );
   }
 
@@ -1036,19 +1271,35 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
       context: context,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
+        final isLinuxDesktop =
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
+        final commandPaletteShortcut = isLinuxDesktop
+            ? 'Ctrl + K (fallback: Ctrl + Alt + K)'
+            : 'Ctrl + K';
         final shortcuts = <(String, String)>[
-          ('Open Command Palette', 'Ctrl + K'),
+          ('Open Command Palette', commandPaletteShortcut),
           ('New Task', 'Ctrl + N'),
           ('Toggle Focus Mode', 'Ctrl + F'),
           ('Toggle Show Completed', 'Ctrl + H'),
           ('Open Settings', 'Ctrl + ,'),
           ('Show Shortcuts', 'Ctrl + / or F1'),
           ('Select Quadrant 1-4', '1, 2, 3, 4'),
+          ('Save (Task Editor)', 'Ctrl + Enter'),
+          ('Cancel/Back (Task Editor)', 'Esc'),
+          ('Toggle Priority Panel (Task Editor)', 'Ctrl + Q'),
+          ('Cycle Quick Dates (Task Editor)', 'Ctrl + D'),
+          ('Select Quadrant (Task Editor)', 'Ctrl + 1/2/3/4'),
+          ('Today / Tomorrow / Next Week', 'Ctrl + T / Y / W'),
+          ('Clear Date & Time (Task Editor)', 'Ctrl + X'),
+          ('Open Date Picker (Task Editor)', 'Ctrl + E'),
+          ('Open Time Picker (Task Editor)', 'Ctrl + R'),
+          ('Focus Title (Task Editor)', 'Ctrl + L'),
+          ('Focus Notes (Task Editor)', 'Ctrl + N'),
         ];
 
         return AppDialogContainer(
-          child: SizedBox(
-            width: 420,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420, maxHeight: 560),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1062,43 +1313,59 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...shortcuts.map(
-                  (s) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            s.$1,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: cs.onSurface.withValues(alpha: 0.82),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: shortcuts
+                          .map(
+                            (s) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      s.$1,
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.82,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.14,
+                                        ),
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      s.$2,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.72,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cs.onSurface.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: cs.onSurface.withValues(alpha: 0.14),
-                              width: 0.5,
-                            ),
-                          ),
-                          child: Text(
-                            s.$2,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: cs.onSurface.withValues(alpha: 0.72),
-                            ),
-                          ),
-                        ),
-                      ],
+                          )
+                          .toList(),
                     ),
                   ),
                 ),
@@ -1139,23 +1406,27 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   List<Task> _filtered(List<Task> tasks, TaskViewFilter f, bool showCompleted) {
     final now = DateTime.now();
     switch (f) {
-      case TaskViewFilter.Daily:
+      case TaskViewFilter.daily:
         return tasks
             .where((t) => t.dueDate != null && t.dueDate!.isSameDay(now))
             .toList();
-      case TaskViewFilter.Weekly:
+      case TaskViewFilter.weekly:
         return tasks
-            .where((t) =>
-                t.dueDate != null &&
-                t.dueDate!.isAfter(now.subtract(const Duration(days: 1))) &&
-                t.dueDate!.isBefore(now.add(const Duration(days: 7))))
+            .where(
+              (t) =>
+                  t.dueDate != null &&
+                  t.dueDate!.isAfter(now.subtract(const Duration(days: 1))) &&
+                  t.dueDate!.isBefore(now.add(const Duration(days: 7))),
+            )
             .toList();
-      case TaskViewFilter.Monthly:
+      case TaskViewFilter.monthly:
         return tasks
-            .where((t) =>
-                t.dueDate != null &&
-                t.dueDate!.year == now.year &&
-                t.dueDate!.month == now.month)
+            .where(
+              (t) =>
+                  t.dueDate != null &&
+                  t.dueDate!.year == now.year &&
+                  t.dueDate!.month == now.month,
+            )
             .toList();
       default:
         return showCompleted
@@ -1166,12 +1437,14 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
 
   double _productivityScore(List<Task> tasks) {
     if (tasks.isEmpty) return 0;
-    final done   = tasks.where((t) => t.isCompleted).length;
+    final done = tasks.where((t) => t.isCompleted).length;
     final onTime = tasks
-        .where((t) =>
-            t.isCompleted &&
-            t.dueDate != null &&
-            t.updatedAt.isBefore(t.dueDate!))
+        .where(
+          (t) =>
+              t.isCompleted &&
+              t.dueDate != null &&
+              t.updatedAt.isBefore(t.dueDate!),
+        )
         .length;
     return ((done / tasks.length) * 0.6 +
             (done > 0 ? onTime / done : 0.0) * 0.4) *
@@ -1180,49 +1453,69 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final cs            = Theme.of(context).colorScheme;
-    final tasks         = ref.watch(taskProvider);
-    final filter        = ref.watch(filterProvider);
+    final cs = Theme.of(context).colorScheme;
+    final tasks = ref.watch(taskProvider);
+    final quadrantNames = ref.watch(quadrantNamesProvider);
+    final filter = ref.watch(filterProvider);
     final showCompleted = ref.watch(showCompletedTasksProvider).value ?? false;
 
-    final all        = _filtered(tasks, filter, showCompleted);
-    final doneCnt    = tasks
-        .where((t) =>
-            t.isCompleted &&
-            t.updatedAt.isAfter(
-                DateTime.now().subtract(const Duration(days: 1))))
+    final all = _filtered(tasks, filter, showCompleted);
+    final doneCnt = tasks
+        .where(
+          (t) =>
+              t.isCompleted &&
+              t.updatedAt.isAfter(
+                DateTime.now().subtract(const Duration(days: 1)),
+              ),
+        )
         .length;
     final overdueCnt = all
-        .where((t) =>
-            !t.isCompleted &&
-            t.dueDate != null &&
-            t.dueDate!.isBefore(DateTime.now()))
+        .where(
+          (t) =>
+              !t.isCompleted &&
+              t.dueDate != null &&
+              t.dueDate!.isBefore(DateTime.now()),
+        )
         .length;
     final score = _productivityScore(tasks);
 
     return Focus(
       focusNode: _homeFocusNode,
       autofocus: true,
-      onKey: _handleHomeKeyEvent,
+      onKeyEvent: _handleHomeKeyEvent,
       child: FocusableActionDetector(
         shortcuts: _shortcuts,
         actions: _actions(context),
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => _homeFocusNode.requestFocus(),
-          child: Scaffold(
-            backgroundColor: cs.surface,
-            body: FadeTransition(
-              opacity: _fadeAnim,
-              child: Column(
-                children: [
-                  _buildMenuBar(cs),
-                  Expanded(
-                    child: _isFocusMode
-                        ? _buildFocusView(all, cs)
-                        : _buildNormalView(all, cs, doneCnt, overdueCnt, score),
+          child: Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.all(2),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Scaffold(
+                backgroundColor: cs.surface,
+                body: FadeTransition(
+                  opacity: _fadeAnim,
+                  child: Column(
+                    children: [
+                      _buildMenuBar(cs),
+                      Expanded(
+                        child: _isFocusMode
+                            ? _buildFocusView(all, cs, quadrantNames)
+                            : _buildNormalView(
+                                all,
+                                cs,
+                                quadrantNames,
+                                doneCnt,
+                                overdueCnt,
+                                score,
+                              ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -1240,12 +1533,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: dividerColor,
-              width: 0.5,
-            ),
-          ),
+          border: Border(bottom: BorderSide(color: dividerColor, width: 0.5)),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -1270,6 +1558,18 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                   child: Image.asset(
                     'assets/images/512x512_logo.png',
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint(
+                        'Failed to load logo asset assets/images/512x512_logo.png: $error',
+                      );
+                      return Center(
+                        child: Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 14,
+                          color: cs.primary,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -1284,10 +1584,12 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                 ),
               ),
               const SizedBox(width: 14),
-              const _SearchPill(),
+              _SearchPill(onTap: _openCommandPalette),
             ];
 
             final right = <Widget>[
+              if (kEnableNearbySync) const _NearbySyncPill(),
+              const SizedBox(width: 8),
               _PillButton(
                 label: 'Shortcuts',
                 icon: Icons.keyboard_command_key_rounded,
@@ -1308,24 +1610,14 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
             ];
 
             if (isWide) {
-              return Row(
-                children: [
-                  ...left,
-                  const Spacer(),
-                  ...right,
-                ],
-              );
+              return Row(children: [...left, const Spacer(), ...right]);
             }
 
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  ...left,
-                  const SizedBox(width: 16),
-                  ...right,
-                ],
+                children: [...left, const SizedBox(width: 16), ...right],
               ),
             );
           },
@@ -1337,42 +1629,54 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   Widget _buildNormalView(
     List<Task> tasks,
     ColorScheme cs,
+    Map<Quadrant, String> quadrantNames,
     int doneCnt,
     int overdueCnt,
     double score,
   ) {
-    final pending  = tasks.where((t) => !t.isCompleted).toList();
+    final compactDensity = ref.watch(uiPreferencesProvider).compactDensity;
+    final pending = tasks.where((t) => !t.isCompleted).toList();
     final upcoming = List<Task>.from(pending)
       ..sort((a, b) {
         if (a.dueDate == null) return 1;
         if (b.dueDate == null) return -1;
         return a.dueDate!.compareTo(b.dueDate!);
       });
-    final recentCompleted = tasks
-        .where(
-          (t) =>
-              t.isCompleted &&
-              t.updatedAt.isAfter(
-                DateTime.now().subtract(const Duration(hours: 24)),
-              ),
-        )
-        .toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    final recentCompleted =
+        tasks
+            .where(
+              (t) =>
+                  t.isCompleted &&
+                  t.updatedAt.isAfter(
+                    DateTime.now().subtract(const Duration(hours: 24)),
+                  ),
+            )
+            .toList()
+          ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+      padding: EdgeInsets.fromLTRB(
+        compactDensity ? 8 : 10,
+        compactDensity ? 6 : 8,
+        compactDensity ? 8 : 10,
+        compactDensity ? 8 : 10,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isCompact = constraints.maxWidth < 980;
           final isUltraWide = constraints.maxWidth >= 1500;
+          final gutter = compactDensity ? 6.0 : 8.0;
 
           if (isCompact) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: 180, child: _buildSidebar(tasks, cs)),
-                const SizedBox(height: 8),
-                Expanded(child: _buildTaskList(tasks, cs)),
-                const SizedBox(height: 8),
+                SizedBox(
+                  height: 180,
+                  child: _buildSidebar(tasks, cs, quadrantNames),
+                ),
+                SizedBox(height: gutter),
+                Expanded(child: _buildTaskList(tasks, cs, quadrantNames)),
+                SizedBox(height: gutter),
                 SizedBox(
                   height: 280,
                   child: _buildInsights(
@@ -1396,20 +1700,24 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(width: 210, child: _buildSidebar(tasks, cs)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTaskList(tasks, cs)),
+                  SizedBox(
+                    width: 210,
+                    child: _buildSidebar(tasks, cs, quadrantNames),
+                  ),
+                  SizedBox(width: gutter),
+                  Expanded(child: _buildTaskList(tasks, cs, quadrantNames)),
                   if (isUltraWide) ...[
-                    const SizedBox(width: 8),
+                    SizedBox(width: gutter),
                     SizedBox(
                       width: 250,
                       child: _buildWideMatrixPanel(
                         tasks: tasks,
                         cs: cs,
+                        quadrantNames: quadrantNames,
                       ),
                     ),
                   ],
-                  const SizedBox(width: 8),
+                  SizedBox(width: gutter),
                   SizedBox(
                     width: 220,
                     child: _buildInsights(
@@ -1434,6 +1742,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   Widget _buildWideMatrixPanel({
     required List<Task> tasks,
     required ColorScheme cs,
+    required Map<Quadrant, String> quadrantNames,
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -1477,9 +1786,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                               t.dueDate!.isBefore(DateTime.now()),
                         )
                         .length;
-                    final top = qTasks
-                        .where((t) => t.dueDate != null)
-                        .toList()
+                    final top = qTasks.where((t) => t.dueDate != null).toList()
                       ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
                     final active = _selectedQuadrant == q;
                     final color = _quadrantColor(q);
@@ -1519,7 +1826,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
-                                    _quadrantName(q),
+                                    _quadrantDisplayName(quadrantNames, q),
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -1543,9 +1850,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              overdue > 0
-                                  ? '$overdue overdue'
-                                  : 'All on track',
+                              overdue > 0 ? '$overdue overdue' : 'All on track',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: overdue > 0
@@ -1589,7 +1894,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     );
   }
 
-  Widget _buildSidebar(List<Task> tasks, ColorScheme cs) {
+  Widget _buildSidebar(
+    List<Task> tasks,
+    ColorScheme cs,
+    Map<Quadrant, String> quadrantNames,
+  ) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
@@ -1618,15 +1927,19 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                     .length;
                 return _QuadrantItem(
                   quadrant: q,
+                  name: _quadrantDisplayName(quadrantNames, q),
                   selected: _selectedQuadrant == q,
                   count: cnt,
                   onTap: () {
                     setState(() => _selectedQuadrant = q);
                     HapticFeedback.selectionClick();
                   },
+                  onRename: () => _showRenameQuadrantDialog(q),
                   onTaskDropped: (task) {
                     if (task.quadrant == q) return;
-                    ref.read(taskProvider.notifier).moveTaskToQuadrant(task.id, q);
+                    ref
+                        .read(taskProvider.notifier)
+                        .moveTaskToQuadrant(task.id, q);
                     HapticFeedback.mediumImpact();
                   },
                 );
@@ -1659,7 +1972,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     );
   }
 
-  Widget _buildTaskList(List<Task> tasks, ColorScheme cs) {
+  Widget _buildTaskList(
+    List<Task> tasks,
+    ColorScheme cs,
+    Map<Quadrant, String> quadrantNames,
+  ) {
     final scoped = tasks
         .where((t) => t.quadrant == _selectedQuadrant && !t.isCompleted)
         .toList();
@@ -1679,12 +1996,14 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                   Container(
                     width: 9,
                     height: 9,
-                    decoration:
-                        BoxDecoration(color: color, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _quadrantName(_selectedQuadrant),
+                    _quadrantDisplayName(quadrantNames, _selectedQuadrant),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -1695,7 +2014,9 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: _surfaceInk(cs, dark: 0.06, light: 0.10),
                       borderRadius: BorderRadius.circular(999),
@@ -1718,21 +2039,44 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
               Expanded(
                 child: scoped.isEmpty
                     ? Center(
-                        child: Text(
-                          'Nothing here yet.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _surfaceInk(cs, dark: 0.35, light: 0.58),
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Nothing here yet.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _surfaceInk(cs, dark: 0.35, light: 0.58),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              children: [
+                                _PillButton(
+                                  label: 'Create task',
+                                  icon: Icons.add_rounded,
+                                  onTap: () => _navigateToAddTask(context),
+                                ),
+                                _PillButton(
+                                  label: 'Open search',
+                                  icon: Icons.search_rounded,
+                                  onTap: _openCommandPalette,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       )
                     : ListView.separated(
                         itemCount: scoped.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 5),
+                        separatorBuilder: (_, __) => const SizedBox(height: 5),
                         itemBuilder: (ctx, i) => _TaskRow(
                           task: scoped[i],
                           ref: ref,
+                          quadrantNames: quadrantNames,
                           onMoveToQuadrant: (q) {
                             ref
                                 .read(taskProvider.notifier)
@@ -1798,8 +2142,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.insights_rounded,
-                            size: 13, color: cs.primary),
+                        Icon(
+                          Icons.insights_rounded,
+                          size: 13,
+                          color: cs.primary,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Insights',
@@ -1816,7 +2163,9 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                       Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 8),
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: _q1.withValues(alpha: 0.07),
                           borderRadius: BorderRadius.circular(10),
@@ -1827,8 +2176,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.warning_amber_rounded,
-                                size: 13, color: _q1),
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              size: 13,
+                              color: _q1,
+                            ),
                             const SizedBox(width: 7),
                             Expanded(
                               child: Text(
@@ -1879,7 +2231,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: _surfaceInk(cs, dark: 0.92, light: 0.92),
+                                    color: _surfaceInk(
+                                      cs,
+                                      dark: 0.92,
+                                      light: 0.92,
+                                    ),
                                   ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
@@ -1891,10 +2247,16 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                                       _formatDueDate(upcoming.first.dueDate!),
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: upcoming.first.dueDate!
-                                                .isBefore(DateTime.now())
+                                        color:
+                                            upcoming.first.dueDate!.isBefore(
+                                              DateTime.now(),
+                                            )
                                             ? _q1
-                                            : _surfaceInk(cs, dark: 0.45, light: 0.68),
+                                            : _surfaceInk(
+                                                cs,
+                                                dark: 0.45,
+                                                light: 0.68,
+                                              ),
                                       ),
                                     ),
                                   ),
@@ -2005,7 +2367,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                       child: LinearProgressIndicator(
                         value: score / 100,
                         minHeight: 4,
-                        backgroundColor: _surfaceInk(cs, dark: 0.08, light: 0.16),
+                        backgroundColor: _surfaceInk(
+                          cs,
+                          dark: 0.08,
+                          light: 0.16,
+                        ),
                         valueColor: const AlwaysStoppedAnimation<Color>(_q2),
                       ),
                     ),
@@ -2032,11 +2398,16 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     );
   }
 
-  Widget _buildFocusView(List<Task> tasks, ColorScheme cs) {
-    final q      = _selectedQuadrant;
-    final color  = _quadrantColor(q);
-    final scoped =
-        tasks.where((t) => t.quadrant == q && !t.isCompleted).toList();
+  Widget _buildFocusView(
+    List<Task> tasks,
+    ColorScheme cs,
+    Map<Quadrant, String> quadrantNames,
+  ) {
+    final q = _selectedQuadrant;
+    final color = _quadrantColor(q);
+    final scoped = tasks
+        .where((t) => t.quadrant == q && !t.isCompleted)
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
@@ -2066,7 +2437,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _quadrantName(q),
+                          _quadrantDisplayName(quadrantNames, q),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -2094,7 +2465,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                                   Icon(
                                     Icons.celebration_rounded,
                                     size: 48,
-                                    color: color.withValues(alpha: 0.3),
+                                    color: color.withValues(alpha: 0.55),
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
@@ -2102,8 +2473,106 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white
-                                          .withValues(alpha: 0.92),
+                                      color: _surfaceInk(
+                                        cs,
+                                        dark: 0.95,
+                                        light: 0.95,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '0 remaining • Great job clearing this quadrant.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: _surfaceInk(
+                                        cs,
+                                        dark: 0.55,
+                                        light: 0.70,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _navigateToAddTask(context),
+                                      borderRadius: BorderRadius.circular(999),
+                                      child: Ink(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _surfaceInk(
+                                            cs,
+                                            dark: 0.08,
+                                            light: 0.14,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                          border: Border.all(
+                                            color: _surfaceInk(
+                                              cs,
+                                              dark: 0.16,
+                                              light: 0.26,
+                                            ),
+                                            width: 0.6,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.add_rounded,
+                                              size: 16,
+                                              color: _surfaceInk(
+                                                cs,
+                                                dark: 0.92,
+                                                light: 0.92,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Add task to ${_quadrantDisplayName(quadrantNames, q)}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: _surfaceInk(
+                                                  cs,
+                                                  dark: 0.92,
+                                                  light: 0.92,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Ctrl + N to add quickly',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: _surfaceInk(
+                                        cs,
+                                        dark: 0.42,
+                                        light: 0.62,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Esc to exit Focus Mode',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: _surfaceInk(
+                                        cs,
+                                        dark: 0.42,
+                                        light: 0.62,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -2116,6 +2585,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                               itemBuilder: (ctx, i) => _TaskRow(
                                 task: scoped[i],
                                 ref: ref,
+                                quadrantNames: quadrantNames,
                                 onMoveToQuadrant: (q) {
                                   ref
                                       .read(taskProvider.notifier)
@@ -2136,8 +2606,9 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   }
 
   void _showSnackbar(BuildContext ctx, Task task) {
-    final bottomPadding = Platform.isWindows ? 48.0 : 0.0;
-    ScaffoldMessenger.of(ctx).showSnackBar(
+    final messenger = ScaffoldMessenger.of(ctx);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Row(
           children: [
@@ -2148,8 +2619,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                 color: Colors.white.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_rounded,
-                  size: 13, color: Colors.white),
+              child: const Icon(
+                Icons.check_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -2181,18 +2655,19 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
         ),
         backgroundColor: _q2,
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPadding),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        duration: const Duration(seconds: 4),
+        width: 360,
+        margin: const EdgeInsets.fromLTRB(0, 14, 0, 0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        dismissDirection: DismissDirection.up,
+        duration: const Duration(seconds: 2),
+        persist: false,
         action: SnackBarAction(
           label: 'UNDO',
           textColor: Colors.white,
           onPressed: () {
-            ref.read(taskProvider.notifier).updateTask(
-              task.copyWith(isCompleted: false),
-            );
+            ref
+                .read(taskProvider.notifier)
+                .updateTask(task.copyWith(isCompleted: false));
           },
         ),
       ),
