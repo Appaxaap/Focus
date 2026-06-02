@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'dart:convert';
 import 'quadrant_enum.dart';
 
 part 'task_models.g.dart'; // Generated file by Hive

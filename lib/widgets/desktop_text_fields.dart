@@ -35,7 +35,7 @@ class DesktopTitleTextField extends StatelessWidget {
         ),
         hintText: 'Enter a clear, actionable title',
         hintStyle: TextStyle(
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          color: colorScheme.onSurfaceVariant.withOpacity(0.6),
         ),
         filled: true,
         fillColor: _getFluentContainerColor(context),
@@ -46,13 +46,13 @@ class DesktopTitleTextField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+            color: colorScheme.outlineVariant.withOpacity(0.4),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+            color: colorScheme.outlineVariant.withOpacity(0.4),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -89,7 +89,7 @@ class DesktopNotesTextField extends StatelessWidget {
         ),
         hintText: 'Add context, links, or details',
         hintStyle: TextStyle(
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          color: colorScheme.onSurfaceVariant.withOpacity(0.6),
         ),
         filled: true,
         fillColor: _getFluentContainerColor(context),
@@ -97,13 +97,13 @@ class DesktopNotesTextField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+            color: colorScheme.outlineVariant.withOpacity(0.4),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+            color: colorScheme.outlineVariant.withOpacity(0.4),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -154,8 +154,8 @@ class DesktopDateTimeField extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: selectedDate != null
-                  ? colorScheme.primary.withValues(alpha: 0.5)
-                  : colorScheme.outlineVariant.withValues(alpha: 0.4),
+                  ? colorScheme.primary.withOpacity(0.5)
+                  : colorScheme.outlineVariant.withOpacity(0.4),
             ),
           ),
           child: Row(
@@ -185,7 +185,7 @@ class DesktopDateTimeField extends StatelessWidget {
                       style: TextStyle(
                         color: selectedDate != null
                             ? colorScheme.onSurface
-                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                            : colorScheme.onSurfaceVariant.withOpacity(0.6),
                         fontSize: 16,
                         fontWeight: selectedDate != null
                             ? FontWeight.w500

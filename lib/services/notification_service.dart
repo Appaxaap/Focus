@@ -21,7 +21,6 @@ class NotificationService {
   bool _isInitialized = false;
   bool _isInitializing = false;
   Completer<void>? _initializationCompleter;
-  bool _linuxActionsSupported = false;
 
   bool get isInitialized => _isInitialized;
   bool get isSupported =>
@@ -79,9 +78,6 @@ class NotificationService {
         guid: '1f0ea55f-2695-4f68-9f5f-0b8d3e20b913',
         iconPath: windowsIconPath,
       );
-      const linuxSettings = LinuxInitializationSettings(
-        defaultActionName: 'Open notification',
-      );
 
       final initialized = await _notificationsPlugin.initialize(
         InitializationSettings(
@@ -89,7 +85,6 @@ class NotificationService {
           iOS: iosSettings,
           macOS: iosSettings,
           windows: windowsSettings,
-          linux: linuxSettings,
         ),
         onDidReceiveNotificationResponse: (response) {
           onNotificationResponse?.call(response);
@@ -102,68 +97,18 @@ class NotificationService {
         throw StateError('Notification plugin initialization failed');
       }
 
-      if (Platform.isLinux) {
-        await _initializeLinuxCapabilities();
-      }
-
       _isInitialized = true;
-      if (_initializationCompleter?.isCompleted == false) {
-        _initializationCompleter?.complete();
-      }
+      _initializationCompleter?.complete();
     } catch (e, s) {
       if (kDebugMode) {
         debugPrint('Notification init failed: $e');
         debugPrint('$s');
       }
 
-      if (_initializationCompleter?.isCompleted == false) {
-        _initializationCompleter?.completeError(e, s);
-      }
-      _initializationCompleter = null;
+      _initializationCompleter?.completeError(e, s);
     } finally {
       _isInitializing = false;
     }
-  }
-
-  Future<void> _initializeLinuxCapabilities() async {
-    try {
-      final linux = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            LinuxFlutterLocalNotificationsPlugin
-          >();
-      final capabilities = await linux?.getCapabilities();
-      _linuxActionsSupported = capabilities?.actions ?? false;
-      if (kDebugMode) {
-        debugPrint(
-          'Linux notification capabilities: actions=$_linuxActionsSupported',
-        );
-      }
-    } catch (e) {
-      _linuxActionsSupported = false;
-      if (kDebugMode) {
-        debugPrint('Failed to read Linux notification capabilities: $e');
-      }
-    }
-  }
-
-  LinuxNotificationDetails _linuxDetails({
-    required LinuxNotificationUrgency urgency,
-  }) {
-    final actions = _linuxActionsSupported
-        ? const <LinuxNotificationAction>[
-            LinuxNotificationAction(key: 'mark_done', label: 'Mark done'),
-            LinuxNotificationAction(key: 'open_task', label: 'Open task'),
-          ]
-        : const <LinuxNotificationAction>[];
-
-    return LinuxNotificationDetails(
-      icon: AssetsLinuxIcon('assets/images/512x512_logo.png'),
-      category: LinuxNotificationCategory.transfer,
-      urgency: urgency,
-      timeout: const LinuxNotificationTimeout.systemDefault(),
-      defaultActionName: 'Open task',
-      actions: actions,
-    );
   }
 
   Future<void> _setDeviceTimezone() async {
@@ -282,9 +227,6 @@ class NotificationService {
         ),
       ],
     );
-    final linuxDetails = _linuxDetails(
-      urgency: LinuxNotificationUrgency.normal,
-    );
 
     await _notificationsPlugin.zonedSchedule(
       id,
@@ -296,7 +238,6 @@ class NotificationService {
         iOS: iosDetails,
         macOS: iosDetails,
         windows: windowsDetails,
-        linux: linuxDetails,
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: payload,
@@ -336,9 +277,6 @@ class NotificationService {
         ),
       ],
     );
-    final linuxDetails = _linuxDetails(
-      urgency: LinuxNotificationUrgency.critical,
-    );
 
     await _notificationsPlugin.show(
       id,
@@ -349,7 +287,6 @@ class NotificationService {
         iOS: iosDetails,
         macOS: iosDetails,
         windows: windowsDetails,
-        linux: linuxDetails,
       ),
       payload: payload,
     );

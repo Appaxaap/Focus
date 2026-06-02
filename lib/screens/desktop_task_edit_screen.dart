@@ -1,5 +1,6 @@
 import 'dart:io';
 import '../providers/quadrant_names_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,6 @@ import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
 import '../providers/task_provider.dart';
 import '../widgets/app_dialog.dart';
-import '../widgets/command_palatte.dart';
 import '../widgets/draggle_area.dart';
 
 class SaveTaskIntent extends Intent {
@@ -33,40 +33,6 @@ class CycleDateIntent extends Intent {
   const CycleDateIntent();
 }
 
-class SelectQuadrantIntent extends Intent {
-  final Quadrant quadrant;
-  const SelectQuadrantIntent(this.quadrant);
-}
-
-class SetQuickDateIntent extends Intent {
-  final int index; // 0 today, 1 tomorrow, 2 next week
-  const SetQuickDateIntent(this.index);
-}
-
-class ClearDateTimeIntent extends Intent {
-  const ClearDateTimeIntent();
-}
-
-class OpenDatePickerIntent extends Intent {
-  const OpenDatePickerIntent();
-}
-
-class OpenTimePickerIntent extends Intent {
-  const OpenTimePickerIntent();
-}
-
-class FocusTitleIntent extends Intent {
-  const FocusTitleIntent();
-}
-
-class FocusNotesIntent extends Intent {
-  const FocusNotesIntent();
-}
-
-class OpenCommandPaletteIntent extends Intent {
-  const OpenCommandPaletteIntent();
-}
-
 class DesktopTaskEditScreen extends ConsumerStatefulWidget {
   final Task? task;
   final Quadrant? initialQuadrant;
@@ -84,7 +50,8 @@ class DesktopTaskEditScreen extends ConsumerStatefulWidget {
       _DesktopTaskEditScreenState();
 }
 
-class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
+class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
+{
   late TextEditingController titleController;
   late TextEditingController notesController;
   late Quadrant? selectedQuadrant;
@@ -149,6 +116,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
         selectedQuadrant = Quadrant.notUrgentImportant;
       }
     }
+
   }
 
   void _onContentChanged() {
@@ -246,86 +214,52 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
     });
   }
 
-  void _setQuickDateByIndex(int index) {
-    setState(() {
-      switch (index) {
-        case 0:
-          selectedDate = DateTime.now();
-          _currentQuickDateIndex = 0;
-          break;
-        case 1:
-          selectedDate = DateTime.now().add(const Duration(days: 1));
-          _currentQuickDateIndex = 1;
-          break;
-        case 2:
-          selectedDate = DateTime.now().add(const Duration(days: 7));
-          _currentQuickDateIndex = 2;
-          break;
-        default:
-          return;
-      }
-      selectedTime ??= const TimeOfDay(hour: 9, minute: 0);
-    });
-  }
-
-  void _clearDateTimeSelection() {
-    setState(() {
-      selectedDate = null;
-      selectedTime = null;
-      _currentQuickDateIndex = -1;
-    });
-  }
-
-  void _selectQuadrant(Quadrant quadrant) {
-    setState(() {
-      selectedQuadrant = quadrant;
-      _quadrantError = null;
-    });
-    HapticFeedback.selectionClick();
-  }
-
   Future<bool> _onWillPop() async {
     if (!_hasUnsavedChanges) return true;
 
     final shouldPop = await showAppDialog<bool>(
       context: context,
-      builder: (context) {
-        return AppDialogContainer(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AppDialogTitle('Unsaved Changes'),
-                const SizedBox(height: 10),
-                const AppDialogMessage(
-                  'You have unsaved changes. Discard them?',
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppDialogButton(
-                        label: 'Keep Editing',
-                        onTap: () => Navigator.pop(context, false),
-                      ),
+      builder: (context) => AppDialogContainer(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Unsaved Changes',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AppDialogButton(
-                        label: 'Discard',
-                        isDestructive: true,
-                        onTap: () => Navigator.pop(context, true),
-                      ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'You have unsaved changes. Discard them?',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppDialogButton(
+                      label: 'Keep Editing',
+                      onTap: () => Navigator.pop(context, false),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: AppDialogButton(
+                      label: 'Discard',
+                      isDestructive: true,
+                      onTap: () => Navigator.pop(context, true),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
     return shouldPop ?? false;
   }
@@ -366,27 +300,21 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 3, child: _buildMainForm(theme, colorScheme)),
+              Expanded(
+                flex: 3,
+                child: _buildMainForm(theme, colorScheme),
+              ),
               const SizedBox(width: 16),
               SizedBox(
                 width: 320,
-                child: LayoutBuilder(
-                  builder: (context, constraints) => SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Column(
-                        children: [
-                          _buildQuadrantPanel(theme, colorScheme),
-                          const SizedBox(height: 16),
-                          _buildQuickDateSelector(theme, colorScheme),
-                          const SizedBox(height: 16),
-                          _buildSmartSuggestions(theme, colorScheme),
-                        ],
-                      ),
-                    ),
-                  ),
+                child: Column(
+                  children: [
+                    _buildQuadrantPanel(theme, colorScheme),
+                    const SizedBox(height: 16),
+                    _buildQuickDateSelector(theme, colorScheme),
+                    const SizedBox(height: 16),
+                    _buildSmartSuggestions(theme, colorScheme),
+                  ],
                 ),
               ),
             ],
@@ -403,12 +331,6 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
     final colorScheme = theme.colorScheme;
 
     final shortcuts = <ShortcutActivator, Intent>{
-      const SingleActivator(LogicalKeyboardKey.keyK, control: true):
-          const OpenCommandPaletteIntent(),
-      const CharacterActivator('k', control: true):
-          const OpenCommandPaletteIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
-          const OpenCommandPaletteIntent(),
       const SingleActivator(LogicalKeyboardKey.enter, control: true):
           const SaveTaskIntent(),
       const SingleActivator(LogicalKeyboardKey.escape):
@@ -419,52 +341,22 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
           const ToggleQuadrantPanelIntent(),
       const SingleActivator(LogicalKeyboardKey.keyD, control: true):
           const CycleDateIntent(),
-      const SingleActivator(LogicalKeyboardKey.digit1, control: true):
-          const SelectQuadrantIntent(Quadrant.urgentImportant),
-      const SingleActivator(LogicalKeyboardKey.digit2, control: true):
-          const SelectQuadrantIntent(Quadrant.notUrgentImportant),
-      const SingleActivator(LogicalKeyboardKey.digit3, control: true):
-          const SelectQuadrantIntent(Quadrant.urgentNotImportant),
-      const SingleActivator(LogicalKeyboardKey.digit4, control: true):
-          const SelectQuadrantIntent(Quadrant.notUrgentNotImportant),
-      const SingleActivator(LogicalKeyboardKey.keyT, control: true):
-          const SetQuickDateIntent(0),
-      const SingleActivator(LogicalKeyboardKey.keyY, control: true):
-          const SetQuickDateIntent(1),
-      const SingleActivator(LogicalKeyboardKey.keyW, control: true):
-          const SetQuickDateIntent(2),
-      const SingleActivator(LogicalKeyboardKey.keyX, control: true):
-          const ClearDateTimeIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyE, control: true):
-          const OpenDatePickerIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyR, control: true):
-          const OpenTimePickerIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyL, control: true):
-          const FocusTitleIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyN, control: true):
-          const FocusNotesIntent(),
     };
 
     final actions = <Type, Action<Intent>>{
       SaveTaskIntent: CallbackAction<SaveTaskIntent>(
-        onInvoke: (intent) {
-          _validateAndSave();
-          return null;
-        },
+        onInvoke: (intent) => _validateAndSave(),
       ),
       CancelTaskIntent: CallbackAction<CancelTaskIntent>(
         onInvoke: (intent) async {
           if (await _onWillPop()) {
-            if (!mounted) return null;
-            Navigator.pop(this.context);
+            Navigator.pop(context);
           }
-          return null;
         },
       ),
       ShowShortcutsIntent: CallbackAction<ShowShortcutsIntent>(
         onInvoke: (intent) {
           setState(() => _showShortcuts = !_showShortcuts);
-          return null;
         },
       ),
       ToggleQuadrantPanelIntent: CallbackAction<ToggleQuadrantPanelIntent>(
@@ -473,81 +365,19 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
             () => _isQuadrantPanelCollapsed = !_isQuadrantPanelCollapsed,
           );
           HapticFeedback.lightImpact();
-          return null;
         },
       ),
       CycleDateIntent: CallbackAction<CycleDateIntent>(
         onInvoke: (intent) {
           _cycleQuickDates();
           HapticFeedback.selectionClick();
-          return null;
-        },
-      ),
-      SelectQuadrantIntent: CallbackAction<SelectQuadrantIntent>(
-        onInvoke: (intent) {
-          _selectQuadrant(intent.quadrant);
-          return null;
-        },
-      ),
-      SetQuickDateIntent: CallbackAction<SetQuickDateIntent>(
-        onInvoke: (intent) {
-          _setQuickDateByIndex(intent.index);
-          HapticFeedback.selectionClick();
-          return null;
-        },
-      ),
-      ClearDateTimeIntent: CallbackAction<ClearDateTimeIntent>(
-        onInvoke: (intent) {
-          _clearDateTimeSelection();
-          return null;
-        },
-      ),
-      OpenDatePickerIntent: CallbackAction<OpenDatePickerIntent>(
-        onInvoke: (intent) {
-          _showInlineDatePicker(theme, colorScheme);
-          return null;
-        },
-      ),
-      OpenTimePickerIntent: CallbackAction<OpenTimePickerIntent>(
-        onInvoke: (intent) {
-          if (selectedDate != null) {
-            _showInlineTimePicker(theme, colorScheme);
-          }
-          return null;
-        },
-      ),
-      FocusTitleIntent: CallbackAction<FocusTitleIntent>(
-        onInvoke: (intent) {
-          _titleFocusNode.requestFocus();
-          return null;
-        },
-      ),
-      FocusNotesIntent: CallbackAction<FocusNotesIntent>(
-        onInvoke: (intent) {
-          _notesFocusNode.requestFocus();
-          return null;
-        },
-      ),
-      OpenCommandPaletteIntent: CallbackAction<OpenCommandPaletteIntent>(
-        onInvoke: (intent) {
-          showDialog(
-            context: context,
-            builder: (_) => CommandPalette(
-              onOpenShortcuts: () {
-                if (mounted) {
-                  setState(() => _showShortcuts = true);
-                }
-              },
-            ),
-          );
-          return null;
         },
       ),
     };
 
     return PopScope(
       canPop: !_hasUnsavedChanges,
-      onPopInvokedWithResult: (didPop, result) async {
+      onPopInvoked: (didPop) async {
         if (!didPop && _hasUnsavedChanges) {
           final shouldPop = await _onWillPop();
           if (shouldPop && context.mounted) {
@@ -590,9 +420,8 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
   }
 
   Widget _buildSmartSuggestions(ThemeData theme, ColorScheme colorScheme) {
-    if (selectedQuadrant == null && selectedDate == null) {
+    if (selectedQuadrant == null && selectedDate == null)
       return const SizedBox.shrink();
-    }
 
     String suggestion = '';
     IconData icon = Icons.lightbulb_outline_rounded;
@@ -626,9 +455,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: suggestionColor.withValues(alpha: 0.1),
+        color: suggestionColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: suggestionColor.withValues(alpha: 0.3)),
+        border: Border.all(color: suggestionColor.withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -652,7 +481,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
 
   Widget _buildLoadingOverlay(ColorScheme colorScheme) {
     return Container(
-      color: Colors.black.withValues(alpha: 0.3),
+      color: Colors.black.withOpacity(0.3),
       child: Center(
         child: Container(
           padding: const EdgeInsets.all(24),
@@ -683,7 +512,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
     return GestureDetector(
       onTap: () => setState(() => _showShortcuts = false),
       child: Container(
-        color: Colors.black.withValues(alpha: 0.6),
+        color: Colors.black.withOpacity(0.6),
         child: Center(
           child: Container(
             width: 420,
@@ -692,7 +521,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                color: colorScheme.outlineVariant.withOpacity(0.3),
               ),
             ),
 
@@ -718,23 +547,10 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildShortcutRow('Ctrl + Enter', 'Save'),
-                _buildShortcutRow('Esc', 'Cancel/back'),
+                _buildShortcutRow('Ctrl + Enter', 'Save task'),
+                _buildShortcutRow('Esc', 'Cancel'),
                 _buildShortcutRow('Ctrl + Q', 'Toggle priority panel'),
                 _buildShortcutRow('Ctrl + D', 'Cycle quick dates'),
-                _buildShortcutRow('Ctrl + 1/2/3/4', 'Select quadrant directly'),
-                _buildShortcutRow(
-                  'Ctrl + T / Y / W',
-                  'Today / Tomorrow / Next Week',
-                ),
-                _buildShortcutRow('Ctrl + X', 'Clear date & time'),
-                _buildShortcutRow('Ctrl + E', 'Open date picker'),
-                _buildShortcutRow(
-                  'Ctrl + R',
-                  'Open time picker (if date exists)',
-                ),
-                _buildShortcutRow('Ctrl + L', 'Focus title'),
-                _buildShortcutRow('Ctrl + N', 'Focus notes'),
                 _buildShortcutRow('?', 'Show shortcuts'),
                 _buildShortcutRow('Tab', 'Navigate fields'),
               ],
@@ -848,7 +664,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
       onTap: () {
         setState(() {
           selectedDate = date;
-          selectedTime ??= const TimeOfDay(hour: 9, minute: 0);
+          if (selectedTime == null) {
+            selectedTime = const TimeOfDay(hour: 9, minute: 0);
+          }
         });
       },
       borderRadius: BorderRadius.circular(8),
@@ -857,13 +675,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primary.withValues(alpha: 0.1)
+              ? colorScheme.primary.withOpacity(0.1)
               : colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
-                : colorScheme.outlineVariant.withValues(alpha: 0.3),
+                : colorScheme.outlineVariant.withOpacity(0.3),
           ),
         ),
         child: Text(
@@ -886,155 +704,141 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
       height: 64,
       backgroundColor: Colors.transparent,
       child: Container(
-        height: 64,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withValues(alpha: 0.92),
-          border: Border(
-            bottom: BorderSide(
-              color: colorScheme.onSurface.withValues(alpha: 0.10),
-              width: 0.5,
-            ),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.92),
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.onSurface.withValues(alpha: 0.10),
+            width: 0.5,
           ),
         ),
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: () async {
-                if (await _onWillPop()) {
-                  if (!mounted) return;
-                  Navigator.pop(context);
-                }
-              },
-              icon: const Icon(Icons.arrow_back_rounded, size: 20),
-              style: IconButton.styleFrom(
-                backgroundColor: colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.5,
-                ),
-                foregroundColor: colorScheme.onSurface,
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () async {
+              if (await _onWillPop()) {
+                Navigator.pop(context);
+              }
+            },
+            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+            style: IconButton.styleFrom(
+              backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(
+                0.5,
               ),
+              foregroundColor: colorScheme.onSurface,
             ),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.edit_note_rounded,
-                color: colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(
+              Icons.edit_note_rounded,
+              color: colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
+          ),
 
-            const SizedBox(width: 12),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          const SizedBox(width: 12),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isEditing ? 'Edit Task' : 'New Task',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              if (_hasUnsavedChanges)
                 Text(
-                  isEditing ? 'Edit Task' : 'New Task',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colorScheme.onSurface,
+                  'Unsaved changes',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontSize: 11,
                   ),
                 ),
-                if (_hasUnsavedChanges)
-                  Text(
-                    'Unsaved changes',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.primary,
-                      fontSize: 11,
+            ],
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => setState(() => _showShortcuts = !_showShortcuts),
+                      icon: const Icon(Icons.keyboard_rounded, size: 18),
+                      tooltip: 'Keyboard Shortcuts (?)',
+                      style: IconButton.styleFrom(
+                        backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      ),
                     ),
-                  ),
-              ],
-            ),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () =>
-                            setState(() => _showShortcuts = !_showShortcuts),
-                        icon: const Icon(Icons.keyboard_rounded, size: 18),
-                        tooltip: 'Keyboard Shortcuts (?)',
-                        style: IconButton.styleFrom(
-                          backgroundColor: colorScheme.surfaceContainerHighest
-                              .withValues(alpha: 0.5),
+                    const SizedBox(width: 8),
+                    if (isEditing) ...[
+                      OutlinedButton.icon(
+                        onPressed: () => _showDeleteConfirmation(context),
+                        icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                        label: const Text('Delete'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colorScheme.error,
+                          side: BorderSide(color: colorScheme.error.withOpacity(0.5)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (isEditing) ...[
-                        OutlinedButton.icon(
-                          onPressed: () => _showDeleteConfirmation(context),
-                          icon: const Icon(
-                            Icons.delete_outline_rounded,
-                            size: 16,
+                    ],
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _isSaving ? null : _validateAndSave,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: colorScheme.secondary,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          label: const Text('Delete'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: colorScheme.error,
-                            side: BorderSide(
-                              color: colorScheme.error.withValues(alpha: 0.5),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _isSaving ? null : _validateAndSave,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorScheme.secondary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_rounded,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_rounded,
+                                color: colorScheme.onSecondary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isEditing ? 'Update' : 'Create',
+                                style: TextStyle(
                                   color: colorScheme.onSecondary,
-                                  size: 18,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isEditing ? 'Update' : 'Create',
-                                  style: TextStyle(
-                                    color: colorScheme.onSecondary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
       ),
     );
   }
@@ -1095,18 +899,14 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
             controller: titleController,
             maxLength: maxTitleLength,
             onSubmitted: (_) => _notesFocusNode.requestFocus(),
-            onChanged: (_) {
-              if (_titleError != null) {
-                setState(() => _titleError = null);
-              }
-            },
+            onChanged: (_) => setState(() => _titleError = null),
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurface,
             ),
             decoration: InputDecoration(
               hintText: 'What needs to be done?',
               hintStyle: TextStyle(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                color: colorScheme.onSurfaceVariant.withOpacity(0.6),
                 fontSize: 14,
               ),
               filled: true,
@@ -1119,7 +919,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  color: colorScheme.outlineVariant.withOpacity(0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -1157,7 +957,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
             decoration: InputDecoration(
               hintText: 'Add details, context, or notes...',
               hintStyle: TextStyle(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                color: colorScheme.onSurfaceVariant.withOpacity(0.6),
                 fontSize: 14,
               ),
               filled: true,
@@ -1169,7 +969,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  color: colorScheme.outlineVariant.withOpacity(0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -1209,13 +1009,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: selectedDate != null
-                        ? colorScheme.primary.withValues(alpha: 0.1)
+                        ? colorScheme.primary.withOpacity(0.1)
                         : colorScheme.surface,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: selectedDate != null
-                          ? colorScheme.primary.withValues(alpha: 0.3)
-                          : colorScheme.outlineVariant.withValues(alpha: 0.3),
+                          ? colorScheme.primary.withOpacity(0.3)
+                          : colorScheme.outlineVariant.withOpacity(0.3),
                     ),
                   ),
                   child: Row(
@@ -1259,13 +1059,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: selectedTime != null
-                          ? colorScheme.primary.withValues(alpha: 0.1)
+                          ? colorScheme.primary.withOpacity(0.1)
                           : colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: selectedTime != null
-                            ? colorScheme.primary.withValues(alpha: 0.3)
-                            : colorScheme.outlineVariant.withValues(alpha: 0.3),
+                            ? colorScheme.primary.withOpacity(0.3)
+                            : colorScheme.outlineVariant.withOpacity(0.3),
                       ),
                     ),
                     child: Row(
@@ -1309,9 +1109,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                 },
                 icon: const Icon(Icons.close_rounded, size: 16),
                 style: IconButton.styleFrom(
-                  backgroundColor: colorScheme.errorContainer.withValues(
-                    alpha: 0.5,
-                  ),
+                  backgroundColor: colorScheme.errorContainer.withOpacity(0.5),
                   foregroundColor: colorScheme.error,
                   padding: const EdgeInsets.all(8),
                 ),
@@ -1448,10 +1246,12 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                                     setState(() {
                                       selectedDate = date;
                                       _currentQuickDateIndex = -1;
-                                      selectedTime ??= const TimeOfDay(
-                                        hour: 9,
-                                        minute: 0,
-                                      );
+                                      if (selectedTime == null) {
+                                        selectedTime = const TimeOfDay(
+                                          hour: 9,
+                                          minute: 0,
+                                        );
+                                      }
                                     });
                                     Navigator.pop(context);
                                   },
@@ -1461,9 +1261,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                                 color: isSelected
                                     ? colorScheme.primary
                                     : isToday
-                                    ? colorScheme.primary.withValues(
-                                        alpha: 0.12,
-                                      )
+                                    ? colorScheme.primary.withOpacity(0.12)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -1473,7 +1271,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: isPast
                                         ? colorScheme.onSurfaceVariant
-                                              .withValues(alpha: 0.3)
+                                              .withOpacity(0.3)
                                         : isSelected
                                         ? colorScheme.onPrimary
                                         : isToday
@@ -1838,7 +1636,11 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: InkWell(
                   onTap: () {
-                    _selectQuadrant(quadrant);
+                    setState(() {
+                      selectedQuadrant = quadrant;
+                      _quadrantError = null;
+                    });
+                    HapticFeedback.selectionClick();
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: AnimatedContainer(
@@ -1846,13 +1648,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? (info['color'] as Color).withValues(alpha: 0.1)
+                          ? (info['color'] as Color).withOpacity(0.1)
                           : colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? (info['color'] as Color)
-                            : colorScheme.outlineVariant.withValues(alpha: 0.3),
+                            : colorScheme.outlineVariant.withOpacity(0.3),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -1861,9 +1663,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: (info['color'] as Color).withValues(
-                              alpha: 0.15,
-                            ),
+                            color: (info['color'] as Color).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -1901,9 +1701,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                               : Icons.radio_button_unchecked_rounded,
                           color: isSelected
                               ? (info['color'] as Color)
-                              : colorScheme.onSurfaceVariant.withValues(
-                                  alpha: 0.4,
-                                ),
+                              : colorScheme.onSurfaceVariant.withOpacity(0.4),
                           size: 22,
                         ),
                       ],
@@ -1911,7 +1709,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                   ),
                 ),
               );
-            }),
+            }).toList(),
           ] else ...[
             const SizedBox(height: 12),
             if (selectedQuadrant != null)
@@ -1919,7 +1717,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: (quadrantInfo[selectedQuadrant]!['color'] as Color)
-                      .withValues(alpha: 0.1),
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: quadrantInfo[selectedQuadrant]!['color'] as Color,
@@ -2001,16 +1799,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
     final notificationService = NotificationService();
     final bool isEditing = widget.task != null;
     final String taskId = widget.task?.id ?? const Uuid().v4();
-    final int notificationId = notificationService.notificationIdForTask(
-      taskId,
-    );
+    final int notificationId = notificationService.notificationIdForTask(taskId);
 
     if (isEditing) {
       await notificationService.cancelNotification(notificationId);
     }
 
     bool notificationScheduled = false;
-    bool linuxRuntimeReminderOnly = false;
     String? notificationError;
 
     if (finalDateTime != null) {
@@ -2021,10 +1816,6 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
 
         if (!hasPermissions) {
           notificationError = 'Notification permissions required';
-        } else if (Platform.isLinux) {
-          // Linux backend does not support scheduled/pending notifications.
-          // Reminders are shown while the app is running via fallback checks.
-          linuxRuntimeReminderOnly = true;
         } else {
           final tz.TZDateTime scheduledTime = tz.TZDateTime.from(
             finalDateTime,
@@ -2074,27 +1865,18 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
           timeMessage = ' (soon!)';
         }
 
-        if (!mounted) return;
         _showSnackbar(
           context,
           'Task saved with reminder$timeMessage',
           isError: false,
         );
-      } else if (linuxRuntimeReminderOnly) {
-        if (!mounted) return;
-        _showSnackbar(
-          context,
-          'Task saved. Linux will notify while Focus is running.',
-          isError: false,
-        );
       } else if (notificationError != null) {
-        if (!mounted) return;
         _showSnackbar(context, notificationError, isError: true);
       } else {
-        if (!mounted) return;
         _showSnackbar(context, 'Task saved successfully!', isError: false);
       }
-      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 300));
       Navigator.pop(context);
     }
   }
@@ -2141,9 +1923,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
                       label: 'Delete',
                       isDestructive: true,
                       onTap: () {
-                        ref
-                            .read(taskProvider.notifier)
-                            .deleteTask(widget.task!.id);
+                        ref.read(taskProvider.notifier).deleteTask(widget.task!.id);
                         Navigator.pop(context);
                         Navigator.pop(context);
                       },
@@ -2175,7 +1955,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(

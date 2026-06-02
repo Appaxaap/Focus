@@ -35,10 +35,6 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     }
   }
 
-  Future<void> refresh() async {
-    await _loadTasks();
-  }
-
   // Adds a new task
   Future<void> addTask({
     required String title,
@@ -53,39 +49,23 @@ class TaskNotifier extends StateNotifier<List<Task>> {
       quadrant: quadrant,
       dueDate: dueDate,
     );
-    state = [...state, task];
-    try {
-      await _hiveService.addTask(task);
-    } catch (e) {
-      await _loadTasks();
-    }
+    await _hiveService.addTask(task);
+    await _loadTasks();
   }
 
   // Updates an existing task
   Future<void> updateTask(Task updatedTask) async {
-    final normalizedTask = updatedTask.copyWith(updatedAt: DateTime.now());
     final taskIndex = state.indexWhere((task) => task.id == updatedTask.id);
     if (taskIndex != -1) {
-      final previous = state[taskIndex];
-      final next = List<Task>.from(state);
-      next[taskIndex] = normalizedTask;
-      state = next;
-      try {
-        await _hiveService.updateTask(normalizedTask);
-      } catch (e) {
-        final rollback = List<Task>.from(state);
-        final i = rollback.indexWhere((t) => t.id == previous.id);
-        if (i != -1) rollback[i] = previous;
-        state = rollback;
-      }
+      // Existing task
+      await _hiveService.updateTask(
+        updatedTask.copyWith(updatedAt: DateTime.now()),
+      );
     } else {
-      state = [...state, normalizedTask];
-      try {
-        await _hiveService.addTask(normalizedTask);
-      } catch (e) {
-        state = state.where((task) => task.id != normalizedTask.id).toList();
-      }
+      // New task
+      await _hiveService.addTask(updatedTask);
     }
+    await _loadTasks();
   }
 
   // Deletes a task
@@ -106,12 +86,8 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
   // Restores a task back to state and Hive (undo delete)
   Future<void> restoreTask(Task task) async {
-    state = [...state, task];
-    try {
-      await _hiveService.addTask(task);
-    } catch (e) {
-      await _loadTasks();
-    }
+    await _hiveService.addTask(task);
+    await _loadTasks();
   }
 
   // Permanently deletes from Hive after undo window expires
@@ -125,17 +101,19 @@ class TaskNotifier extends StateNotifier<List<Task>> {
 
   // Clear completed tasks
   Future<void> clearCompletedTasks() async {
-    final previous = state;
-    final completedIds = previous
+    // Get all completed task IDs
+    final completedIds = state
         .where((task) => task.isCompleted)
         .map((task) => task.id)
         .toList();
-    state = previous.where((task) => !task.isCompleted).toList();
-    try {
-      await Future.wait(completedIds.map(_hiveService.deleteTask));
-    } catch (e) {
-      state = previous;
+
+    // Delete each from Hive
+    for (final id in completedIds) {
+      await _hiveService.deleteTask(id);
     }
+
+    // Reload tasks
+    await _loadTasks();
   }
 
   // Toggle task completion
@@ -158,21 +136,9 @@ class TaskNotifier extends StateNotifier<List<Task>> {
     final taskIndex = state.indexWhere((task) => task.id == taskId);
     if (taskIndex != -1) {
       final task = state[taskIndex];
-      final updatedTask = task.copyWith(
-        quadrant: newQuadrant,
-        updatedAt: DateTime.now(),
-      );
-      final next = List<Task>.from(state);
-      next[taskIndex] = updatedTask;
-      state = next;
-      try {
-        await _hiveService.updateTask(updatedTask);
-      } catch (e) {
-        final rollback = List<Task>.from(state);
-        final i = rollback.indexWhere((t) => t.id == task.id);
-        if (i != -1) rollback[i] = task;
-        state = rollback;
-      }
+      final updatedTask = task.copyWith(quadrant: newQuadrant);
+      await _hiveService.updateTask(updatedTask);
+      await _loadTasks();
     }
   }
 }

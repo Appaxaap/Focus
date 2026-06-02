@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Focus"
-#define MyAppVersion "3.0.0"
+#define MyAppVersion "1.0"
 #define MyAppPublisher "Codecx"
 #define MyAppURL "https://eisenhowerapp.framer.website/"
 #define MyAppExeName "Focus.exe"
@@ -10,7 +10,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{8ED754D5-0A70-4A2E-9C9B-2CFA60CE40EB}
+AppId={{646D2F38-1F3E-4A73-8863-FCB70B3B6E5E}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -30,12 +30,13 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 LicenseFile=C:\projects\focus\installers\LICENSE.txt
+InfoBeforeFile=C:\projects\focus\installers\INSTALL_INFO.txt
 InfoAfterFile=C:\projects\focus\installers\AFTER_INSTALL.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 OutputDir=C:\projects\focus\installers
-OutputBaseFilename=Focus
-SetupIconFile=C:\projects\focus\windows\runner\resources\app_icon.ico
+OutputBaseFilename=focus
+SetupIconFile=C:\Users\Basim Basheer\Documents\[5]Codecx\[4]Work\[12]Indie Development\[4]Focus\[1]Graphics\favicon.ico
 SolidCompression=yes
 WizardStyle=modern
 
@@ -47,17 +48,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "C:\projects\focus\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\projects\focus\build\windows\x64\runner\Release\desktop_multi_window_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\desktop_window_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\flutter_local_notifications_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\flutter_localization_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\flutter_timezone_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\projects\focus\build\windows\x64\runner\Release\hotkey_manager_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\permission_handler_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\screen_retriever_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\share_plus_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\projects\focus\build\windows\x64\runner\Release\tray_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\window_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\projects\focus\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs

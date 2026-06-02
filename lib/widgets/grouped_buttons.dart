@@ -15,7 +15,6 @@ class GroupedButtons extends ConsumerWidget {
   final Future<void> Function() onFilterPressed;
   final Future<void> Function() onSettingsPressed;
   final VoidCallback onSearchPressed;
-  final bool showSearchButton;
 
   const GroupedButtons({
     super.key,
@@ -23,60 +22,34 @@ class GroupedButtons extends ConsumerWidget {
     required this.onFilterPressed,
     required this.onSettingsPressed,
     required this.onSearchPressed,
-    this.showSearchButton = true,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final activeButton = ref.watch(activeButtonProvider);
-    final int totalButtons = showSearchButton ? 4 : 3;
-    final int searchIndex = 0;
-    final int listIndex = showSearchButton ? 1 : 0;
-    final int filterIndex = showSearchButton ? 2 : 1;
-    final int settingsIndex = showSearchButton ? 3 : 2;
-
-    BorderRadius edgeRadius(int index, {required bool active}) {
-      if (active) return BorderRadius.circular(40);
-      final bool isFirst = index == 0;
-      final bool isLast = index == totalButtons - 1;
-      if (isFirst && isLast) return BorderRadius.circular(40);
-      if (isFirst) {
-        return const BorderRadius.only(
-          topLeft: Radius.circular(40),
-          bottomLeft: Radius.circular(40),
-          topRight: Radius.circular(4),
-          bottomRight: Radius.circular(4),
-        );
-      }
-      if (isLast) {
-        return const BorderRadius.only(
-          topLeft: Radius.circular(4),
-          bottomLeft: Radius.circular(4),
-          topRight: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        );
-      }
-      return BorderRadius.circular(4);
-    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (showSearchButton) ...[
-          // Search Button
-          _CustomIconButton(
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              onSearchPressed();
-            },
-            icon: Icon(Icons.search_rounded, color: colorScheme.onSurface),
-            borderRadius: edgeRadius(searchIndex, active: false),
-            isActive: false,
-            colorScheme: colorScheme,
+        // Search Button
+        _CustomIconButton(
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            onSearchPressed();
+          },
+          icon: Icon(Icons.search_rounded, color: colorScheme.onSurface),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(40),
+            bottomLeft: Radius.circular(40),
+            topRight: Radius.circular(4),
+            bottomRight: Radius.circular(4),
           ),
-          const SizedBox(width: 2),
-        ],
+          isActive: false,
+          colorScheme: colorScheme,
+        ),
+
+        const SizedBox(width: 2),
 
         // List/Grid Toggle
         _CustomIconButton(
@@ -98,12 +71,15 @@ class GroupedButtons extends ConsumerWidget {
                 : Icons.grid_view_rounded,
             color: colorScheme.onSurface,
           ),
-          borderRadius: edgeRadius(listIndex, active: activeButton == ActiveButton.list),
+          borderRadius: activeButton == ActiveButton.list
+              ? BorderRadius.circular(40)
+              : BorderRadius.circular(4),
           isActive: activeButton == ActiveButton.list,
           colorScheme: colorScheme,
         ),
 
         const SizedBox(width: 2),
+
         // Filter
         _CustomIconButton(
           onPressed: () async {
@@ -115,12 +91,15 @@ class GroupedButtons extends ConsumerWidget {
             }
           },
           icon: Icon(Icons.filter_list_rounded, color: colorScheme.onSurface),
-          borderRadius: edgeRadius(filterIndex, active: activeButton == ActiveButton.filter),
+          borderRadius: activeButton == ActiveButton.filter
+              ? BorderRadius.circular(40)
+              : BorderRadius.circular(4),
           isActive: activeButton == ActiveButton.filter,
           colorScheme: colorScheme,
         ),
 
         const SizedBox(width: 2),
+
         // Settings
         _CustomIconButton(
           onPressed: () async {
@@ -133,10 +112,14 @@ class GroupedButtons extends ConsumerWidget {
             }
           },
           icon: Icon(Icons.settings, color: colorScheme.onSurface),
-          borderRadius: edgeRadius(
-            settingsIndex,
-            active: activeButton == ActiveButton.settings,
-          ),
+          borderRadius: activeButton == ActiveButton.settings
+              ? BorderRadius.circular(40)
+              : const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  bottomLeft: Radius.circular(4),
+                  topRight: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
           isActive: activeButton == ActiveButton.settings,
           colorScheme: colorScheme,
         ),

@@ -1,9 +1,6 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import '../providers/show_completed_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -11,11 +8,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_icon_badge_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
-import '../services/nearby_sync_client_service.dart';
-import '../screens/nearby_sync_screen.dart';
-import '../models/task_models.dart';
-import '../main.dart';
-import '../config/feature_flags.dart';
 import 'app_dialog.dart';
 
 class SettingsBottomSheet extends ConsumerStatefulWidget {
@@ -299,6 +291,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     final completedCount = allTasks.where((task) => task.isCompleted).length;
     final totalTaskCount = allTasks.length;
     final colorScheme = _getColorScheme(appTheme);
+
     return SlideTransition(
       position: _slideAnimation,
       child: Container(
@@ -339,10 +332,6 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             const SizedBox(height: 16),
             _buildAppIconBadgeSection(appIconBadgeEnabled, colorScheme),
             const SizedBox(height: 16),
-            if (!Platform.isWindows) ...[
-              if (kEnableNearbySync) _buildNearbySyncButton(colorScheme),
-              const SizedBox(height: 10),
-            ],
             _buildClearCompletedButton(colorScheme, completedCount),
             const SizedBox(height: 16),
           ],
@@ -360,7 +349,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         border: Border.all(color: colorScheme.card, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -372,7 +361,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: colorScheme.accent.withValues(alpha: 0.1),
+              color: colorScheme.accent.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -429,7 +418,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -569,7 +558,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             borderRadius: BorderRadius.circular(isSelected ? 26 : 48),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 3,
                 offset: const Offset(0, 1),
               ),
@@ -614,7 +603,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 3,
                 offset: const Offset(0, 1),
               ),
@@ -650,16 +639,13 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             color: colorScheme.card,
             borderRadius: BorderRadius.circular(48),
             border: hasCompleted
-                ? Border.all(
-                    color: Colors.red.withValues(alpha: 0.15),
-                    width: 1.5,
-                  )
+                ? Border.all(color: Colors.red.withOpacity(0.15), width: 1.5)
                 : null,
             boxShadow: [
               BoxShadow(
                 color: hasCompleted
-                    ? Colors.red.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.04),
+                    ? Colors.red.withOpacity(0.08)
+                    : Colors.black.withOpacity(0.04),
                 blurRadius: hasCompleted ? 6 : 3,
                 offset: const Offset(0, 2),
               ),
@@ -672,7 +658,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                 height: 48,
                 decoration: BoxDecoration(
                   color: hasCompleted
-                      ? Colors.red.withValues(alpha: 0.1)
+                      ? Colors.red.withOpacity(0.1)
                       : colorScheme.secondaryCard,
                   borderRadius: BorderRadius.circular(24),
                 ),
@@ -712,7 +698,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.15),
+                              color: Colors.red.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -753,412 +739,12 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
     );
   }
 
-  Widget _buildNearbySyncButton(_ColorScheme colorScheme) {
-    return GestureDetector(
-      onTapDown: (_) => HapticFeedback.lightImpact(),
-      onTap: () async {
-        final nav = Navigator.of(context);
-        nav.pop();
-        await nav.push(
-          MaterialPageRoute(builder: (_) => const NearbySyncScreen()),
-        );
-      },
-      child: Container(
-        height: 80,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        decoration: BoxDecoration(
-          color: colorScheme.card,
-          borderRadius: BorderRadius.circular(48),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: colorScheme.secondaryCard,
-                borderRadius: BorderRadius.circular(21),
-              ),
-              child: Icon(
-                Icons.sync_alt_rounded,
-                color: colorScheme.secondaryText,
-                size: 21,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Nearby Sync',
-                    style: TextStyle(
-                      color: colorScheme.primaryText,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Pull tasks from desktop over local Wi-Fi',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: colorScheme.secondaryText,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: colorScheme.secondaryText,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ignore: unused_element
-  Future<void> _showNearbySyncDialog() async {
-    final endpointController = TextEditingController();
-    final pairingController = TextEditingController();
-
-    await showAppDialog(
-      context: context,
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-        bool syncing = false;
-        String? message;
-        bool error = false;
-
-        return StatefulBuilder(
-          builder: (context, setLocalState) {
-            Future<void> runSync() async {
-              debugPrint('[NearbySync] Sync button tapped');
-              if (syncing) return;
-              final endpoint = endpointController.text.trim();
-              final pair = pairingController.text.trim();
-              debugPrint(
-                '[NearbySync] Input endpoint="$endpoint", pinLength=${pair.length}',
-              );
-              if (endpoint.isEmpty || pair.isEmpty) {
-                setLocalState(() {
-                  error = true;
-                  message = 'Enter endpoint and pairing code.';
-                });
-                debugPrint(
-                  '[NearbySync] Validation failed: missing endpoint/pin',
-                );
-                return;
-              }
-
-              setLocalState(() {
-                syncing = true;
-                error = false;
-                message = null;
-              });
-
-              try {
-                debugPrint('[NearbySync] Starting pullFromDesktop...');
-                final hiveService = ref.read(hiveServiceProvider);
-                final result = await NearbySyncClientService.instance
-                    .pullFromDesktop(
-                      endpoint: endpoint,
-                      pairingCode: pair,
-                      hiveService: hiveService,
-                    )
-                    .timeout(const Duration(seconds: 18));
-                debugPrint(
-                  '[NearbySync] pullFromDesktop success: received=${result.receivedCount}, upserted=${result.upsertedCount}, ignored=${result.ignoredCount}',
-                );
-                await ref.read(taskProvider.notifier).refresh();
-                debugPrint('[NearbySync] Provider refresh done');
-                if (!ctx.mounted) return;
-                setLocalState(() => syncing = false);
-                setLocalState(() {
-                  error = false;
-                  message = result.upsertedCount == 0
-                      ? 'Already up to date. ${result.receivedCount} tasks checked.'
-                      : 'Connected and synced ${result.upsertedCount}/${result.receivedCount} tasks.';
-                });
-                return;
-              } on TimeoutException {
-                debugPrint('[NearbySync] Sync timeout');
-                if (!ctx.mounted) return;
-                setLocalState(() {
-                  syncing = false;
-                  error = true;
-                  message = 'Sync timed out. Check Wi-Fi and desktop host.';
-                });
-                return;
-              } catch (e, st) {
-                debugPrint('[NearbySync] Sync failed: $e');
-                debugPrint('[NearbySync] Stack: $st');
-                if (!ctx.mounted) return;
-                setLocalState(() {
-                  error = true;
-                  message = 'Sync failed: $e';
-                });
-              }
-            }
-
-            return AppDialogContainer(
-              child: SizedBox(
-                width: 420,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nearby Sync',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: cs.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Use endpoint and pairing code from desktop Nearby Sync.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: endpointController,
-                              decoration: const InputDecoration(
-                                labelText: 'Desktop endpoint',
-                                hintText: '192.168.1.4:53124',
-                                prefixIcon: Icon(Icons.computer_rounded),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            height: 52,
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                final scanned = await _scanNearbySyncQr(ctx);
-                                if (scanned == null || scanned.isEmpty) return;
-                                final endpoint = _extractEndpointFromQr(
-                                  scanned,
-                                );
-                                if (endpoint == null) {
-                                  setLocalState(() {
-                                    error = true;
-                                    message =
-                                        'QR invalid. Scan a Focus desktop sync QR.';
-                                  });
-                                  return;
-                                }
-                                endpointController.text = endpoint;
-                                setLocalState(() {
-                                  error = false;
-                                  message = 'Endpoint filled from QR.';
-                                });
-                              },
-                              icon: const Icon(
-                                Icons.qr_code_scanner_rounded,
-                                size: 18,
-                              ),
-                              label: const Text('Scan QR'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: pairingController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        decoration: const InputDecoration(
-                          labelText: 'Pairing code',
-                          hintText: '123456',
-                          prefixIcon: Icon(Icons.password_rounded),
-                          counterText: '',
-                        ),
-                      ),
-                      if (message != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          message!,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: error ? cs.error : Colors.green.shade600,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppDialogButton(
-                              label: syncing ? 'Syncing...' : 'Sync now',
-                              isPrimary: true,
-                              onTap: syncing ? () {} : runSync,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: AppDialogButton(
-                              label: 'Close',
-                              onTap: () {
-                                if (syncing) {
-                                  setLocalState(() {
-                                    error = true;
-                                    message =
-                                        'Please wait for sync to finish before closing.';
-                                  });
-                                  return;
-                                }
-                                _safeCloseDialog(context);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    endpointController.dispose();
-    pairingController.dispose();
-  }
-
-  void _safeCloseDialog(BuildContext dialogContext) {
-    FocusManager.instance.primaryFocus?.unfocus();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final nav = Navigator.of(dialogContext);
-      if (nav.canPop()) nav.pop();
-    });
-  }
-
-  Future<String?> _scanNearbySyncQr(BuildContext parentContext) async {
-    final controller = MobileScannerController(
-      detectionSpeed: DetectionSpeed.noDuplicates,
-      facing: CameraFacing.back,
-    );
-    bool handled = false;
-
-    final result = await showDialog<String>(
-      context: parentContext,
-      barrierDismissible: true,
-      builder: (ctx) {
-        return Dialog(
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 24,
-          ),
-          backgroundColor: Colors.black,
-          child: SizedBox(
-            width: 360,
-            height: 460,
-            child: Stack(
-              children: [
-                MobileScanner(
-                  controller: controller,
-                  onDetect: (capture) {
-                    if (handled) return;
-                    if (capture.barcodes.isEmpty) return;
-                    final code = capture.barcodes.first.rawValue;
-                    if (code == null || code.isEmpty) return;
-                    handled = true;
-                    Navigator.pop(ctx, code);
-                  },
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: IconButton.filled(
-                    onPressed: () => Navigator.pop(ctx),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ),
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 14,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'Point camera at the desktop Nearby Sync QR',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 12.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    await controller.dispose();
-    return result;
-  }
-
-  String? _extractEndpointFromQr(String raw) {
-    final value = raw.trim();
-    if (value.contains(':') && !value.startsWith('{')) return value;
-    try {
-      final decoded = jsonDecode(value);
-      if (decoded is Map<String, dynamic> &&
-          decoded['type'] == 'focus_nearby_sync' &&
-          decoded['endpoint'] is String) {
-        final endpoint = (decoded['endpoint'] as String).trim();
-        return endpoint.isEmpty ? null : endpoint;
-      }
-    } catch (_) {
-      return null;
-    }
-    return null;
-  }
-
   Future<void> _handleClearCompleted(int count) async {
     final bool confirmed = Platform.isWindows
         ? await _showWindowsClearDialog(count)
         : await _showMobileClearDialog(count);
 
     if (confirmed == true) {
-      final completedTasks = List<Task>.from(
-        ref.read(taskProvider).where((task) => task.isCompleted),
-      );
       await ref.read(taskProvider.notifier).clearCompletedTasks();
       ref.read(showCompletedTasksProvider.notifier).set(false);
 
@@ -1166,33 +752,21 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         HapticFeedback.heavyImpact();
       }
 
-      if (!mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.green.shade600,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green.shade600,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            content: const Text(
+              'Completed tasks cleared. Fresh start.',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
-          content: const Text(
-            'Completed tasks cleared.',
-            style: TextStyle(color: Colors.white),
-          ),
-          action: completedTasks.isEmpty
-              ? null
-              : SnackBarAction(
-                  label: 'UNDO',
-                  textColor: Colors.white,
-                  onPressed: () async {
-                    for (final task in completedTasks) {
-                      await ref.read(taskProvider.notifier).restoreTask(task);
-                    }
-                    ref.read(showCompletedTasksProvider.notifier).set(true);
-                  },
-                ),
-        ),
-      );
+        );
+      }
     }
   }
 
@@ -1306,7 +880,6 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         false;
   }
 
-  // ignore: unused_element
   Widget _buildDialogButton({
     required String label,
     required bool isPrimary,
@@ -1356,7 +929,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
               borderRadius: BorderRadius.circular(48),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withOpacity(0.04),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
@@ -1398,7 +971,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             borderRadius: BorderRadius.circular(48),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 3,
                 offset: const Offset(0, 1),
               ),
@@ -1413,7 +986,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   ref.read(showCompletedTasksProvider.notifier).toggle();
                   HapticFeedback.lightImpact();
                 },
-                activeTrackColor: Theme.of(context).colorScheme.primary,
+                activeColor: Theme.of(context).colorScheme.primary,
                 inactiveThumbColor: colorScheme.switchInactiveThumb,
                 inactiveTrackColor: colorScheme.switchInactiveTrack,
               ),
@@ -1442,7 +1015,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
               borderRadius: BorderRadius.circular(48),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withOpacity(0.04),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
@@ -1484,7 +1057,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             borderRadius: BorderRadius.circular(48),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 3,
                 offset: const Offset(0, 1),
               ),
@@ -1499,7 +1072,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   ref.read(appIconBadgeProvider.notifier).setEnabled(value);
                   HapticFeedback.lightImpact();
                 },
-                activeTrackColor: Theme.of(context).colorScheme.primary,
+                activeColor: Theme.of(context).colorScheme.primary,
                 inactiveThumbColor: colorScheme.switchInactiveThumb,
                 inactiveTrackColor: colorScheme.switchInactiveTrack,
               ),
@@ -1586,8 +1159,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   child: _buildActionButton(
                     icon: Icons.code_rounded,
                     label: 'Source',
-                    onTap: () =>
-                        _launchUrl('https://github.com/Appaxaap/Focus'),
+                    onTap: () => _launchUrl('https://github.com/Appaxaap/Focus'),
                     colorScheme: _getColorScheme(ref.read(themeProvider)),
                   ),
                 ),
@@ -1596,8 +1168,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   child: _buildActionButton(
                     icon: Icons.bug_report_rounded,
                     label: 'Issues',
-                    onTap: () =>
-                        _launchUrl('https://github.com/Appaxaap/Focus/issues'),
+                    onTap: () => _launchUrl('https://github.com/Appaxaap/Focus/issues'),
                     colorScheme: _getColorScheme(ref.read(themeProvider)),
                   ),
                 ),
@@ -1661,7 +1232,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           color: colorScheme.secondaryCard,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: colorScheme.secondaryText.withValues(alpha: 0.15),
+            color: colorScheme.secondaryText.withOpacity(0.15),
             width: 1,
           ),
         ),
@@ -1709,7 +1280,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         secondaryCard: const Color(0xFFF2F2F7),
         primaryText: const Color(0xFF1C1C1E),
         secondaryText: const Color(0xFF8E8E93),
-        dragHandle: Colors.black.withValues(alpha: 0.3),
+        dragHandle: Colors.black.withOpacity(0.3),
         selectedTheme: const Color(0xFFB8C5D1),
         selectedThemeIcon: const Color(0xFF2C2C2E),
         dialogBackground: Colors.white,
@@ -1725,13 +1296,13 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         secondaryCard: const Color(0xFF141414),
         primaryText: Colors.white,
         secondaryText: const Color(0xFF8E8E93),
-        dragHandle: Colors.white.withValues(alpha: 0.3),
+        dragHandle: Colors.white.withOpacity(0.3),
         selectedTheme: const Color(0xFF1A1A1A),
         selectedThemeIcon: const Color(0xFFD1BCFF),
         dialogBackground: const Color(0xFF0A0A0A),
         accent: const Color(0xFFD1BCFF),
         switchActive: const Color(0xFFD1BCFF),
-        switchInactiveThumb: const Color(0xFF767680).withValues(alpha: 0.16),
+        switchInactiveThumb: const Color(0xFF767680).withOpacity(0.16),
         switchInactiveTrack: const Color(0xFF1C1C1E),
       );
     } else {
@@ -1741,13 +1312,13 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         secondaryCard: const Color(0xFF3A3A3C),
         primaryText: Colors.white,
         secondaryText: const Color(0xFF8E8E93),
-        dragHandle: Colors.white.withValues(alpha: 0.3),
+        dragHandle: Colors.white.withOpacity(0.3),
         selectedTheme: const Color(0xFFB8C5D1),
         selectedThemeIcon: const Color(0xFF1C1C1E),
         dialogBackground: const Color(0xFF2C2C2E),
         accent: const Color(0xFF0A84FF),
         switchActive: const Color(0xFF30D158),
-        switchInactiveThumb: const Color(0xFF767680).withValues(alpha: 0.16),
+        switchInactiveThumb: const Color(0xFF767680).withOpacity(0.16),
         switchInactiveTrack: const Color(0xFF39393D),
       );
     }

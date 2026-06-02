@@ -75,12 +75,6 @@ This approach helps reduce cognitive overload and improve daily decision making.
 - List view and card view layouts  
 - No account or onboarding required  
 
-## Current Stability Notes
-
-- Linux desktop is release-ready for core task management workflows.
-- Pairing/offline sync is currently experimental; avoid using it for critical data exchange until stabilized.
-
-
 ---
 
 ## Release Track Convention
@@ -237,47 +231,3 @@ See the LICENSE file for details.
 
 > What is important is seldom urgent, and what is urgent is seldom important.  
 > Dwight D. Eisenhower
-
----
-
-## Linux Packaging and Release
-
-Build the Linux release bundle first:
-
-```bash
-flutter clean
-flutter pub get
-flutter build linux --release
-```
-
-Then generate distributables:
-
-```bash
-# AppImage (cross-distro friendly)
-./installers/linux/build_appimage.sh
-
-# Debian package (.deb)
-./installers/linux/build_deb.sh
-
-# RPM package (.rpm) - good for Fedora/Nobara
-./installers/linux/build_rpm.sh
-```
-
-Artifacts are written to `dist/`.
-
-### Packaging dependencies
-
-- AppImage: `wget`
-- DEB: `dpkg-deb`
-- RPM: `rpmbuild` (on Nobara/Fedora: `sudo dnf install rpm-build`)
-
-### Publish for multiple distros
-
-Recommended minimum release set:
-
-- `Focus-<version>-x86_64.AppImage`
-- `focus_<version>_amd64.deb`
-- `focus-<version>-1*.x86_64.rpm`
-- `focus.sha256`
-
-Upload these to GitHub Releases with release notes and tested distro list.

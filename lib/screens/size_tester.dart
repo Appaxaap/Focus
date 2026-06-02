@@ -1,4 +1,5 @@
-// DEV - ONLY SCREEN
+/// DEV - ONLY SCREEN
+
 
 // import 'package:flutter/material.dart';
 // import 'package:window_manager/window_manager.dart';
@@ -231,7 +232,7 @@
 //                                 borderRadius: BorderRadius.circular(20),
 //                                 boxShadow: [
 //                                   BoxShadow(
-//                                     color: Colors.black.withValues(alpha: 0.1),
+//                                     color: Colors.black.withOpacity(0.1),
 //                                     blurRadius: 20,
 //                                     offset: const Offset(0, 10),
 //                                   ),
@@ -375,7 +376,7 @@
 //       width: 120,
 //       height: 120,
 //       decoration: BoxDecoration(
-//         color: color.withValues(alpha: 0.1),
+//         color: color.withOpacity(0.1),
 //         borderRadius: BorderRadius.circular(15),
 //         border: Border.all(color: color, width: 2),
 //       ),

@@ -119,7 +119,6 @@ android/build/
 android/local.properties
 
 # Installer outputs
-/dist/
 installers/*.exe
 installers/*.msi
 installers/*.dmg

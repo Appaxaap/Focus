@@ -10,7 +10,6 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:io';
 import 'package:desktop_window/desktop_window.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'models/quadrant_enum.dart';
@@ -23,20 +22,9 @@ import 'screens/desktop_home_screen.dart';
 import 'screens/sunrise_screen.dart';
 
 const Color appBackgroundColor = Color(0xFF141118);
-RandomAccessFile? singleInstanceLockFile;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  final lockResult = await _acquireSingleInstanceLock();
-  if (!lockResult.acquired) {
-    runApp(
-      LockErrorApp(
-        message: lockResult.message,
-      ),
-    );
-    return;
-  }
 
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     await windowManager.ensureInitialized();
@@ -65,28 +53,12 @@ void main() async {
   }
 
   // Initialize Hive for local storage.
-  final appSupportDir = await getApplicationSupportDirectory();
-  await Hive.initFlutter(appSupportDir.path);
+  await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
   Hive.registerAdapter(QuadrantAdapter());
 
   final hiveService = HiveService();
-  try {
-    await hiveService.initialize();
-  } on FileSystemException catch (e) {
-    if (_isHiveLockException(e)) {
-      runApp(
-        LockErrorApp(
-          message:
-              'Focus appears to be already running and holding the local data lock.\n\n'
-              'Quit Focus from tray, then launch again.\n\n'
-              'Details: ${e.path ?? 'unknown lock path'}',
-        ),
-      );
-      return;
-    }
-    rethrow;
-  }
+  await hiveService.initialize();
 
   // Get the saved theme preference from Hive.
   final savedTheme = await hiveService.getThemePreference();
@@ -101,17 +73,21 @@ void main() async {
   runApp(
     ProviderScope(
       overrides: [
-        hiveServiceProvider.overrideWith((ref) => hiveService),
-        themeProvider.overrideWith((ref) {
-          return ThemeNotifier(hiveService)
-            ..setTheme(savedTheme ?? AppTheme.light);
-        }),
+        hiveServiceProvider.overrideWithProvider(
+          Provider((ref) => hiveService),
+        ),
+        themeProvider.overrideWithProvider(
+          StateNotifierProvider<ThemeNotifier, AppTheme>((ref) {
+            return ThemeNotifier(hiveService)
+              ..setTheme(savedTheme ?? AppTheme.light);
+          }),
+        ),
       ],
       child: const FocusApp(),
     ),
   );
 
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+  if (!kIsWeb && Platform.isWindows) {
     try {
       await WindowsShellService.instance.initialize();
     } catch (e) {
@@ -120,61 +96,6 @@ void main() async {
       }
     }
   }
-}
-
-bool _isHiveLockException(FileSystemException e) {
-  final message = e.message.toLowerCase();
-  final path = (e.path ?? '').toLowerCase();
-  return message.contains('lock failed') ||
-      path.endsWith('tasks.lock') ||
-      path.endsWith('preferences.lock');
-}
-
-Future<_SingleInstanceLockResult> _acquireSingleInstanceLock() async {
-  try {
-    final appSupportDir = await getApplicationSupportDirectory();
-    final lockFile = File('${appSupportDir.path}/app_instance.lock');
-    await lockFile.parent.create(recursive: true);
-
-    final raf = await lockFile.open(mode: FileMode.append);
-    await raf.lock(FileLock.exclusive);
-    singleInstanceLockFile = raf;
-    return const _SingleInstanceLockResult(acquired: true, message: '');
-  } on FileSystemException catch (e) {
-    final path = e.path ?? 'unknown path';
-    final message = e.message.toLowerCase();
-    final looksLikeAlreadyRunning =
-        message.contains('lock') ||
-        message.contains('resource temporarily unavailable') ||
-        message.contains('would block');
-    if (looksLikeAlreadyRunning) {
-      return _SingleInstanceLockResult(
-        acquired: false,
-        message:
-            'Focus is already running in another window/session.\n\n'
-            'Please switch to that instance or close it before launching again.\n\n'
-            'Lock path: $path',
-      );
-    }
-    return _SingleInstanceLockResult(
-      acquired: false,
-      message:
-          'Focus could not acquire the single-instance lock.\n\n'
-          'This is usually a file permission issue.\n'
-          'Lock path: $path\n'
-          'System message: ${e.message}',
-    );
-  }
-}
-
-class _SingleInstanceLockResult {
-  final bool acquired;
-  final String message;
-
-  const _SingleInstanceLockResult({
-    required this.acquired,
-    required this.message,
-  });
 }
 
 // Provider for the HiveService.
@@ -239,58 +160,6 @@ class FocusApp extends ConsumerStatefulWidget {
   ConsumerState<FocusApp> createState() => _FocusAppState();
 }
 
-class LockErrorApp extends StatelessWidget {
-  const LockErrorApp({super.key, required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: appBackgroundColor,
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Focus Is Already Running',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(message),
-                      const SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton(
-                          onPressed: () => exit(0),
-                          child: const Text('Close'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _FocusAppState extends ConsumerState<FocusApp> {
   late final ProviderSubscription<List<Task>> _tasksSubscription;
   late final ProviderSubscription<AsyncValue<bool>> _badgePrefSubscription;
@@ -302,15 +171,6 @@ class _FocusAppState extends ConsumerState<FocusApp> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarDividerColor: Colors.transparent,
-        systemStatusBarContrastEnforced: false,
-        systemNavigationBarContrastEnforced: false,
-      ),
-    );
 
     _tasksSubscription = ref.listenManual<List<Task>>(taskProvider, (
       previous,
@@ -369,10 +229,9 @@ class _FocusAppState extends ConsumerState<FocusApp> {
         outline: Color(0xFF2C2C2E),
         outlineVariant: Color(0xFF1C1C1E),
       ),
-      textTheme: ThemeData.dark().textTheme.apply(
-        bodyColor: Colors.white,
-        displayColor: Colors.white,
-      ),
+      textTheme: ThemeData.dark()
+          .textTheme
+          .apply(bodyColor: Colors.white, displayColor: Colors.white),
     );
 
     bool isDesktop = kIsWeb
@@ -390,9 +249,10 @@ class _FocusAppState extends ConsumerState<FocusApp> {
         useMaterial3: true,
         scaffoldBackgroundColor: appBackgroundColor,
         appBarTheme: const AppBarTheme(backgroundColor: appBackgroundColor),
-        textTheme: ThemeData(
-          useMaterial3: true,
-        ).textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
+        textTheme: ThemeData(useMaterial3: true).textTheme.apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+        ),
       ),
       darkTheme: themeMode == AppTheme.amoled
           ? amoledTheme
@@ -404,10 +264,9 @@ class _FocusAppState extends ConsumerState<FocusApp> {
                 backgroundColor: appBackgroundColor,
               ),
 
-              textTheme: ThemeData.dark(useMaterial3: true).textTheme.apply(
-                bodyColor: Colors.white,
-                displayColor: Colors.white,
-              ),
+              textTheme: ThemeData.dark(useMaterial3: true)
+                  .textTheme
+                  .apply(bodyColor: Colors.white, displayColor: Colors.white),
             ),
       themeMode: themeMode == AppTheme.light ? ThemeMode.light : ThemeMode.dark,
       home: isDesktop ? const DesktopHomeScreen() : const SplashRouterScreen(),

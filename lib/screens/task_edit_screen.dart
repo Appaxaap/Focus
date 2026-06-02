@@ -26,7 +26,8 @@ class TaskEditScreen extends ConsumerStatefulWidget {
   ConsumerState<TaskEditScreen> createState() => _TaskEditScreenState();
 }
 
-class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
+class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
+{
   late TextEditingController titleController;
   late TextEditingController notesController;
   late Quadrant? selectedQuadrant;
@@ -45,6 +46,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     selectedTime = widget.task?.dueDate != null
         ? TimeOfDay.fromDateTime(widget.task!.dueDate!)
         : null;
+
   }
 
   @override
@@ -60,7 +62,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     if (Theme.of(context).brightness == Brightness.dark) {
       return baseColor.withAlpha((255 * 0.4).toInt()); // 40% opacity
     } else {
-      return Theme.of(context).colorScheme.surfaceContainerHighest;
+      return Theme.of(context).colorScheme.surfaceVariant;
     }
   }
 
@@ -159,7 +161,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
             Text(
               'Add your priority',
               style: TextStyle(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                color: colorScheme.onSurface.withOpacity(0.6),
                 fontSize: isSmallScreen ? 12 : 14,
                 fontWeight: FontWeight.w400,
                 height: 1.0,
@@ -315,7 +317,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       setState(() {
         selectedDate = pickedDate;
       });
-      if (!mounted) return;
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: selectedTime ?? TimeOfDay.now(),
@@ -399,9 +400,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     final notificationService = NotificationService();
     final bool isEditing = widget.task != null;
     final String taskId = widget.task?.id ?? const Uuid().v4();
-    final int notificationId = notificationService.notificationIdForTask(
-      taskId,
-    );
+    final int notificationId = notificationService.notificationIdForTask(taskId);
 
     // Cancel existing notification if editing
     if (isEditing) {
@@ -425,7 +424,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           notificationError =
               'Notification permissions required for reminders.';
           if (kDebugMode) {
-            debugPrint('Permissions denied, but continuing to save task');
+            print('Permissions denied, but continuing to save task');
           }
         } else {
           // 3. Convert to timezone-aware datetime
@@ -446,9 +445,9 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           notificationScheduled = true;
 
           if (kDebugMode) {
-            debugPrint('Notification scheduled successfully!');
-            debugPrint('Scheduled Time: $scheduledTime');
-            debugPrint(
+            print('Notification scheduled successfully!');
+            print('Scheduled Time: $scheduledTime');
+            print(
               'Time Until: ${scheduledTime.difference(tz.TZDateTime.now(tz.local))}',
             );
 
@@ -494,23 +493,20 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           timeMessage = ' (very soon!)';
         }
 
-        if (!mounted) return;
         _showSnackbar(
           context,
           'Task saved with reminder$timeMessage',
           isError: false,
         );
       } else if (notificationError != null) {
-        if (!mounted) return;
         _showSnackbar(context, notificationError, isError: true);
       } else {
-        if (!mounted) return;
         _showSnackbar(context, 'Task saved!', isError: false);
       }
 
       // Small delay before navigation
       await Future.delayed(const Duration(milliseconds: 300));
-      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.pop(context);
     }
   }
@@ -522,11 +518,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.delete_outline_rounded,
-              color: Theme.of(context).colorScheme.error,
-              size: 40,
-            ),
+            Icon(Icons.delete_outline_rounded,
+                color: Theme.of(context).colorScheme.error, size: 40),
             const SizedBox(height: 20),
             Text(
               'Delete Task?',

@@ -1,1 +1,0 @@
-const bool kEnableNearbySync = false;
