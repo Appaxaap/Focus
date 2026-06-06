@@ -73,14 +73,14 @@ void main() async {
   runApp(
     ProviderScope(
       overrides: [
-        hiveServiceProvider.overrideWithProvider(
-          Provider((ref) => hiveService),
+        hiveServiceProvider.overrideWith(
+          (ref) => hiveService,
         ),
-        themeProvider.overrideWithProvider(
-          StateNotifierProvider<ThemeNotifier, AppTheme>((ref) {
+        themeProvider.overrideWith(
+          (ref) {
             return ThemeNotifier(hiveService)
               ..setTheme(savedTheme ?? AppTheme.light);
-          }),
+          },
         ),
       ],
       child: const FocusApp(),

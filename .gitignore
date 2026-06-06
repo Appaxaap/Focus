@@ -126,3 +126,4 @@ installers/*.appimage
 installers/*.deb
 installers/*.rpm
 installers/*.zip
+dist/

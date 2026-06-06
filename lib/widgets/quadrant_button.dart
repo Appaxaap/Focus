@@ -1,10 +1,6 @@
-// quadrant_buttons.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // If needed for providers later
-import '../models/quadrant_enum.dart'; // Adjust path as needed
+import '../models/quadrant_enum.dart';
 
-// Define the quadrant information map directly in this file or pass it as needed.
-// For self-contained widgets, defining it here is often good.
 final Map<Quadrant, Map<String, dynamic>> quadrantInfo = {
   Quadrant.urgentImportant: {
     'color': const Color(0xFFFF4557),
@@ -28,46 +24,41 @@ final Map<Quadrant, Map<String, dynamic>> quadrantInfo = {
   },
 };
 
-// Helper methods (if needed by this widget and not passed in)
-// You might need to decide if these should be passed in or defined here.
-// For now, let's define them here for self-containment.
-// Note: These require a BuildContext, so they are functions, not constants.
 Color _getContainerBackgroundColor(BuildContext context) {
   final baseColor = const Color(0xFF232323);
   if (Theme.of(context).brightness == Brightness.dark) {
-    return baseColor.withAlpha((255 * 0.4).toInt()); // 40% opacity
+    return baseColor.withAlpha((255 * 0.4).toInt());
   } else {
-    return Theme.of(context).colorScheme.surfaceVariant;
+    return Theme.of(context).colorScheme.surfaceContainerHighest;
   }
 }
 
 Color _getIconColor(BuildContext context) {
   final baseColor = const Color(0xFF6C7B7F);
   if (Theme.of(context).brightness == Brightness.dark) {
-    return baseColor.withAlpha((255 * 0.6).toInt()); // 60% opacity
+    return baseColor.withAlpha((255 * 0.6).toInt());
   } else {
     return Theme.of(context).colorScheme.onSurfaceVariant;
   }
 }
 
-class QuadrantSelector extends ConsumerStatefulWidget {
+class QuadrantSelector extends StatefulWidget {
   final Quadrant? initialQuadrant;
-  final ValueChanged<Quadrant?>? onQuadrantSelected; // Callback for selection
-  final AnimationController?
-  animationController; // Optional external controller
+  final ValueChanged<Quadrant?>? onQuadrantSelected;
+  final AnimationController? animationController;
 
   const QuadrantSelector({
-    Key? key,
     this.initialQuadrant,
     this.onQuadrantSelected,
     this.animationController,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
-  ConsumerState<QuadrantSelector> createState() => _QuadrantSelectorState();
+  State<QuadrantSelector> createState() => _QuadrantSelectorState();
 }
 
-class _QuadrantSelectorState extends ConsumerState<QuadrantSelector>
+class _QuadrantSelectorState extends State<QuadrantSelector>
     with TickerProviderStateMixin {
   late Quadrant? _selectedQuadrant;
   late AnimationController _animationController;
@@ -78,7 +69,6 @@ class _QuadrantSelectorState extends ConsumerState<QuadrantSelector>
     super.initState();
     _selectedQuadrant = widget.initialQuadrant;
 
-    // Use provided controller or create our own
     if (widget.animationController != null) {
       _animationController = widget.animationController!;
     } else {
@@ -114,7 +104,7 @@ class _QuadrantSelectorState extends ConsumerState<QuadrantSelector>
                     setState(() {
                       _selectedQuadrant = quadrant;
                     });
-                    widget.onQuadrantSelected?.call(quadrant); // Notify parent
+                    widget.onQuadrantSelected?.call(quadrant);
 
                     if (isSelected) {
                       _animationController.forward().then((_) {
@@ -135,8 +125,8 @@ class _QuadrantSelectorState extends ConsumerState<QuadrantSelector>
                         isSelected && _animationController.value > 0
                             ? 40 - (25 * _animationController.value)
                             : isSelected
-                            ? 15 // Selected state: 15px corners
-                            : 40, // Unselected state: 40px corners
+                            ? 15
+                            : 40,
                       ),
                     ),
                     child: Center(

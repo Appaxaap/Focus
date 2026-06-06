@@ -62,7 +62,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
     if (Theme.of(context).brightness == Brightness.dark) {
       return baseColor.withAlpha((255 * 0.4).toInt()); // 40% opacity
     } else {
-      return Theme.of(context).colorScheme.surfaceVariant;
+      return Theme.of(context).colorScheme.surfaceContainerHighest;
     }
   }
 
@@ -161,7 +161,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
             Text(
               'Add your priority',
               style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.6),
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
                 fontSize: isSmallScreen ? 12 : 14,
                 fontWeight: FontWeight.w400,
                 height: 1.0,
@@ -317,6 +317,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
       setState(() {
         selectedDate = pickedDate;
       });
+      if (!mounted) return;
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: selectedTime ?? TimeOfDay.now(),
@@ -424,16 +425,14 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
           notificationError =
               'Notification permissions required for reminders.';
           if (kDebugMode) {
-            print('Permissions denied, but continuing to save task');
+            debugPrint('Notification permissions denied; saving task without reminder');
           }
         } else {
-          // 3. Convert to timezone-aware datetime
           final tz.TZDateTime scheduledTime = tz.TZDateTime.from(
             finalDateTime,
             tz.local,
           );
 
-          // 4. Schedule notification
           await notificationService.scheduleNotification(
             id: notificationId,
             title: 'Task Due: $title',
@@ -445,13 +444,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
           notificationScheduled = true;
 
           if (kDebugMode) {
-            print('Notification scheduled successfully!');
-            print('Scheduled Time: $scheduledTime');
-            print(
-              'Time Until: ${scheduledTime.difference(tz.TZDateTime.now(tz.local))}',
+            debugPrint('Notification scheduled for $scheduledTime');
+            debugPrint(
+              'Time until notification: ${scheduledTime.difference(tz.TZDateTime.now(tz.local))}',
             );
-
-            // Debug pending notifications
             await notificationService.debugPendingNotifications();
           }
         }
@@ -478,37 +474,36 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen>
     ref.read(taskProvider.notifier).updateTask(newTask);
 
     // Show feedback to user
-    if (context.mounted) {
-      if (notificationScheduled && finalDateTime != null) {
-        final timeUntil = finalDateTime.difference(DateTime.now());
-        final hoursUntil = timeUntil.inHours;
-        final minutesUntil = timeUntil.inMinutes % 60;
+    if (!mounted) return;
+    if (notificationScheduled && finalDateTime != null) {
+      final timeUntil = finalDateTime.difference(DateTime.now());
+      final hoursUntil = timeUntil.inHours;
+      final minutesUntil = timeUntil.inMinutes % 60;
 
-        String timeMessage = '';
-        if (hoursUntil > 0) {
-          timeMessage = ' (in ${hoursUntil}h ${minutesUntil}m)';
-        } else if (minutesUntil > 0) {
-          timeMessage = ' (in ${minutesUntil}m)';
-        } else {
-          timeMessage = ' (very soon!)';
-        }
-
-        _showSnackbar(
-          context,
-          'Task saved with reminder$timeMessage',
-          isError: false,
-        );
-      } else if (notificationError != null) {
-        _showSnackbar(context, notificationError, isError: true);
+      String timeMessage = '';
+      if (hoursUntil > 0) {
+        timeMessage = ' (in ${hoursUntil}h ${minutesUntil}m)';
+      } else if (minutesUntil > 0) {
+        timeMessage = ' (in ${minutesUntil}m)';
       } else {
-        _showSnackbar(context, 'Task saved!', isError: false);
+        timeMessage = ' (very soon!)';
       }
 
-      // Small delay before navigation
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (!context.mounted) return;
-      Navigator.pop(context);
+      _showSnackbar(
+        context,
+        'Task saved with reminder$timeMessage',
+        isError: false,
+      );
+    } else if (notificationError != null) {
+      _showSnackbar(context, notificationError, isError: true);
+    } else {
+      _showSnackbar(context, 'Task saved!', isError: false);
     }
+
+    // Small delay before navigation
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    Navigator.pop(context);
   }
 
   void _showDeleteConfirmation(BuildContext context) {
