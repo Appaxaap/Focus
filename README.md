@@ -290,7 +290,6 @@ You can inspect the AppImage to list missing shared libraries:
 ldd squashfs-root/usr/bin/focus | grep "not found\|keybinder"
 ```
 
-If you distribute AppImages, consider adding these install steps to the release notes so users can quickly resolve missing runtime libraries.
 
 
 > What is important is seldom urgent, and what is urgent is seldom important.  
