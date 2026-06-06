@@ -11,6 +11,7 @@ import '../providers/theme_provider.dart';
 import 'app_dialog.dart';
 
 const Color _macDanger = Color(0xFFFF4D57);
+const String _changelogUrl = 'https://github.com/Appaxaap/Focus/releases';
 
 bool _isDarkScheme(ColorScheme cs) => cs.brightness == Brightness.dark;
 
@@ -22,7 +23,12 @@ Color _panel(ColorScheme cs, {double dark = 0.72, double light = 0.90}) {
   return cs.surface.withValues(alpha: _isDarkScheme(cs) ? dark : light);
 }
 
-void showDesktopSettingsFlyout(BuildContext context, GlobalKey anchorKey) {
+void showDesktopSettingsFlyout(
+  BuildContext context,
+  GlobalKey anchorKey, {
+  VoidCallback? onToggleFocusMode,
+  VoidCallback? onOpenShortcuts,
+}) {
   final RenderBox renderBox =
       anchorKey.currentContext!.findRenderObject() as RenderBox;
   final Offset offset = renderBox.localToGlobal(Offset.zero);
@@ -37,7 +43,10 @@ void showDesktopSettingsFlyout(BuildContext context, GlobalKey anchorKey) {
         Positioned(
           top: offset.dy + size.height + 8,
           right: MediaQuery.of(context).size.width - offset.dx - size.width,
-          child: const _DesktopSettingsFlyout(),
+          child: _DesktopSettingsFlyout(
+            onToggleFocusMode: onToggleFocusMode,
+            onOpenShortcuts: onOpenShortcuts,
+          ),
         ),
       ],
     ),
@@ -45,7 +54,13 @@ void showDesktopSettingsFlyout(BuildContext context, GlobalKey anchorKey) {
 }
 
 class _DesktopSettingsFlyout extends ConsumerStatefulWidget {
-  const _DesktopSettingsFlyout();
+  final VoidCallback? onToggleFocusMode;
+  final VoidCallback? onOpenShortcuts;
+
+  const _DesktopSettingsFlyout({
+    this.onToggleFocusMode,
+    this.onOpenShortcuts,
+  });
 
   @override
   ConsumerState<_DesktopSettingsFlyout> createState() =>
@@ -618,6 +633,17 @@ class _DesktopSettingsFlyoutState extends ConsumerState<_DesktopSettingsFlyout>
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: _aboutLinkButton(
+            icon: Icons.update_rounded,
+            label: 'Changelog',
+            url: _changelogUrl,
+            colorScheme: colorScheme,
+            theme: theme,
+          ),
         ),
         const SizedBox(height: 10),
         GestureDetector(

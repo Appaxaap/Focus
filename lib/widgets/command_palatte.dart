@@ -33,6 +33,9 @@ class CommandPalette extends ConsumerStatefulWidget {
   final VoidCallback? onToggleShowCompleted;
   final VoidCallback? onOpenSettings;
   final VoidCallback? onOpenShortcuts;
+  final VoidCallback? onOpenSelectedTask;
+  final VoidCallback? onCompleteSelectedTask;
+  final VoidCallback? onDeleteSelectedTask;
 
   const CommandPalette({
     super.key,
@@ -40,6 +43,9 @@ class CommandPalette extends ConsumerStatefulWidget {
     this.onToggleShowCompleted,
     this.onOpenSettings,
     this.onOpenShortcuts,
+    this.onOpenSelectedTask,
+    this.onCompleteSelectedTask,
+    this.onDeleteSelectedTask,
   });
 
   @override
@@ -120,6 +126,33 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
           onExecute: () {
             Navigator.pop(context);
             widget.onOpenShortcuts?.call();
+          },
+        ),
+      if (widget.onOpenSelectedTask != null)
+        Command(
+          name: 'Open Selected Task',
+          icon: Icons.open_in_new_rounded,
+          onExecute: () {
+            Navigator.pop(context);
+            widget.onOpenSelectedTask?.call();
+          },
+        ),
+      if (widget.onCompleteSelectedTask != null)
+        Command(
+          name: 'Complete Selected Task',
+          icon: Icons.check_circle_outline_rounded,
+          onExecute: () {
+            Navigator.pop(context);
+            widget.onCompleteSelectedTask?.call();
+          },
+        ),
+      if (widget.onDeleteSelectedTask != null)
+        Command(
+          name: 'Delete Selected Task',
+          icon: Icons.delete_outline_rounded,
+          onExecute: () {
+            Navigator.pop(context);
+            widget.onDeleteSelectedTask?.call();
           },
         ),
     ];

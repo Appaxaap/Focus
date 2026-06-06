@@ -1,6 +1,5 @@
 import 'dart:io';
 import '../providers/quadrant_names_provider.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +30,16 @@ class ToggleQuadrantPanelIntent extends Intent {
 
 class CycleDateIntent extends Intent {
   const CycleDateIntent();
+}
+
+class SelectQuadrantIntent extends Intent {
+  final Quadrant quadrant;
+  const SelectQuadrantIntent(this.quadrant);
+}
+
+class SetQuickDateIntent extends Intent {
+  final int index;
+  const SetQuickDateIntent(this.index);
 }
 
 class DesktopTaskEditScreen extends ConsumerStatefulWidget {
@@ -214,6 +223,27 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
     });
   }
 
+  void _setQuickDateByIndex(int index) {
+    setState(() {
+      _currentQuickDateIndex = index;
+      switch (index) {
+        case 0:
+          selectedDate = DateTime.now();
+          break;
+        case 1:
+          selectedDate = DateTime.now().add(const Duration(days: 1));
+          break;
+        case 2:
+          selectedDate = DateTime.now().add(const Duration(days: 7));
+          break;
+        default:
+          return;
+      }
+
+      selectedTime ??= const TimeOfDay(hour: 9, minute: 0);
+    });
+  }
+
   Future<bool> _onWillPop() async {
     if (!_hasUnsavedChanges) return true;
 
@@ -307,14 +337,23 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
               const SizedBox(width: 16),
               SizedBox(
                 width: 320,
-                child: Column(
-                  children: [
-                    _buildQuadrantPanel(theme, colorScheme),
-                    const SizedBox(height: 16),
-                    _buildQuickDateSelector(theme, colorScheme),
-                    const SizedBox(height: 16),
-                    _buildSmartSuggestions(theme, colorScheme),
-                  ],
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildQuadrantPanel(theme, colorScheme),
+                          const SizedBox(height: 16),
+                          _buildQuickDateSelector(theme, colorScheme),
+                          const SizedBox(height: 16),
+                          _buildSmartSuggestions(theme, colorScheme),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -329,6 +368,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
     final isEditing = widget.task != null;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final navigator = Navigator.of(context);
 
     final shortcuts = <ShortcutActivator, Intent>{
       const SingleActivator(LogicalKeyboardKey.enter, control: true):
@@ -341,6 +381,20 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
           const ToggleQuadrantPanelIntent(),
       const SingleActivator(LogicalKeyboardKey.keyD, control: true):
           const CycleDateIntent(),
+      const SingleActivator(LogicalKeyboardKey.digit1, control: true):
+          const SelectQuadrantIntent(Quadrant.urgentImportant),
+      const SingleActivator(LogicalKeyboardKey.digit2, control: true):
+          const SelectQuadrantIntent(Quadrant.notUrgentImportant),
+      const SingleActivator(LogicalKeyboardKey.digit3, control: true):
+          const SelectQuadrantIntent(Quadrant.urgentNotImportant),
+      const SingleActivator(LogicalKeyboardKey.digit4, control: true):
+          const SelectQuadrantIntent(Quadrant.notUrgentNotImportant),
+      const SingleActivator(LogicalKeyboardKey.digit1, control: true, shift: true):
+          const SetQuickDateIntent(0),
+      const SingleActivator(LogicalKeyboardKey.digit2, control: true, shift: true):
+          const SetQuickDateIntent(1),
+      const SingleActivator(LogicalKeyboardKey.digit3, control: true, shift: true):
+          const SetQuickDateIntent(2),
     };
 
     final actions = <Type, Action<Intent>>{
@@ -350,13 +404,18 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
       CancelTaskIntent: CallbackAction<CancelTaskIntent>(
         onInvoke: (intent) async {
           if (await _onWillPop()) {
-            Navigator.pop(context);
+            if (!mounted) {
+              return null;
+            }
+            navigator.pop();
           }
+          return null;
         },
       ),
       ShowShortcutsIntent: CallbackAction<ShowShortcutsIntent>(
         onInvoke: (intent) {
           setState(() => _showShortcuts = !_showShortcuts);
+          return null;
         },
       ),
       ToggleQuadrantPanelIntent: CallbackAction<ToggleQuadrantPanelIntent>(
@@ -365,23 +424,42 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
             () => _isQuadrantPanelCollapsed = !_isQuadrantPanelCollapsed,
           );
           HapticFeedback.lightImpact();
+          return null;
         },
       ),
       CycleDateIntent: CallbackAction<CycleDateIntent>(
         onInvoke: (intent) {
           _cycleQuickDates();
           HapticFeedback.selectionClick();
+          return null;
+        },
+      ),
+      SelectQuadrantIntent: CallbackAction<SelectQuadrantIntent>(
+        onInvoke: (intent) {
+          setState(() {
+            selectedQuadrant = intent.quadrant;
+            _quadrantError = null;
+          });
+          HapticFeedback.selectionClick();
+          return null;
+        },
+      ),
+      SetQuickDateIntent: CallbackAction<SetQuickDateIntent>(
+        onInvoke: (intent) {
+          _setQuickDateByIndex(intent.index);
+          HapticFeedback.selectionClick();
+          return null;
         },
       ),
     };
 
     return PopScope(
       canPop: !_hasUnsavedChanges,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (!didPop && _hasUnsavedChanges) {
           final shouldPop = await _onWillPop();
-          if (shouldPop && context.mounted) {
-            Navigator.pop(context);
+          if (shouldPop && mounted) {
+            navigator.pop();
           }
         }
       },
@@ -420,8 +498,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
   }
 
   Widget _buildSmartSuggestions(ThemeData theme, ColorScheme colorScheme) {
-    if (selectedQuadrant == null && selectedDate == null)
+    if (selectedQuadrant == null && selectedDate == null) {
       return const SizedBox.shrink();
+    }
 
     String suggestion = '';
     IconData icon = Icons.lightbulb_outline_rounded;
@@ -455,9 +534,11 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: suggestionColor.withOpacity(0.1),
+        color: suggestionColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: suggestionColor.withOpacity(0.3)),
+        border: Border.all(
+          color: suggestionColor.withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,7 +562,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
 
   Widget _buildLoadingOverlay(ColorScheme colorScheme) {
     return Container(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withValues(alpha: 0.3),
       child: Center(
         child: Container(
           padding: const EdgeInsets.all(24),
@@ -512,7 +593,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
     return GestureDetector(
       onTap: () => setState(() => _showShortcuts = false),
       child: Container(
-        color: Colors.black.withOpacity(0.6),
+        color: Colors.black.withValues(alpha: 0.6),
         child: Center(
           child: Container(
             width: 420,
@@ -521,7 +602,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: colorScheme.outlineVariant.withOpacity(0.3),
+                color: colorScheme.outlineVariant.withValues(alpha: 0.3),
               ),
             ),
 
@@ -551,6 +632,8 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                 _buildShortcutRow('Esc', 'Cancel'),
                 _buildShortcutRow('Ctrl + Q', 'Toggle priority panel'),
                 _buildShortcutRow('Ctrl + D', 'Cycle quick dates'),
+                _buildShortcutRow('Ctrl + 1..4', 'Set priority quadrant'),
+                _buildShortcutRow('Ctrl + Shift + 1..3', 'Set quick date'),
                 _buildShortcutRow('?', 'Show shortcuts'),
                 _buildShortcutRow('Tab', 'Navigate fields'),
               ],
@@ -664,9 +747,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
       onTap: () {
         setState(() {
           selectedDate = date;
-          if (selectedTime == null) {
-            selectedTime = const TimeOfDay(hour: 9, minute: 0);
-          }
+          selectedTime ??= const TimeOfDay(hour: 9, minute: 0);
         });
       },
       borderRadius: BorderRadius.circular(8),
@@ -675,13 +756,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primary.withOpacity(0.1)
+              ? colorScheme.primary.withValues(alpha: 0.1)
               : colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
-                : colorScheme.outlineVariant.withOpacity(0.3),
+                : colorScheme.outlineVariant.withValues(alpha: 0.3),
           ),
         ),
         child: Text(

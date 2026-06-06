@@ -70,6 +70,9 @@ class NotificationService {
         requestBadgePermission: true,
         requestSoundPermission: true,
       );
+      const linuxSettings = LinuxInitializationSettings(
+        defaultActionName: 'Open notification',
+      );
       final windowsIconPath =
           '${File(Platform.resolvedExecutable).parent.path}\\data\\flutter_assets\\assets\\images\\tray_icon.ico';
       final windowsSettings = WindowsInitializationSettings(
@@ -84,6 +87,7 @@ class NotificationService {
           android: androidSettings,
           iOS: iosSettings,
           macOS: iosSettings,
+          linux: linuxSettings,
           windows: windowsSettings,
         ),
         onDidReceiveNotificationResponse: (response) {
@@ -214,6 +218,7 @@ class NotificationService {
     );
 
     const iosDetails = DarwinNotificationDetails();
+    const linuxDetails = LinuxNotificationDetails();
     final taskPayload = payload ?? '';
     final windowsDetails = WindowsNotificationDetails(
       actions: [
@@ -237,6 +242,7 @@ class NotificationService {
         android: androidDetails,
         iOS: iosDetails,
         macOS: iosDetails,
+        linux: linuxDetails,
         windows: windowsDetails,
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -264,6 +270,7 @@ class NotificationService {
       priority: Priority.high,
     );
     const iosDetails = DarwinNotificationDetails();
+    const linuxDetails = LinuxNotificationDetails();
     final taskPayload = payload ?? '';
     final windowsDetails = WindowsNotificationDetails(
       actions: [
@@ -286,6 +293,7 @@ class NotificationService {
         android: androidDetails,
         iOS: iosDetails,
         macOS: iosDetails,
+        linux: linuxDetails,
         windows: windowsDetails,
       ),
       payload: payload,

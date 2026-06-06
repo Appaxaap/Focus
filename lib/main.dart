@@ -167,10 +167,23 @@ class _FocusAppState extends ConsumerState<FocusApp> {
   List<Task> _latestTasks = const [];
   bool _badgeEnabled = true;
 
+  void _resetKeyboardStateForDebugLinux() {
+    assert(() {
+      if (!kIsWeb && Platform.isLinux) {
+        // Hot restart on Linux can leave synthesized lock-key state behind.
+        // Clearing it in debug avoids the Flutter keyboard assertion loop.
+        // ignore: invalid_use_of_visible_for_testing_member
+        HardwareKeyboard.instance.clearState();
+      }
+      return true;
+    }());
+  }
+
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _resetKeyboardStateForDebugLinux();
 
     _tasksSubscription = ref.listenManual<List<Task>>(taskProvider, (
       previous,
@@ -194,6 +207,12 @@ class _FocusAppState extends ConsumerState<FocusApp> {
     await ref
         .read(appBadgeServiceProvider)
         .syncBadge(tasks: _latestTasks, enabled: _badgeEnabled);
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    _resetKeyboardStateForDebugLinux();
   }
 
   @override

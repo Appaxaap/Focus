@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
@@ -46,6 +45,31 @@ class OpenSettingsIntent extends Intent {
 
 class OpenShortcutHelpIntent extends Intent {
   const OpenShortcutHelpIntent();
+}
+
+class SelectNextTaskIntent extends Intent {
+  const SelectNextTaskIntent();
+}
+
+class SelectPreviousTaskIntent extends Intent {
+  const SelectPreviousTaskIntent();
+}
+
+class OpenSelectedTaskIntent extends Intent {
+  const OpenSelectedTaskIntent();
+}
+
+class CompleteSelectedTaskIntent extends Intent {
+  const CompleteSelectedTaskIntent();
+}
+
+class DeleteSelectedTaskIntent extends Intent {
+  const DeleteSelectedTaskIntent();
+}
+
+class MoveSelectedTaskIntent extends Intent {
+  final Quadrant quadrant;
+  const MoveSelectedTaskIntent(this.quadrant);
 }
 
 class SelectQuadrantIntent extends Intent {
@@ -389,11 +413,15 @@ class _TaskRow extends StatefulWidget {
   final Task task;
   final WidgetRef ref;
   final ValueChanged<Quadrant> onMoveToQuadrant;
+  final bool selected;
+  final VoidCallback? onOpenTask;
 
   const _TaskRow({
     required this.task,
     required this.ref,
     required this.onMoveToQuadrant,
+    required this.selected,
+    this.onOpenTask,
     super.key,
   });
 
@@ -469,15 +497,19 @@ class _TaskRowState extends State<_TaskRow> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
         decoration: BoxDecoration(
-          color: _hovered
-              ? _surfaceInk(cs, dark: 0.08, light: 0.12)
-              : _surfaceInk(cs, dark: 0.04, light: 0.08),
+          color: widget.selected
+              ? _quadrantColor(task.quadrant).withValues(alpha: 0.12)
+              : _hovered
+                  ? _surfaceInk(cs, dark: 0.08, light: 0.12)
+                  : _surfaceInk(cs, dark: 0.04, light: 0.08),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: _hovered
-                ? _surfaceInk(cs, dark: 0.12, light: 0.18)
-                : _surfaceInk(cs, dark: 0.07, light: 0.12),
-            width: 0.5,
+            color: widget.selected
+                ? _quadrantColor(task.quadrant).withValues(alpha: 0.42)
+                : _hovered
+                    ? _surfaceInk(cs, dark: 0.12, light: 0.18)
+                    : _surfaceInk(cs, dark: 0.07, light: 0.12),
+            width: widget.selected ? 1.0 : 0.5,
           ),
         ),
         child: Column(
@@ -493,6 +525,7 @@ class _TaskRowState extends State<_TaskRow> {
               duration: const Duration(milliseconds: 140),
               curve: Curves.easeOut,
               child: _hovered
+                      || widget.selected
                   ? Container(
                       height: 30,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -525,6 +558,12 @@ class _TaskRowState extends State<_TaskRow> {
                               color: _surfaceInk(cs, dark: 0.55, light: 0.75),
                               onTap: () {},
                             ),
+                          ),
+                          _stripAction(
+                            icon: Icons.open_in_new_rounded,
+                            label: 'Open',
+                            color: _surfaceInk(cs, dark: 0.55, light: 0.75),
+                            onTap: widget.onOpenTask ?? () {},
                           ),
                           _stripAction(
                             icon: Icons.check_circle_outline_rounded,
@@ -698,14 +737,26 @@ class _SearchPill extends StatelessWidget {
 
 class _SettingsPill extends StatelessWidget {
   final GlobalKey settingsKey;
-  const _SettingsPill({required this.settingsKey});
+  final VoidCallback? onToggleFocusMode;
+  final VoidCallback? onOpenShortcuts;
+
+  const _SettingsPill({
+    required this.settingsKey,
+    this.onToggleFocusMode,
+    this.onOpenShortcuts,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       key: settingsKey,
-      onTap: () => showDesktopSettingsFlyout(context, settingsKey),
+      onTap: () => showDesktopSettingsFlyout(
+        context,
+        settingsKey,
+        onToggleFocusMode: onToggleFocusMode,
+        onOpenShortcuts: onOpenShortcuts,
+      ),
       child: Container(
         width: 30,
         height: 30,
@@ -742,9 +793,13 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
   StreamSubscription<DesktopShellEvent>? _desktopShellSub;
   Timer? _dueReminderTimer;
   final FocusNode _homeFocusNode = FocusNode();
+  final ScrollController _taskListController = ScrollController();
+  final ScrollController _focusTaskListController = ScrollController();
   final Set<String> _dueReminderShown = <String>{};
+  final Map<String, GlobalKey> _taskRowKeys = <String, GlobalKey>{};
 
   Quadrant _selectedQuadrant = Quadrant.urgentImportant;
+  String? _selectedTaskId;
   bool _isFocusMode = false;
 
   final GlobalKey _settingsKey = GlobalKey();
@@ -810,8 +865,134 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     _dueReminderTimer?.cancel();
     NotificationService().onNotificationResponse = null;
     _homeFocusNode.dispose();
+    _taskListController.dispose();
+    _focusTaskListController.dispose();
     _fadeCtrl.dispose();
     super.dispose();
+  }
+
+  GlobalKey _taskRowKey(String taskId) {
+    return _taskRowKeys.putIfAbsent(taskId, GlobalKey.new);
+  }
+
+  List<Task> _currentScopedTasks() {
+    final tasks = ref.read(taskProvider);
+    final filter = ref.read(filterProvider);
+    final showCompleted = ref.read(showCompletedTasksProvider).value ?? false;
+    final filtered = _filtered(tasks, filter, showCompleted);
+    return filtered
+        .where((t) => t.quadrant == _selectedQuadrant && !t.isCompleted)
+        .toList();
+  }
+
+  void _syncSelectedTask([List<Task>? scoped]) {
+    final visible = scoped ?? _currentScopedTasks();
+    final selectedExists = _selectedTaskId != null &&
+        visible.any((task) => task.id == _selectedTaskId);
+
+    if (visible.isEmpty) {
+      if (_selectedTaskId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() => _selectedTaskId = null);
+          }
+        });
+      }
+      return;
+    }
+
+    if (!selectedExists) {
+      final nextId = visible.first.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _selectedTaskId = nextId);
+          _ensureSelectedTaskVisible();
+        }
+      });
+    }
+  }
+
+  Task? _selectedTask([List<Task>? scoped]) {
+    final visible = scoped ?? _currentScopedTasks();
+    if (visible.isEmpty) return null;
+    return visible.where((task) => task.id == _selectedTaskId).firstOrNull ??
+        visible.first;
+  }
+
+  void _selectTaskByOffset(int offset) {
+    final visible = _currentScopedTasks();
+    if (visible.isEmpty) return;
+
+    final currentIndex = _selectedTaskId == null
+        ? 0
+        : visible.indexWhere((task) => task.id == _selectedTaskId);
+    final safeIndex = currentIndex < 0 ? 0 : currentIndex;
+    final nextIndex = (safeIndex + offset).clamp(0, visible.length - 1);
+    final nextId = visible[nextIndex].id;
+
+    if (nextId == _selectedTaskId) return;
+
+    setState(() => _selectedTaskId = nextId);
+    _ensureSelectedTaskVisible();
+    HapticFeedback.selectionClick();
+  }
+
+  void _ensureSelectedTaskVisible() {
+    final taskId = _selectedTaskId;
+    if (taskId == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final itemContext = _taskRowKeys[taskId]?.currentContext;
+      if (itemContext == null || !mounted) return;
+      Scrollable.ensureVisible(
+        itemContext,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
+    });
+  }
+
+  void _openTask(Task task) {
+    Navigator.push(
+      context,
+      _fastRoute(DesktopTaskEditScreen(task: task)),
+    ).then((_) {
+      if (mounted) _homeFocusNode.requestFocus();
+    });
+  }
+
+  void _openSelectedTask() {
+    final task = _selectedTask();
+    if (task == null) return;
+    _openTask(task);
+  }
+
+  void _toggleSelectedTaskCompletion() {
+    final task = _selectedTask();
+    if (task == null) return;
+    ref.read(taskProvider.notifier).updateTask(
+          task.copyWith(
+            isCompleted: !task.isCompleted,
+            updatedAt: DateTime.now(),
+          ),
+        );
+    HapticFeedback.lightImpact();
+  }
+
+  void _deleteSelectedTask() {
+    final task = _selectedTask();
+    if (task == null) return;
+    ref.read(taskProvider.notifier).deleteTask(task.id);
+    HapticFeedback.mediumImpact();
+  }
+
+  void _moveSelectedTaskToQuadrant(Quadrant quadrant) {
+    final task = _selectedTask();
+    if (task == null || task.quadrant == quadrant) return;
+    ref.read(taskProvider.notifier).moveTaskToQuadrant(task.id, quadrant);
+    setState(() => _selectedQuadrant = quadrant);
+    HapticFeedback.mediumImpact();
   }
 
   void _openCommandPalette() {
@@ -821,8 +1002,16 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
         onToggleFocusMode: _toggleFocusMode,
         onToggleShowCompleted: () =>
             ref.read(showCompletedTasksProvider.notifier).toggle(),
-        onOpenSettings: () => showDesktopSettingsFlyout(context, _settingsKey),
+        onOpenSettings: () => showDesktopSettingsFlyout(
+          context,
+          _settingsKey,
+          onToggleFocusMode: _toggleFocusMode,
+          onOpenShortcuts: _showShortcutsHelp,
+        ),
         onOpenShortcuts: _showShortcutsHelp,
+        onOpenSelectedTask: _openSelectedTask,
+        onCompleteSelectedTask: _toggleSelectedTaskCompletion,
+        onDeleteSelectedTask: _deleteSelectedTask,
       ),
     ).then((_) {
       if (mounted) _homeFocusNode.requestFocus();
@@ -938,6 +1127,32 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
             const OpenShortcutHelpIntent(),
         const SingleActivator(LogicalKeyboardKey.f1):
             const OpenShortcutHelpIntent(),
+        const SingleActivator(LogicalKeyboardKey.arrowDown):
+            const SelectNextTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyJ):
+            const SelectNextTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.arrowUp):
+            const SelectPreviousTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyK):
+            const SelectPreviousTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.enter):
+            const OpenSelectedTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.space):
+            const CompleteSelectedTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyX):
+            const CompleteSelectedTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.delete):
+            const DeleteSelectedTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.backspace):
+            const DeleteSelectedTaskIntent(),
+        const SingleActivator(LogicalKeyboardKey.digit1, alt: true):
+            const MoveSelectedTaskIntent(Quadrant.urgentImportant),
+        const SingleActivator(LogicalKeyboardKey.digit2, alt: true):
+            const MoveSelectedTaskIntent(Quadrant.notUrgentImportant),
+        const SingleActivator(LogicalKeyboardKey.digit3, alt: true):
+            const MoveSelectedTaskIntent(Quadrant.urgentNotImportant),
+        const SingleActivator(LogicalKeyboardKey.digit4, alt: true):
+            const MoveSelectedTaskIntent(Quadrant.notUrgentNotImportant),
         const SingleActivator(LogicalKeyboardKey.digit1):
             const SelectQuadrantIntent(Quadrant.urgentImportant),
         const SingleActivator(LogicalKeyboardKey.digit2):
@@ -948,10 +1163,12 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
             const SelectQuadrantIntent(Quadrant.notUrgentNotImportant),
       };
 
-  KeyEventResult _handleHomeKeyEvent(FocusNode node, RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
+  KeyEventResult _handleHomeKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-    final isCtrlOrMeta = event.isControlPressed || event.isMetaPressed;
+    final isCtrlOrMeta =
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
     if (!isCtrlOrMeta) return KeyEventResult.ignored;
 
     switch (event.logicalKey) {
@@ -968,7 +1185,12 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
         ref.read(showCompletedTasksProvider.notifier).toggle();
         return KeyEventResult.handled;
       case LogicalKeyboardKey.comma:
-        showDesktopSettingsFlyout(context, _settingsKey);
+        showDesktopSettingsFlyout(
+          context,
+          _settingsKey,
+          onToggleFocusMode: _toggleFocusMode,
+          onOpenShortcuts: _showShortcutsHelp,
+        );
         return KeyEventResult.handled;
       case LogicalKeyboardKey.slash:
         _showShortcutsHelp();
@@ -993,7 +1215,12 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
               ref.read(showCompletedTasksProvider.notifier).toggle(),
         ),
         OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(
-          onInvoke: (_) => showDesktopSettingsFlyout(context, _settingsKey),
+          onInvoke: (_) => showDesktopSettingsFlyout(
+            context,
+            _settingsKey,
+            onToggleFocusMode: _toggleFocusMode,
+            onOpenShortcuts: _showShortcutsHelp,
+          ),
         ),
         OpenShortcutHelpIntent: CallbackAction<OpenShortcutHelpIntent>(
           onInvoke: (_) {
@@ -1001,9 +1228,46 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
             return null;
           },
         ),
+        SelectNextTaskIntent: CallbackAction<SelectNextTaskIntent>(
+          onInvoke: (_) {
+            _selectTaskByOffset(1);
+            return null;
+          },
+        ),
+        SelectPreviousTaskIntent: CallbackAction<SelectPreviousTaskIntent>(
+          onInvoke: (_) {
+            _selectTaskByOffset(-1);
+            return null;
+          },
+        ),
+        OpenSelectedTaskIntent: CallbackAction<OpenSelectedTaskIntent>(
+          onInvoke: (_) {
+            _openSelectedTask();
+            return null;
+          },
+        ),
+        CompleteSelectedTaskIntent: CallbackAction<CompleteSelectedTaskIntent>(
+          onInvoke: (_) {
+            _toggleSelectedTaskCompletion();
+            return null;
+          },
+        ),
+        DeleteSelectedTaskIntent: CallbackAction<DeleteSelectedTaskIntent>(
+          onInvoke: (_) {
+            _deleteSelectedTask();
+            return null;
+          },
+        ),
+        MoveSelectedTaskIntent: CallbackAction<MoveSelectedTaskIntent>(
+          onInvoke: (intent) {
+            _moveSelectedTaskToQuadrant(intent.quadrant);
+            return null;
+          },
+        ),
         SelectQuadrantIntent: CallbackAction<SelectQuadrantIntent>(
           onInvoke: (i) {
             setState(() => _selectedQuadrant = i.quadrant);
+            _syncSelectedTask();
             HapticFeedback.selectionClick();
             return null;
           },
@@ -1036,7 +1300,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
       context: context,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
-        final shortcuts = <(String, String)>[
+        final globalShortcuts = <(String, String)>[
           ('Open Command Palette', 'Ctrl + K'),
           ('New Task', 'Ctrl + N'),
           ('Toggle Focus Mode', 'Ctrl + F'),
@@ -1044,11 +1308,31 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
           ('Open Settings', 'Ctrl + ,'),
           ('Show Shortcuts', 'Ctrl + / or F1'),
           ('Select Quadrant 1-4', '1, 2, 3, 4'),
+          ('Next / Previous Task', 'J / K or Up / Down'),
+          ('Open Selected Task', 'Enter'),
+          ('Complete Selected Task', 'Space or X'),
+          ('Delete Selected Task', 'Delete or Backspace'),
+          ('Move Selected Task', 'Alt + 1, 2, 3, 4'),
+        ];
+        final editorShortcuts = <(String, String)>[
+          ('Save Task', 'Ctrl + Enter'),
+          ('Cancel Edit', 'Esc'),
+          ('Toggle Priority Panel', 'Ctrl + Q'),
+          ('Cycle Quick Dates', 'Ctrl + D'),
+          ('Set Priority Quadrant', 'Ctrl + 1, 2, 3, 4'),
+          ('Set Quick Date', 'Ctrl + Shift + 1, 2, 3'),
+          ('Show Editor Shortcuts', '?'),
+          ('Navigate Fields', 'Tab'),
+        ];
+        final paletteShortcuts = <(String, String)>[
+          ('Move Result Selection', 'Up / Down'),
+          ('Run Highlighted Result', 'Enter'),
+          ('Close Palette', 'Esc'),
         ];
 
         return AppDialogContainer(
           child: SizedBox(
-            width: 420,
+            width: 460,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1062,39 +1346,158 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...shortcuts.map(
-                  (s) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 420),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            s.$1,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: cs.onSurface.withValues(alpha: 0.82),
+                        Text(
+                          'Home',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: cs.onSurface.withValues(alpha: 0.58),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        ...globalShortcuts.map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s.$1,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: cs.onSurface.withValues(alpha: 0.82),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: cs.onSurface.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: cs.onSurface.withValues(alpha: 0.14),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    s.$2,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: cs.onSurface.withValues(alpha: 0.92),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                        const SizedBox(height: 12),
+                        Text(
+                          'Task Editor',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: cs.onSurface.withValues(alpha: 0.58),
                           ),
-                          decoration: BoxDecoration(
-                            color: cs.onSurface.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: cs.onSurface.withValues(alpha: 0.14),
-                              width: 0.5,
+                        ),
+                        const SizedBox(height: 4),
+                        ...editorShortcuts.map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s.$1,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: cs.onSurface.withValues(alpha: 0.82),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: cs.onSurface.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: cs.onSurface.withValues(alpha: 0.14),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    s.$2,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.onSurface.withValues(alpha: 0.72),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Text(
-                            s.$2,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: cs.onSurface.withValues(alpha: 0.72),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Command Palette',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: cs.onSurface.withValues(alpha: 0.58),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        ...paletteShortcuts.map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s.$1,
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: cs.onSurface.withValues(alpha: 0.82),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: cs.onSurface.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: cs.onSurface.withValues(alpha: 0.14),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    s.$2,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.onSurface.withValues(alpha: 0.72),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -1186,6 +1589,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     final showCompleted = ref.watch(showCompletedTasksProvider).value ?? false;
 
     final all        = _filtered(tasks, filter, showCompleted);
+    _syncSelectedTask(
+      all
+          .where((t) => t.quadrant == _selectedQuadrant && !t.isCompleted)
+          .toList(),
+    );
     final doneCnt    = tasks
         .where((t) =>
             t.isCompleted &&
@@ -1203,7 +1611,7 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
     return Focus(
       focusNode: _homeFocusNode,
       autofocus: true,
-      onKey: _handleHomeKeyEvent,
+      onKeyEvent: _handleHomeKeyEvent,
       child: FocusableActionDetector(
         shortcuts: _shortcuts,
         actions: _actions(context),
@@ -1304,7 +1712,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                 onTap: () => _navigateToAddTask(context),
               ),
               const SizedBox(width: 8),
-              _SettingsPill(settingsKey: _settingsKey),
+              _SettingsPill(
+                settingsKey: _settingsKey,
+                onToggleFocusMode: _toggleFocusMode,
+                onOpenShortcuts: _showShortcutsHelp,
+              ),
             ];
 
             if (isWide) {
@@ -1487,6 +1899,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                     return GestureDetector(
                       onTap: () {
                         setState(() => _selectedQuadrant = q);
+                        _syncSelectedTask(
+                          tasks
+                              .where((t) => t.quadrant == q && !t.isCompleted)
+                              .toList(),
+                        );
                         HapticFeedback.selectionClick();
                       },
                       child: Container(
@@ -1622,6 +2039,11 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                   count: cnt,
                   onTap: () {
                     setState(() => _selectedQuadrant = q);
+                    _syncSelectedTask(
+                      tasks
+                          .where((t) => t.quadrant == q && !t.isCompleted)
+                          .toList(),
+                    );
                     HapticFeedback.selectionClick();
                   },
                   onTaskDropped: (task) {
@@ -1727,18 +2149,21 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                         ),
                       )
                     : ListView.separated(
+                        controller: _taskListController,
                         itemCount: scoped.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 5),
                         itemBuilder: (ctx, i) => _TaskRow(
                           task: scoped[i],
                           ref: ref,
+                          selected: scoped[i].id == _selectedTaskId,
+                          onOpenTask: () => _openTask(scoped[i]),
                           onMoveToQuadrant: (q) {
                             ref
                                 .read(taskProvider.notifier)
                                 .moveTaskToQuadrant(scoped[i].id, q);
                           },
-                          key: ValueKey(scoped[i].id),
+                          key: _taskRowKey(scoped[i].id),
                         ),
                       ),
               ),
@@ -2110,18 +2535,21 @@ class _DesktopHomeScreenState extends ConsumerState<DesktopHomeScreen>
                               ),
                             )
                           : ListView.separated(
+                              controller: _focusTaskListController,
                               itemCount: scoped.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 5),
                               itemBuilder: (ctx, i) => _TaskRow(
                                 task: scoped[i],
                                 ref: ref,
+                                selected: scoped[i].id == _selectedTaskId,
+                                onOpenTask: () => _openTask(scoped[i]),
                                 onMoveToQuadrant: (q) {
                                   ref
                                       .read(taskProvider.notifier)
                                       .moveTaskToQuadrant(scoped[i].id, q);
                                 },
-                                key: ValueKey(scoped[i].id),
+                                key: _taskRowKey(scoped[i].id),
                               ),
                             ),
                     ),
