@@ -7,7 +7,10 @@ project(runner LANGUAGES CXX)
 set(BINARY_NAME "focus")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.example.focus")
+set(APPLICATION_ID "com.appaxaap.focus")
+set(APPLICATION_NAME "Focus")
+set(APPLICATION_COMMENT "Offline Eisenhower Matrix task manager")
+set(APPLICATION_ICON "${CMAKE_CURRENT_SOURCE_DIR}/../assets/images/512x512_logo.png")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -90,8 +93,34 @@ install(CODE "
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(INSTALL_BUNDLE_SHARE_DIR "${CMAKE_INSTALL_PREFIX}/share")
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/packaging/${APPLICATION_ID}.desktop.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_ID}.desktop"
+  @ONLY
+)
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/packaging/${APPLICATION_ID}.metainfo.xml.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_ID}.metainfo.xml"
+  @ONLY
+)
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  COMPONENT Runtime)
+
+install(FILES "${APPLICATION_ICON}"
+  DESTINATION "${INSTALL_BUNDLE_SHARE_DIR}/icons/hicolor/512x512/apps"
+  RENAME "${APPLICATION_ID}.png"
+  COMPONENT Runtime)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_ID}.desktop"
+  DESTINATION "${INSTALL_BUNDLE_SHARE_DIR}/applications"
+  COMPONENT Runtime)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_ID}.metainfo.xml"
+  DESTINATION "${INSTALL_BUNDLE_SHARE_DIR}/metainfo"
   COMPONENT Runtime)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"

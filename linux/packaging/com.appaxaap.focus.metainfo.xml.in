@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>@APPLICATION_ID@</id>
+  <name>@APPLICATION_NAME@</name>
+  <summary>@APPLICATION_COMMENT@</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <launchable type="desktop-id">@APPLICATION_ID@.desktop</launchable>
+  <description>
+    <p>Focus is an offline Eisenhower Matrix task manager built for keyboard-first desktop productivity.</p>
+  </description>
+  <categories>
+    <category>Office</category>
+    <category>Utility</category>
+    <category>Productivity</category>
+  </categories>
+  <url type="homepage">https://github.com/Appaxaap/Focus</url>
+  <url type="bugtracker">https://github.com/Appaxaap/Focus/issues</url>
+</component>

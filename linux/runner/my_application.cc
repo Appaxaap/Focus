@@ -14,11 +14,23 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+static gchar* resolve_bundle_icon_path() {
+  g_autofree gchar* executable_path = g_file_read_link("/proc/self/exe", nullptr);
+  if (executable_path == nullptr) {
+    return nullptr;
+  }
+
+  g_autofree gchar* executable_dir = g_path_get_dirname(executable_path);
+  return g_build_filename(executable_dir, "share", "icons", "hicolor", "512x512",
+                          "apps", APPLICATION_ID ".png", nullptr);
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+  g_autofree gchar* icon_path = resolve_bundle_icon_path();
 
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu
@@ -37,14 +49,17 @@ static void my_application_activate(GApplication* application) {
     }
   }
 #endif
+  if (icon_path != nullptr && g_file_test(icon_path, G_FILE_TEST_EXISTS)) {
+    gtk_window_set_default_icon_from_file(icon_path, nullptr);
+  }
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "focus");
+    gtk_header_bar_set_title(header_bar, "Focus");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "focus");
+    gtk_window_set_title(window, "Focus");
   }
 
   gtk_window_set_default_size(window, 1280, 720);

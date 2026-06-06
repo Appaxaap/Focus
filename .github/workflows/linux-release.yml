@@ -1,0 +1,74 @@
+name: Build and Release Focus Linux
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'linux-*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Validate Linux tag format
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ ! "${TAG}" =~ ^linux-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid Linux tag format: ${TAG}"
+            echo "Use: linux-x.y.z (example: linux-2.2.4)"
+            exit 1
+          fi
+          echo "LINUX_VERSION=${TAG#linux-}" >> "$GITHUB_ENV"
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            libayatana-appindicator3-dev \
+            libgtk-3-dev \
+            libkeybinder-3.0-dev \
+            ninja-build \
+            pkg-config \
+            tar
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.5'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux release bundle
+        run: flutter build linux --release
+
+      - name: Package Linux artifact
+        run: |
+          VERSION="${LINUX_VERSION}"
+          PACKAGE_DIR="dist/Focus-linux-${VERSION}-x86_64"
+          ARCHIVE_PATH="dist/Focus-linux-${VERSION}-x86_64.tar.gz"
+          mkdir -p dist
+          cp -R build/linux/x64/release/bundle "${PACKAGE_DIR}"
+          tar -C dist -czf "${ARCHIVE_PATH}" "Focus-linux-${VERSION}-x86_64"
+          sha256sum "${ARCHIVE_PATH}" > "${ARCHIVE_PATH}.sha256"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Focus Linux v${{ env.LINUX_VERSION }}"
+          body_path: RELEASE_NOTES_LINUX.md
+          draft: false
+          prerelease: false
+          files: |
+            dist/Focus-linux-${{ env.LINUX_VERSION }}-x86_64.tar.gz
+            dist/Focus-linux-${{ env.LINUX_VERSION }}-x86_64.tar.gz.sha256

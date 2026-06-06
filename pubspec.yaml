@@ -73,6 +73,10 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   intl_utils: ^2.8.8
 
+dependency_overrides:
+  hotkey_manager_linux:
+    path: third_party/hotkey_manager_linux
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=@APPLICATION_NAME@
+Comment=@APPLICATION_COMMENT@
+Exec=focus
+Icon=@APPLICATION_ID@
+Terminal=false
+Categories=Office;Utility;Productivity;
+Keywords=tasks;todo;productivity;eisenhower;focus;
+StartupNotify=true
+StartupWMClass=focus
+X-GNOME-UsesNotifications=true
