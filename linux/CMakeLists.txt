@@ -10,7 +10,7 @@ set(BINARY_NAME "focus")
 set(APPLICATION_ID "com.appaxaap.focus")
 set(APPLICATION_NAME "Focus")
 set(APPLICATION_COMMENT "Offline Eisenhower Matrix task manager")
-set(APPLICATION_ICON "${CMAKE_CURRENT_SOURCE_DIR}/../assets/images/512x512_logo.png")
+set(APPLICATION_ICON "${CMAKE_CURRENT_SOURCE_DIR}/../assets/images/rounded_logo.png")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
