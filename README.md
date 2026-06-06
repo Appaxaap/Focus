@@ -205,6 +205,49 @@ If you believe productivity is about focus rather than constant activity, Focus 
 
 ---
 
+## Linux (AppImage) - Troubleshooting
+
+If you run the AppImage and see an error like:
+
+```
+/tmp/.mount_focus.MjCbpJ/focus: error while loading shared libraries: libkeybinder-3.0.so.0: cannot open shared object file: No such file or directory
+```
+
+This means a required system library is missing on your distribution. To fix, install the package that provides the missing shared library on your system (examples below). After installing the packages, re-run the AppImage.
+
+Quick copy-paste for common distros (pick the one matching your system):
+
+Debian / Ubuntu / Mint
+
+```bash
+sudo apt update
+sudo apt install libkeybinder-3.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 libnotify4
+```
+
+Fedora
+
+```bash
+sudo dnf install keybinder3 gdk-pixbuf2 gtk3 libnotify
+```
+
+Arch / Manjaro
+
+```bash
+sudo pacman -S keybinder gdk-pixbuf2 gtk3 libnotify
+```
+
+If package names differ on your distribution, search which package provides the missing library (for example `dnf provides "*/libkeybinder-3.0.so.0"`, `apt-file search libkeybinder-3.0.so.0`, or `pacman -Fs libkeybinder-3.0.so.0`).
+
+You can inspect the AppImage to list missing shared libraries:
+
+```bash
+# extract the AppImage (creates squashfs-root/)
+./Focus.AppImage --appimage-extract
+# inspect the main binary and check for "not found" entries
+ldd squashfs-root/usr/bin/focus | grep "not found\|keybinder"
+```
+
+
 ## Support Development
 
 Focus is developed independently and will always remain offline first and privacy focused.
