@@ -65,20 +65,23 @@ Included in this release:
 - Application icon integration
 - Linux release workflow for GitHub builds
 - Self-contained release archive for x86_64 systems
+- Portable AppImage package for broader distro compatibility
 
-The downloadable archive extracts to a complete bundle directory and can be run directly from the extracted folder.
+The downloadable archive extracts to a complete bundle directory and can be run directly from the extracted folder. This release also includes an AppImage for users who want a more portable single-file Linux download.
 
 ## Release Artifact
 
 Files included in this release:
 
+- `Focus-linux-2.2.4-x86_64.AppImage`
+- `Focus-linux-2.2.4-x86_64.AppImage.sha256`
 - `Focus-linux-2.2.4-x86_64.tar.gz`
 - `Focus-linux-2.2.4-x86_64.tar.gz.sha256`
 
 ## Notes
 
 - This is the first official Linux launch of Focus
-- The Linux build is distributed as a standalone desktop bundle
+- The Linux build is distributed as both a standalone desktop bundle and an AppImage
 - Android and desktop releases continue on separate release tracks
 - This release focuses on establishing a reliable Linux foundation for future improvements
 

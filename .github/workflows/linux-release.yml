@@ -38,7 +38,8 @@ jobs:
             libkeybinder-3.0-dev \
             ninja-build \
             pkg-config \
-            tar
+            tar \
+            wget
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -62,6 +63,27 @@ jobs:
           tar -C dist -czf "${ARCHIVE_PATH}" "Focus-linux-${VERSION}-x86_64"
           sha256sum "${ARCHIVE_PATH}" > "${ARCHIVE_PATH}.sha256"
 
+      - name: Build AppImage
+        run: |
+          VERSION="${LINUX_VERSION}"
+          APPDIR="dist/Focus.AppDir"
+          APPIMAGE_PATH="dist/Focus-linux-${VERSION}-x86_64.AppImage"
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          rm -rf "${APPDIR}"
+          mkdir -p "${APPDIR}"
+          cp -R build/linux/x64/release/bundle/. "${APPDIR}"
+          cp "${APPDIR}/share/applications/com.appaxaap.focus.desktop" "${APPDIR}/Focus.desktop"
+          cp "${APPDIR}/share/icons/hicolor/512x512/apps/com.appaxaap.focus.png" "${APPDIR}/.DirIcon"
+          cat > "${APPDIR}/AppRun" <<'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "${HERE}/focus" "$@"
+          EOF
+          chmod +x "${APPDIR}/AppRun"
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run "${APPDIR}" "${APPIMAGE_PATH}"
+          sha256sum "${APPIMAGE_PATH}" > "${APPIMAGE_PATH}.sha256"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -72,3 +94,5 @@ jobs:
           files: |
             dist/Focus-linux-${{ env.LINUX_VERSION }}-x86_64.tar.gz
             dist/Focus-linux-${{ env.LINUX_VERSION }}-x86_64.tar.gz.sha256
+            dist/Focus-linux-${{ env.LINUX_VERSION }}-x86_64.AppImage
+            dist/Focus-linux-${{ env.LINUX_VERSION }}-x86_64.AppImage.sha256
