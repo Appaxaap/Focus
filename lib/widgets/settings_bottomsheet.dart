@@ -349,7 +349,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         border: Border.all(color: colorScheme.card, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withAlpha((0.03 * 255).round()),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -361,7 +361,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: colorScheme.accent.withOpacity(0.1),
+              color: colorScheme.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -418,7 +418,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withAlpha((0.06 * 255).round()),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -558,7 +558,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             borderRadius: BorderRadius.circular(isSelected ? 26 : 48),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withAlpha((0.04 * 255).round()),
                 blurRadius: 3,
                 offset: const Offset(0, 1),
               ),
@@ -603,7 +603,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withAlpha((0.04 * 255).round()),
                 blurRadius: 3,
                 offset: const Offset(0, 1),
               ),
@@ -644,8 +644,8 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
             boxShadow: [
               BoxShadow(
                 color: hasCompleted
-                    ? Colors.red.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.04),
+                    ? Colors.red.withAlpha((0.08 * 255).round())
+                    : Colors.black.withAlpha((0.04 * 255).round()),
                 blurRadius: hasCompleted ? 6 : 3,
                 offset: const Offset(0, 2),
               ),
@@ -658,7 +658,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                 height: 48,
                 decoration: BoxDecoration(
                   color: hasCompleted
-                      ? Colors.red.withOpacity(0.1)
+                      ? Colors.red.withAlpha((0.1 * 255).round())
                       : colorScheme.secondaryCard,
                   borderRadius: BorderRadius.circular(24),
                 ),
@@ -698,7 +698,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.15),
+                              color: Colors.red.withAlpha((0.15 * 255).round()),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -929,7 +929,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
               borderRadius: BorderRadius.circular(48),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withAlpha((0.04 * 255).round()),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
@@ -1159,7 +1159,8 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   child: _buildActionButton(
                     icon: Icons.code_rounded,
                     label: 'Source',
-                    onTap: () => _launchUrl('https://github.com/Appaxaap/Focus'),
+                    onTap: () =>
+                        _launchUrl('https://github.com/Appaxaap/Focus'),
                     colorScheme: _getColorScheme(ref.read(themeProvider)),
                   ),
                 ),
@@ -1168,7 +1169,8 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
                   child: _buildActionButton(
                     icon: Icons.bug_report_rounded,
                     label: 'Issues',
-                    onTap: () => _launchUrl('https://github.com/Appaxaap/Focus/issues'),
+                    onTap: () =>
+                        _launchUrl('https://github.com/Appaxaap/Focus/issues'),
                     colorScheme: _getColorScheme(ref.read(themeProvider)),
                   ),
                 ),
@@ -1232,7 +1234,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
           color: colorScheme.secondaryCard,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: colorScheme.secondaryText.withOpacity(0.15),
+            color: colorScheme.secondaryText.withValues(alpha: 0.15),
             width: 1,
           ),
         ),
@@ -1280,7 +1282,7 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         secondaryCard: const Color(0xFFF2F2F7),
         primaryText: const Color(0xFF1C1C1E),
         secondaryText: const Color(0xFF8E8E93),
-        dragHandle: Colors.black.withOpacity(0.3),
+        dragHandle: Colors.black.withAlpha((0.3 * 255).round()),
         selectedTheme: const Color(0xFFB8C5D1),
         selectedThemeIcon: const Color(0xFF2C2C2E),
         dialogBackground: Colors.white,
@@ -1296,13 +1298,15 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         secondaryCard: const Color(0xFF141414),
         primaryText: Colors.white,
         secondaryText: const Color(0xFF8E8E93),
-        dragHandle: Colors.white.withOpacity(0.3),
+        dragHandle: Colors.white.withAlpha((0.3 * 255).round()),
         selectedTheme: const Color(0xFF1A1A1A),
         selectedThemeIcon: const Color(0xFFD1BCFF),
         dialogBackground: const Color(0xFF0A0A0A),
         accent: const Color(0xFFD1BCFF),
         switchActive: const Color(0xFFD1BCFF),
-        switchInactiveThumb: const Color(0xFF767680).withOpacity(0.16),
+        switchInactiveThumb: const Color(
+          0xFF767680,
+        ).withAlpha((0.16 * 255).round()),
         switchInactiveTrack: const Color(0xFF1C1C1E),
       );
     } else {
@@ -1312,13 +1316,15 @@ class _SettingsBottomSheetState extends ConsumerState<SettingsBottomSheet>
         secondaryCard: const Color(0xFF3A3A3C),
         primaryText: Colors.white,
         secondaryText: const Color(0xFF8E8E93),
-        dragHandle: Colors.white.withOpacity(0.3),
+        dragHandle: Colors.white.withAlpha((0.3 * 255).round()),
         selectedTheme: const Color(0xFFB8C5D1),
         selectedThemeIcon: const Color(0xFF1C1C1E),
         dialogBackground: const Color(0xFF2C2C2E),
         accent: const Color(0xFF0A84FF),
         switchActive: const Color(0xFF30D158),
-        switchInactiveThumb: const Color(0xFF767680).withOpacity(0.16),
+        switchInactiveThumb: const Color(
+          0xFF767680,
+        ).withAlpha((0.16 * 255).round()),
         switchInactiveTrack: const Color(0xFF39393D),
       );
     }

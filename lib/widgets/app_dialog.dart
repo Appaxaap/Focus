@@ -17,10 +17,8 @@ Future<T?> showAppDialog<T>({
         duration: const Duration(milliseconds: 350),
         tween: Tween(begin: 0.0, end: 1.0),
         curve: const Cubic(0.05, 0.7, 0.1, 1.0),
-        builder: (context, scale, child) => Transform.scale(
-          scale: scale,
-          child: child,
-        ),
+        builder: (context, scale, child) =>
+            Transform.scale(scale: scale, child: child),
         child: builder(context),
       ),
     ),
@@ -42,7 +40,7 @@ class AppDialogContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha((0.2 * 255).round()),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -74,8 +72,8 @@ class AppDialogButton extends StatelessWidget {
     final bgColor = isDestructive
         ? Colors.red.shade600
         : isPrimary
-            ? colorScheme.primary
-            : colorScheme.surfaceContainerHighest;
+        ? colorScheme.primary
+        : colorScheme.surfaceContainerHighest;
 
     final textColor = (isDestructive || isPrimary)
         ? Colors.white

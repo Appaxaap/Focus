@@ -27,9 +27,10 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
       duration: const Duration(seconds: 10),
     )..repeat(reverse: true);
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     // Delay the button appearance to encourage reading the message
     Future.delayed(const Duration(milliseconds: 1500), () {
@@ -102,7 +103,7 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
                     child: Icon(
                       Icons.wb_sunny_outlined,
                       size: 60,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withAlpha((0.8 * 255).round()),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -118,7 +119,7 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
                     message,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withAlpha((0.7 * 255).round()),
                       fontWeight: FontWeight.w400,
                       height: 1.5,
                     ),
@@ -129,10 +130,14 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
                     duration: const Duration(milliseconds: 500),
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.9),
+                        backgroundColor: Colors.white.withAlpha(
+                          (0.9 * 255).round(),
+                        ),
                         foregroundColor: colorScheme.primary,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 16),
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                         textStyle: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -140,10 +145,21 @@ class _SunriseScreenState extends ConsumerState<SunriseScreen>
                       onPressed: () {
                         Navigator.of(context).pushReplacement(
                           PageRouteBuilder(
-                            pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
-                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                              return FadeTransition(opacity: animation, child: child);
-                            },
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    const HomeScreen(),
+                            transitionsBuilder:
+                                (
+                                  context,
+                                  animation,
+                                  secondaryAnimation,
+                                  child,
+                                ) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
                           ),
                         );
                       },

@@ -159,7 +159,8 @@ class _TaskTileState extends ConsumerState<TaskTile> {
       },
       child: GestureDetector(
         onTap: () {
-          final isDesktop = !kIsWeb &&
+          final isDesktop =
+              !kIsWeb &&
               (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
           Navigator.push(
@@ -180,14 +181,14 @@ class _TaskTileState extends ConsumerState<TaskTile> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isOverdue
-                  ? colorScheme.error.withOpacity(0.3)
-                  : colorScheme.outline.withOpacity(0.4),
+                  ? colorScheme.error.withAlpha((0.3 * 255).round())
+                  : colorScheme.outline.withAlpha((0.4 * 255).round()),
               width: isOverdue ? 1.5 : 1.0,
             ),
             boxShadow: isOverdue
                 ? [
                     BoxShadow(
-                      color: colorScheme.error.withOpacity(0.1),
+                      color: colorScheme.error.withAlpha((0.1 * 255).round()),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -242,7 +243,9 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                       widget.task.title,
                       style: textTheme.bodyMedium?.copyWith(
                         color: widget.task.isCompleted
-                            ? colorScheme.onSurface.withOpacity(0.5)
+                            ? colorScheme.onSurface.withAlpha(
+                                (0.5 * 255).round(),
+                              )
                             : isOverdue
                             ? colorScheme.error
                             : colorScheme.onSurface,
@@ -252,7 +255,9 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                         decoration: widget.task.isCompleted
                             ? TextDecoration.lineThrough
                             : TextDecoration.none,
-                        decorationColor: colorScheme.onSurface.withOpacity(0.4),
+                        decorationColor: colorScheme.onSurface.withAlpha(
+                          (0.4 * 255).round(),
+                        ),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -269,8 +274,10 @@ class _TaskTileState extends ConsumerState<TaskTile> {
                     widget.task.notes!,
                     style: textTheme.bodySmall?.copyWith(
                       color: isOverdue
-                          ? colorScheme.error.withOpacity(0.8)
-                          : colorScheme.onSurface.withOpacity(0.7),
+                          ? colorScheme.error.withAlpha((0.8 * 255).round())
+                          : colorScheme.onSurface.withAlpha(
+                              (0.7 * 255).round(),
+                            ),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -334,8 +341,8 @@ class _TaskTileState extends ConsumerState<TaskTile> {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: isOverdue
-              ? colorScheme.error.withOpacity(0.3)
-              : colorScheme.outline.withOpacity(0.3),
+              ? colorScheme.error.withValues(alpha: 0.3)
+              : colorScheme.outline.withValues(alpha: 0.3),
           width: 0.5,
         ),
       ),

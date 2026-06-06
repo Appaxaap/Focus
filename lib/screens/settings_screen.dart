@@ -120,7 +120,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       subtitle: Text(
                         'Display finished tasks in your list',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                       value: showCompleted,
@@ -129,7 +131,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                             value;
                         HapticFeedback.selectionClick();
                       },
-                      activeColor: colorScheme.primary,
+                      activeThumbColor: colorScheme.primary,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                   ],
@@ -212,7 +214,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: colorScheme.outlineVariant.withOpacity(0.5),
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           width: 0.5,
         ),
       ),
@@ -306,7 +308,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         Text(
           'Choose your preferred theme mode',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -385,7 +387,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       final backupData = await hiveService.exportData();
 
       if (!Platform.isAndroid) {
-        _showSuccessSnackbar(context, 'Backup export is only supported on Android', isError: true);
+        _showSuccessSnackbar(
+          context,
+          'Backup export is only supported on Android',
+          isError: true,
+        );
         return;
       }
 
@@ -403,7 +409,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       final backupFile = File('${directory.path}/focus_backup_$timestamp.json');
 
       await backupFile.writeAsString(backupData);
-      _showSuccessSnackbar(context, 'Backup saved to Downloads/focus_backup_$timestamp.json');
+      _showSuccessSnackbar(
+        context,
+        'Backup saved to Downloads/focus_backup_$timestamp.json',
+      );
     } catch (e, s) {
       debugPrint('Error exporting backup: $e\n$s');
       _showSuccessSnackbar(context, 'Failed to export backup', isError: true);
@@ -435,7 +444,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       } else if (decoded is List) {
         jsonList = decoded;
       } else {
-        _showSuccessSnackbar(context, 'Invalid backup file format', isError: true);
+        _showSuccessSnackbar(
+          context,
+          'Invalid backup file format',
+          isError: true,
+        );
         return;
       }
 
@@ -457,8 +470,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warning_outlined,
-                color: Theme.of(context).colorScheme.error, size: 40),
+            Icon(
+              Icons.warning_outlined,
+              color: Theme.of(context).colorScheme.error,
+              size: 40,
+            ),
             const SizedBox(height: 20),
             Text(
               'Clear All Data?',
@@ -525,8 +541,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.apps_outlined,
-                color: Theme.of(context).colorScheme.primary, size: 40),
+            Icon(
+              Icons.apps_outlined,
+              color: Theme.of(context).colorScheme.primary,
+              size: 40,
+            ),
             const SizedBox(height: 16),
             Text(
               'About Focus',
@@ -569,8 +588,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_outline,
-                color: Theme.of(context).colorScheme.primary, size: 40),
+            Icon(
+              Icons.person_outline,
+              color: Theme.of(context).colorScheme.primary,
+              size: 40,
+            ),
             const SizedBox(height: 16),
             Text(
               'About Developer',

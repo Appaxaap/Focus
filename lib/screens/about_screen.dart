@@ -42,7 +42,7 @@ class AboutScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     colorScheme.primaryContainer,
-                    colorScheme.primaryContainer.withOpacity(0.8),
+                    colorScheme.primaryContainer.withAlpha((0.8 * 255).round()),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -50,7 +50,7 @@ class AboutScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.shadow.withOpacity(0.1),
+                    color: colorScheme.shadow.withAlpha((0.1 * 255).round()),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -65,7 +65,7 @@ class AboutScreen extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           colorScheme.primary,
-                          colorScheme.primary.withOpacity(0.8),
+                          colorScheme.primary.withAlpha((0.8 * 255).round()),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -73,7 +73,9 @@ class AboutScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withAlpha(
+                            (0.3 * 255).round(),
+                          ),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -97,7 +99,9 @@ class AboutScreen extends StatelessWidget {
                   Text(
                     'Task management based on the Eisenhower Matrix',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                      color: colorScheme.onPrimaryContainer.withAlpha(
+                        (0.8 * 255).round(),
+                      ),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -234,12 +238,12 @@ class AboutScreen extends StatelessWidget {
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.outlineVariant.withOpacity(0.5),
+          color: colorScheme.outlineVariant.withAlpha((0.5 * 255).round()),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withAlpha((0.05 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -272,12 +276,12 @@ class AboutScreen extends StatelessWidget {
           color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.5),
+            color: colorScheme.outlineVariant.withAlpha((0.5 * 255).round()),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.05),
+              color: colorScheme.shadow.withAlpha((0.05 * 255).round()),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -403,7 +407,7 @@ class AboutScreen extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 colorScheme.secondary,
-                colorScheme.secondary.withOpacity(0.8),
+                colorScheme.secondary.withAlpha((0.8 * 255).round()),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -574,80 +578,79 @@ class AboutScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.7,
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(28),
-                topRight: Radius.circular(28),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(28),
+            topRight: Radius.circular(28),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            child: Column(
-              children: [
-                // Handle bar
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
 
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.history_rounded,
-                          size: 20,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        'Changelog',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Changelog content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        _buildChangelogItem(context, 'v1.0.0', 'January 2025', [
-                          'Initial release',
-                          'Eisenhower Matrix implementation',
-                          'Task management system',
-                          'Modern Material Design 3 UI',
-                          'Light and dark theme support',
-                        ]),
-                        const SizedBox(height: 24),
-                      ],
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.history_rounded,
+                      size: 20,
+                      color: colorScheme.onPrimaryContainer,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Text(
+                    'Changelog',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+
+            // Changelog content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    _buildChangelogItem(context, 'v1.0.0', 'January 2025', [
+                      'Initial release',
+                      'Eisenhower Matrix implementation',
+                      'Task management system',
+                      'Modern Material Design 3 UI',
+                      'Light and dark theme support',
+                    ]),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

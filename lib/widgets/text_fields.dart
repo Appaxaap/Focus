@@ -87,7 +87,7 @@ class CustomTitleTextField extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Enter task title...',
                   hintStyle: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withAlpha((0.6 * 255).round()),
                     fontSize: 16,
                   ),
                   border: InputBorder.none,
@@ -165,7 +165,7 @@ class CustomNotesTextField extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Add notes or description',
                   hintStyle: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withAlpha((0.6 * 255).round()),
                     fontSize: 16,
                   ),
                   border: InputBorder.none,
@@ -260,7 +260,7 @@ class CustomDateTimeField extends StatelessWidget {
                                   : ''),
                     style: TextStyle(
                       color: selectedDate == null
-                          ? colorScheme.onSurface.withOpacity(0.6)
+                          ? colorScheme.onSurface.withAlpha((0.6 * 255).round())
                           : colorScheme.onSurface,
                       fontSize: 16,
                     ),

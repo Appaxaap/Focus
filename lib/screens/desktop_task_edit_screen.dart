@@ -59,8 +59,7 @@ class DesktopTaskEditScreen extends ConsumerStatefulWidget {
       _DesktopTaskEditScreenState();
 }
 
-class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
-{
+class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen> {
   late TextEditingController titleController;
   late TextEditingController notesController;
   late Quadrant? selectedQuadrant;
@@ -125,7 +124,6 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
         selectedQuadrant = Quadrant.notUrgentImportant;
       }
     }
-
   }
 
   void _onContentChanged() {
@@ -258,9 +256,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
             children: [
               Text(
                 'Unsaved Changes',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 10),
               Text(
@@ -330,10 +328,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 3,
-                child: _buildMainForm(theme, colorScheme),
-              ),
+              Expanded(flex: 3, child: _buildMainForm(theme, colorScheme)),
               const SizedBox(width: 16),
               SizedBox(
                 width: 320,
@@ -341,7 +336,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                   builder: (context, constraints) => SingleChildScrollView(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -389,12 +386,27 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
           const SelectQuadrantIntent(Quadrant.urgentNotImportant),
       const SingleActivator(LogicalKeyboardKey.digit4, control: true):
           const SelectQuadrantIntent(Quadrant.notUrgentNotImportant),
-      const SingleActivator(LogicalKeyboardKey.digit1, control: true, shift: true):
-          const SetQuickDateIntent(0),
-      const SingleActivator(LogicalKeyboardKey.digit2, control: true, shift: true):
-          const SetQuickDateIntent(1),
-      const SingleActivator(LogicalKeyboardKey.digit3, control: true, shift: true):
-          const SetQuickDateIntent(2),
+      const SingleActivator(
+        LogicalKeyboardKey.digit1,
+        control: true,
+        shift: true,
+      ): const SetQuickDateIntent(
+        0,
+      ),
+      const SingleActivator(
+        LogicalKeyboardKey.digit2,
+        control: true,
+        shift: true,
+      ): const SetQuickDateIntent(
+        1,
+      ),
+      const SingleActivator(
+        LogicalKeyboardKey.digit3,
+        control: true,
+        shift: true,
+      ): const SetQuickDateIntent(
+        2,
+      ),
     };
 
     final actions = <Type, Action<Intent>>{
@@ -536,9 +548,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
       decoration: BoxDecoration(
         color: suggestionColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: suggestionColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: suggestionColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -785,141 +795,154 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
       height: 64,
       backgroundColor: Colors.transparent,
       child: Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.92),
-        border: Border(
-          bottom: BorderSide(
-            color: colorScheme.onSurface.withValues(alpha: 0.10),
-            width: 0.5,
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface.withValues(alpha: 0.92),
+          border: Border(
+            bottom: BorderSide(
+              color: colorScheme.onSurface.withValues(alpha: 0.10),
+              width: 0.5,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () async {
-              if (await _onWillPop()) {
-                Navigator.pop(context);
-              }
-            },
-            icon: const Icon(Icons.arrow_back_rounded, size: 20),
-            style: IconButton.styleFrom(
-              backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(
-                0.5,
-              ),
-              foregroundColor: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.edit_note_rounded,
-              color: colorScheme.onSurfaceVariant,
-              size: 20,
-            ),
-          ),
-
-          const SizedBox(width: 12),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isEditing ? 'Edit Task' : 'New Task',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () async {
+                if (await _onWillPop()) {
+                  Navigator.pop(context);
+                }
+              },
+              icon: const Icon(Icons.arrow_back_rounded, size: 20),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
                 ),
+                foregroundColor: colorScheme.onSurface,
               ),
-              if (_hasUnsavedChanges)
+            ),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.edit_note_rounded,
+                color: colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  'Unsaved changes',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontSize: 11,
+                  isEditing ? 'Edit Task' : 'New Task',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
                   ),
                 ),
-            ],
-          ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => setState(() => _showShortcuts = !_showShortcuts),
-                      icon: const Icon(Icons.keyboard_rounded, size: 18),
-                      tooltip: 'Keyboard Shortcuts (?)',
-                      style: IconButton.styleFrom(
-                        backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                      ),
+                if (_hasUnsavedChanges)
+                  Text(
+                    'Unsaved changes',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontSize: 11,
                     ),
-                    const SizedBox(width: 8),
-                    if (isEditing) ...[
-                      OutlinedButton.icon(
-                        onPressed: () => _showDeleteConfirmation(context),
-                        icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                        label: const Text('Delete'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colorScheme.error,
-                          side: BorderSide(color: colorScheme.error.withOpacity(0.5)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                  ),
+              ],
+            ),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () =>
+                            setState(() => _showShortcuts = !_showShortcuts),
+                        icon: const Icon(Icons.keyboard_rounded, size: 18),
+                        tooltip: 'Keyboard Shortcuts (?)',
+                        style: IconButton.styleFrom(
+                          backgroundColor: colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
                         ),
                       ),
                       const SizedBox(width: 8),
-                    ],
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _isSaving ? null : _validateAndSave,
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: colorScheme.secondary,
-                            borderRadius: BorderRadius.circular(10),
+                      if (isEditing) ...[
+                        OutlinedButton.icon(
+                          onPressed: () => _showDeleteConfirmation(context),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 16,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check_rounded,
-                                color: colorScheme.onSecondary,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isEditing ? 'Update' : 'Create',
-                                style: TextStyle(
+                          label: const Text('Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colorScheme.error,
+                            side: BorderSide(
+                              color: colorScheme.error.withValues(alpha: 0.5),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _isSaving ? null : _validateAndSave,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.secondary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_rounded,
                                   color: colorScheme.onSecondary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  size: 18,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  isEditing ? 'Update' : 'Create',
+                                  style: TextStyle(
+                                    color: colorScheme.onSecondary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -987,7 +1010,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
             decoration: InputDecoration(
               hintText: 'What needs to be done?',
               hintStyle: TextStyle(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 fontSize: 14,
               ),
               filled: true,
@@ -1000,7 +1023,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: colorScheme.outlineVariant.withOpacity(0.3),
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -1038,7 +1061,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
             decoration: InputDecoration(
               hintText: 'Add details, context, or notes...',
               hintStyle: TextStyle(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 fontSize: 14,
               ),
               filled: true,
@@ -1050,7 +1073,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                  color: colorScheme.outlineVariant.withOpacity(0.3),
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.3),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -1090,13 +1113,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: selectedDate != null
-                        ? colorScheme.primary.withOpacity(0.1)
+                        ? colorScheme.primary.withValues(alpha: 0.1)
                         : colorScheme.surface,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: selectedDate != null
-                          ? colorScheme.primary.withOpacity(0.3)
-                          : colorScheme.outlineVariant.withOpacity(0.3),
+                          ? colorScheme.primary.withValues(alpha: 0.3)
+                          : colorScheme.outlineVariant.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -1140,13 +1163,13 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: selectedTime != null
-                          ? colorScheme.primary.withOpacity(0.1)
+                          ? colorScheme.primary.withValues(alpha: 0.1)
                           : colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: selectedTime != null
-                            ? colorScheme.primary.withOpacity(0.3)
-                            : colorScheme.outlineVariant.withOpacity(0.3),
+                            ? colorScheme.primary.withValues(alpha: 0.3)
+                            : colorScheme.outlineVariant.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -1190,7 +1213,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                 },
                 icon: const Icon(Icons.close_rounded, size: 16),
                 style: IconButton.styleFrom(
-                  backgroundColor: colorScheme.errorContainer.withOpacity(0.5),
+                  backgroundColor: colorScheme.errorContainer.withValues(
+                    alpha: 0.5,
+                  ),
                   foregroundColor: colorScheme.error,
                   padding: const EdgeInsets.all(8),
                 ),
@@ -1342,7 +1367,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                                 color: isSelected
                                     ? colorScheme.primary
                                     : isToday
-                                    ? colorScheme.primary.withOpacity(0.12)
+                                    ? colorScheme.primary.withValues(
+                                        alpha: 0.12,
+                                      )
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -1352,7 +1379,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: isPast
                                         ? colorScheme.onSurfaceVariant
-                                              .withOpacity(0.3)
+                                              .withAlpha((0.3 * 255).round())
                                         : isSelected
                                         ? colorScheme.onPrimary
                                         : isToday
@@ -1729,13 +1756,15 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? (info['color'] as Color).withOpacity(0.1)
+                          ? (info['color'] as Color).withAlpha(
+                              (0.1 * 255).round(),
+                            )
                           : colorScheme.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? (info['color'] as Color)
-                            : colorScheme.outlineVariant.withOpacity(0.3),
+                            : colorScheme.outlineVariant.withValues(alpha: 0.3),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -1744,7 +1773,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: (info['color'] as Color).withOpacity(0.15),
+                            color: (info['color'] as Color).withAlpha(
+                              (0.15 * 255).round(),
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -1782,7 +1813,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                               : Icons.radio_button_unchecked_rounded,
                           color: isSelected
                               ? (info['color'] as Color)
-                              : colorScheme.onSurfaceVariant.withOpacity(0.4),
+                              : colorScheme.onSurfaceVariant.withValues(
+                                  alpha: 0.4,
+                                ),
                           size: 22,
                         ),
                       ],
@@ -1798,7 +1831,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: (quadrantInfo[selectedQuadrant]!['color'] as Color)
-                      .withOpacity(0.1),
+                      .withAlpha((0.1 * 255).round()),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: quadrantInfo[selectedQuadrant]!['color'] as Color,
@@ -1880,7 +1913,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
     final notificationService = NotificationService();
     final bool isEditing = widget.task != null;
     final String taskId = widget.task?.id ?? const Uuid().v4();
-    final int notificationId = notificationService.notificationIdForTask(taskId);
+    final int notificationId = notificationService.notificationIdForTask(
+      taskId,
+    );
 
     if (isEditing) {
       await notificationService.cancelNotification(notificationId);
@@ -2004,7 +2039,9 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
                       label: 'Delete',
                       isDestructive: true,
                       onTap: () {
-                        ref.read(taskProvider.notifier).deleteTask(widget.task!.id);
+                        ref
+                            .read(taskProvider.notifier)
+                            .deleteTask(widget.task!.id);
                         Navigator.pop(context);
                         Navigator.pop(context);
                       },
@@ -2036,7 +2073,7 @@ class _DesktopTaskEditScreenState extends ConsumerState<DesktopTaskEditScreen>
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withAlpha((0.2 * 255).round()),
                 shape: BoxShape.circle,
               ),
               child: Icon(

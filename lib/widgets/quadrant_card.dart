@@ -39,12 +39,12 @@ class QuadrantCard extends ConsumerWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.1),
+              color: colorScheme.onSurface.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.check,
-              color: colorScheme.onSurface.withOpacity(0.4),
+              color: colorScheme.onSurface.withValues(alpha: 0.4),
               size: 18,
             ),
           ),
@@ -52,13 +52,13 @@ class QuadrantCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             decoration: BoxDecoration(
-              color: colorScheme.onSurface.withOpacity(0.1),
+              color: colorScheme.onSurface.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               'Tap to add task',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.6),
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
                 fontSize: 12,
               ),
             ),
@@ -91,12 +91,14 @@ class QuadrantCard extends ConsumerWidget {
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _getQuadrantColor(task.quadrant).withOpacity(0.6),
+                    color: _getQuadrantColor(
+                      task.quadrant,
+                    ).withAlpha((0.6 * 255).round()),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withAlpha((0.2 * 255).round()),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
