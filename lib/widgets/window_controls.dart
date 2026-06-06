@@ -56,7 +56,6 @@ class _WindowButton extends StatefulWidget {
 
 class _WindowButtonState extends State<_WindowButton> {
   bool _hovered = false;
-  bool _pressed = false;
 
   Color get _baseColor {
     switch (widget.type) {
@@ -69,9 +68,8 @@ class _WindowButtonState extends State<_WindowButton> {
     }
   }
 
-  // 👇 softened color
   Color get _color {
-    return _baseColor.withOpacity(0.55); // 🔥 key change
+    return _baseColor.withValues(alpha: 0.55);
   }
 
   IconData get _icon {
@@ -89,15 +87,9 @@ class _WindowButtonState extends State<_WindowButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() {
-        _hovered = false;
-        _pressed = false;
-      }),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
         onTap: widget.onPressed,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
@@ -105,7 +97,7 @@ class _WindowButtonState extends State<_WindowButton> {
           height: 12,
           decoration: BoxDecoration(
             color: _hovered
-                ? _baseColor.withOpacity(0.9) // only bright on hover
+                ? _baseColor.withValues(alpha: 0.9)
                 : _color,
             shape: BoxShape.circle,
           ),
@@ -116,7 +108,7 @@ class _WindowButtonState extends State<_WindowButton> {
               child: Icon(
                 _icon,
                 size: 8,
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
               ),
             ),
           ),
