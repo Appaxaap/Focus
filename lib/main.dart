@@ -38,7 +38,7 @@ void main() async {
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.setPreventClose(true);
+      await windowManager.setPreventClose(Platform.isWindows);
       await windowManager.show();
       await windowManager.focus();
     });
