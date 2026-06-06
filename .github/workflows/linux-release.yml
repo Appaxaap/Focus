@@ -74,6 +74,7 @@ jobs:
           mkdir -p "${APPDIR}"
           cp -R build/linux/x64/release/bundle/. "${APPDIR}"
           cp "${APPDIR}/share/applications/com.appaxaap.focus.desktop" "${APPDIR}/Focus.desktop"
+          cp "${APPDIR}/share/icons/hicolor/512x512/apps/com.appaxaap.focus.png" "${APPDIR}/com.appaxaap.focus.png"
           cp "${APPDIR}/share/icons/hicolor/512x512/apps/com.appaxaap.focus.png" "${APPDIR}/.DirIcon"
           cat > "${APPDIR}/AppRun" <<'EOF'
           #!/bin/sh
