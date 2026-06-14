@@ -17,6 +17,18 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Validate Android tag format
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ ! "${TAG}" =~ ^android-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid Android tag format: ${TAG}"
+            echo "Use: android-x.y.z (example: android-2.2.4)"
+            exit 1
+          fi
+          echo "ANDROID_VERSION=${TAG#android-}" >> "$GITHUB_ENV"
+          echo "ANDROID_TAG=${TAG}" >> "$GITHUB_ENV"
+          echo "Building commit $(git rev-parse HEAD) for ${TAG}"
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -37,16 +49,6 @@ jobs:
 
       - name: Build split APKs
         run: flutter build apk --release --split-per-abi
-
-      - name: Validate Android tag format
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          if [[ ! "${TAG}" =~ ^android-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid Android tag format: ${TAG}"
-            echo "Use: android-x.y.z (example: android-2.2.4)"
-            exit 1
-          fi
-          echo "ANDROID_VERSION=${TAG#android-}" >> "$GITHUB_ENV"
 
       - name: Rename APKs
         run: |
@@ -71,14 +73,32 @@ jobs:
           mv "${ARMEABI}" \
              build/app/outputs/flutter-apk/${PREFIX}-armeabi-v7a.apk
 
+      - name: Write provenance
+        run: |
+          cat > build/app/outputs/flutter-apk/Focus-android-${ANDROID_VERSION}-provenance.txt <<EOF
+          tag=${ANDROID_TAG}
+          commit=$(git rev-parse HEAD)
+          flutter_version=3.32.5
+          version=${ANDROID_VERSION}
+          EOF
+
+      - name: Write release body
+        run: |
+          cat RELEASE_NOTES.md > build/app/outputs/flutter-apk/Focus-android-${ANDROID_VERSION}-release-notes.md
+          printf '\n## Build Provenance\n\n- Tag: `%s`\n- Commit: `%s`\n' \
+            "${ANDROID_TAG}" \
+            "$(git rev-parse HEAD)" \
+            >> build/app/outputs/flutter-apk/Focus-android-${ANDROID_VERSION}-release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: "Focus Android v${{ env.ANDROID_VERSION }}"
-          body_path: RELEASE_NOTES.md
+          body_path: build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-release-notes.md
           draft: false
           prerelease: false
           files: |
             build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-universal.apk
             build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-arm64-v8a.apk
             build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-armeabi-v7a.apk
+            build/app/outputs/flutter-apk/Focus-android-${{ env.ANDROID_VERSION }}-provenance.txt

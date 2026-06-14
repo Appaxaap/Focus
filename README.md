@@ -85,6 +85,10 @@ This approach helps reduce cognitive overload and improve daily decision making.
   - `Focus-android-x.y.z-universal.apk`
   - `Focus-android-x.y.z-arm64-v8a.apk`
   - `Focus-android-x.y.z-armeabi-v7a.apk`
+- Split APK version codes are ABI-specific:
+  - universal APKs keep the base build number from `pubspec.yaml`
+  - `arm64-v8a` APKs add the ABI offset, so `2.2.4+12` becomes `versionCode=2012`
+- Android manifest SDK values come from the pinned Flutter SDK used for the build, so matching release output requires building with the same Flutter version as the release workflow
 
 ---
 
