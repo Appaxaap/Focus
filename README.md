@@ -262,7 +262,7 @@ sudo dnf install keybinder3 gdk-pixbuf2 gtk3 libnotify
 Arch / Manjaro
 
 ```bash
-sudo pacman -S keybinder gdk-pixbuf2 gtk3 libnotify
+sudo pacman -S libkeybinder3 libayatana-appindicator appmenu-gtk-module gdk-pixbuf2 gtk3 libnotify
 ```
 
 Debian / Ubuntu / Mint
@@ -281,7 +281,7 @@ sudo dnf install keybinder3 gdk-pixbuf2 gtk3 libnotify
 Arch / Manjaro
 
 ```bash
-sudo pacman -S keybinder gdk-pixbuf2 gtk3 libnotify
+sudo pacman -S libkeybinder3 libayatana-appindicator appmenu-gtk-module gdk-pixbuf2 gtk3 libnotify
 ```
 
 If package names differ on your distribution, search which package provides the missing library (for example `dnf provides "*/libkeybinder-3.0.so.0"`, `apt-file search libkeybinder-3.0.so.0`, or `pacman -Fs libkeybinder-3.0.so.0`).

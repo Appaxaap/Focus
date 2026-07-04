@@ -1,15 +1,18 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:hive/hive.dart';
+import '../models/focus_completion_event.dart';
 import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
 import '../providers/theme_provider.dart';
 
 class HiveService {
   static const String _taskBoxName = 'tasks';
+  static const String _historyBoxName = 'completion_events';
   static const String _prefsBoxName = 'preferences';
 
   Box<Task>? _taskBox;
+  Box<FocusCompletionEvent>? _historyBox;
   Box<dynamic>? _prefsBox;
 
   // Preference keys
@@ -26,12 +29,18 @@ class HiveService {
     if (!Hive.isAdapterRegistered(TaskAdapter().typeId)) {
       Hive.registerAdapter(TaskAdapter());
     }
+    if (!Hive.isAdapterRegistered(FocusCompletionEventAdapter().typeId)) {
+      Hive.registerAdapter(FocusCompletionEventAdapter());
+    }
     if (!Hive.isAdapterRegistered(QuadrantAdapter().typeId)) {
       Hive.registerAdapter(QuadrantAdapter());
     }
 
     if (_taskBox == null || !_taskBox!.isOpen) {
       _taskBox = await Hive.openBox<Task>(_taskBoxName);
+    }
+    if (_historyBox == null || !_historyBox!.isOpen) {
+      _historyBox = await Hive.openBox<FocusCompletionEvent>(_historyBoxName);
     }
     if (_prefsBox == null || !_prefsBox!.isOpen) {
       _prefsBox = await Hive.openBox(_prefsBoxName);
@@ -99,6 +108,28 @@ class HiveService {
     return _taskBox!.values.where((task) => task.isCompleted).toList();
   }
 
+  Future<List<FocusCompletionEvent>> getCompletionEvents() async {
+    await _ensureInitialized();
+    return _historyBox!.values.toList();
+  }
+
+  Future<void> addCompletionEvent(FocusCompletionEvent event) async {
+    await _ensureInitialized();
+    await _historyBox!.put(event.id, event);
+  }
+
+  Future<FocusCompletionEvent?> removeLatestCompletionEventForTask(
+    String taskId,
+  ) async {
+    await _ensureInitialized();
+    final events = _historyBox!.values.toList();
+    final index = events.lastIndexWhere((event) => event.taskId == taskId);
+    if (index == -1) return null;
+    final removed = events[index];
+    await _historyBox!.delete(removed.id);
+    return removed;
+  }
+
   // Data management
   Future<void> clearAllData() async {
     try {
@@ -106,11 +137,18 @@ class HiveService {
       await tasksBox.clear();
       await tasksBox.close();
 
+      final historyBox = await Hive.openBox<FocusCompletionEvent>(
+        _historyBoxName,
+      );
+      await historyBox.clear();
+      await historyBox.close();
+
       final prefsBox = await Hive.openBox('preferences');
       await prefsBox.clear();
       await prefsBox.close();
 
       await Hive.deleteBoxFromDisk('tasks');
+      await Hive.deleteBoxFromDisk(_historyBoxName);
       await Hive.deleteBoxFromDisk('preferences');
 
       debugPrint('All Hive data cleared successfully');
@@ -137,16 +175,22 @@ class HiveService {
 
   Future<String> exportData() async {
     final tasks = await getAllTasks();
+    final history = await getCompletionEvents();
     return jsonEncode({
-      'version': 1,
+      'version': 2,
       'exportedAt': DateTime.now().toIso8601String(),
       'tasks': tasks.map((t) => t.toJson()).toList(),
+      'completionEvents': history.map((e) => e.toJson()).toList(),
     });
   }
 
-  Future<void> importData(List<Map<String, dynamic>> jsonList) async {
+  Future<void> importData(
+    List<Map<String, dynamic>> jsonList, {
+    List<Map<String, dynamic>>? completionEvents,
+  }) async {
     await _ensureInitialized();
     await _taskBox!.clear();
+    await _historyBox!.clear();
 
     for (final json in jsonList) {
       try {
@@ -154,6 +198,16 @@ class HiveService {
         await addTask(task);
       } catch (e) {
         debugPrint('Skipping invalid task import: $e');
+      }
+    }
+
+    final events = completionEvents ?? const [];
+    for (final json in events) {
+      try {
+        final event = FocusCompletionEvent.fromJson(json);
+        await addCompletionEvent(event);
+      } catch (e) {
+        debugPrint('Skipping invalid completion event import: $e');
       }
     }
   }
@@ -198,8 +252,10 @@ class HiveService {
   // Helper method to ensure initialization
   Future<void> _ensureInitialized() async {
     if (_taskBox == null ||
+        _historyBox == null ||
         _prefsBox == null ||
         !_taskBox!.isOpen ||
+        !_historyBox!.isOpen ||
         !_prefsBox!.isOpen) {
       await initialize();
     }

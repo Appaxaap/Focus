@@ -439,8 +439,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       final decoded = jsonDecode(jsonString);
 
       final List<dynamic> jsonList;
+      List<dynamic>? historyList;
       if (decoded is Map<String, dynamic> && decoded.containsKey('tasks')) {
         jsonList = decoded['tasks'] as List;
+        final maybeHistory = decoded['completionEvents'];
+        if (maybeHistory is List) {
+          historyList = maybeHistory;
+        }
       } else if (decoded is List) {
         jsonList = decoded;
       } else {
@@ -454,6 +459,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
 
       await hiveService.importData(
         jsonList.map((e) => e as Map<String, dynamic>).toList(),
+        completionEvents: historyList
+            ?.map((e) => e as Map<String, dynamic>)
+            .toList(),
       );
 
       _showSuccessSnackbar(context, 'Backup restored successfully!');

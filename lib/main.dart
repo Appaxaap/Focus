@@ -13,6 +13,7 @@ import 'package:desktop_window/desktop_window.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'models/quadrant_enum.dart';
+import 'models/focus_completion_event.dart';
 import 'models/task_models.dart';
 import 'providers/app_icon_badge_provider.dart';
 import 'providers/task_provider.dart';
@@ -55,6 +56,7 @@ void main() async {
   // Initialize Hive for local storage.
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
+  Hive.registerAdapter(FocusCompletionEventAdapter());
   Hive.registerAdapter(QuadrantAdapter());
 
   final hiveService = HiveService();

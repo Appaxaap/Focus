@@ -2,21 +2,24 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../main.dart';
+import '../models/focus_completion_event.dart';
 import '../models/quadrant_enum.dart';
 import '../models/task_models.dart';
+import 'focus_history_provider.dart';
 import '../services/hive_service.dart';
 
 // Main provider for all tasks
 final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>((ref) {
   final hiveService = ref.read(hiveServiceProvider);
-  return TaskNotifier(hiveService);
+  return TaskNotifier(hiveService, ref);
 });
 
 class TaskNotifier extends StateNotifier<List<Task>> {
   final HiveService _hiveService;
+  final Ref _ref;
   bool _isLoading = false;
 
-  TaskNotifier(this._hiveService) : super([]) {
+  TaskNotifier(this._hiveService, this._ref) : super([]) {
     _loadTasks();
   }
 
@@ -120,14 +123,43 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   Future<void> toggleTaskCompletion(String taskId) async {
     final taskIndex = state.indexWhere((task) => task.id == taskId);
     if (taskIndex != -1) {
-      final updatedTask = state[taskIndex].copyWith(
-        isCompleted: !state[taskIndex].isCompleted,
+      await setTaskCompletion(taskId, !state[taskIndex].isCompleted);
+    }
+  }
+
+  Future<void> setTaskCompletion(String taskId, bool completed) async {
+    final taskIndex = state.indexWhere((task) => task.id == taskId);
+    if (taskIndex != -1) {
+      final currentTask = state[taskIndex];
+      if (currentTask.isCompleted == completed) {
+        return;
+      }
+
+      final updatedAt = DateTime.now();
+      final updatedTask = currentTask.copyWith(
+        isCompleted: completed,
+        updatedAt: updatedAt,
       );
       final newState = List<Task>.from(state);
       newState[taskIndex] = updatedTask;
       state = newState;
 
       await _hiveService.updateTask(updatedTask);
+
+      final historyNotifier = _ref.read(focusHistoryProvider.notifier);
+      if (completed) {
+        await historyNotifier.addEvent(
+          FocusCompletionEvent(
+            id: '${updatedTask.id}_${updatedAt.millisecondsSinceEpoch}',
+            taskId: updatedTask.id,
+            completedAt: updatedAt,
+            quadrantAtCompletion: updatedTask.quadrant,
+            titleSnapshot: updatedTask.title,
+          ),
+        );
+      } else {
+        await historyNotifier.removeLatestForTask(updatedTask.id);
+      }
     }
   }
 
