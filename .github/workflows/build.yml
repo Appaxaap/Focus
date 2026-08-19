@@ -38,8 +38,28 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.5'
+          flutter-version: '3.35.2'
           cache: true
+
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "${ANDROID_KEYSTORE_BASE64}" || { echo "Missing ANDROID_KEYSTORE_BASE64 secret"; exit 1; }
+          test -n "${ANDROID_KEYSTORE_PASSWORD}" || { echo "Missing ANDROID_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "${ANDROID_KEY_ALIAS}" || { echo "Missing ANDROID_KEY_ALIAS secret"; exit 1; }
+          test -n "${ANDROID_KEY_PASSWORD}" || { echo "Missing ANDROID_KEY_PASSWORD secret"; exit 1; }
+          printf '%s' "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > android/release-keystore.jks
+          cat > android/key.properties <<EOF
+          storeFile=release-keystore.jks
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          EOF
 
       - name: Install dependencies
         run: flutter pub get
@@ -54,22 +74,16 @@ jobs:
         run: |
           VERSION=${ANDROID_VERSION}
           PREFIX=Focus-android-${VERSION}
-          UNIVERSAL=build/app/outputs/flutter-apk/app-release-unsigned.apk
-          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
-            UNIVERSAL=build/app/outputs/flutter-apk/app-release.apk
-          fi
+          UNIVERSAL=build/app/outputs/flutter-apk/app-release.apk
+          test -f "${UNIVERSAL}" || { echo "Signed universal APK was not produced"; exit 1; }
           mv "${UNIVERSAL}" \
              build/app/outputs/flutter-apk/${PREFIX}-universal.apk
-          ARM64=build/app/outputs/flutter-apk/app-arm64-v8a-release-unsigned.apk
-          if [ -f "build/app/outputs/flutter-apk/app-arm64-v8a-release.apk" ]; then
-            ARM64=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-          fi
+          ARM64=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          test -f "${ARM64}" || { echo "Signed ARM64 APK was not produced"; exit 1; }
           mv "${ARM64}" \
              build/app/outputs/flutter-apk/${PREFIX}-arm64-v8a.apk
-          ARMEABI=build/app/outputs/flutter-apk/app-armeabi-v7a-release-unsigned.apk
-          if [ -f "build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk" ]; then
-            ARMEABI=build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-          fi
+          ARMEABI=build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          test -f "${ARMEABI}" || { echo "Signed ARMv7 APK was not produced"; exit 1; }
           mv "${ARMEABI}" \
              build/app/outputs/flutter-apk/${PREFIX}-armeabi-v7a.apk
 

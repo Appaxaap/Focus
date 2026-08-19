@@ -15,7 +15,8 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.codecx.focus"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    // NDK r28 produces 16 KB page-size-compatible native libraries.
+    ndkVersion = "28.1.13356709"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -42,7 +43,7 @@ android {
         create("release") {
             // This only runs when key.properties exists locally
             if (keystorePropertiesFile.exists()) {
-                storeFile = file(keystoreProperties["storeFile"] as String)
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
@@ -52,9 +53,9 @@ android {
 
     buildTypes {
         release {
-            // Only sign release builds locally when a release keystore is present.
-            // CI builds should stay unsigned so the APK can be signed offline.
-            signingConfig = if (keystorePropertiesFile.exists() && System.getenv("CI") != "true") {
+            // Use the configured release keystore both locally and in CI.
+            // CI creates key.properties from the repository's signing secrets.
+            signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
             } else {
                 null
@@ -72,7 +73,8 @@ android {
 
             packaging {
                 jniLibs {
-                    useLegacyPackaging = true
+                    // Keep native libraries uncompressed and 16 KB aligned.
+                    useLegacyPackaging = false
                 }
             }
         }
