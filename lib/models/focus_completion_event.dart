@@ -4,7 +4,7 @@ import 'quadrant_enum.dart';
 
 part 'focus_completion_event.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 2)
 class FocusCompletionEvent {
   @HiveField(0)
   final String id;

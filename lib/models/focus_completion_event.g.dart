@@ -8,7 +8,7 @@ part of 'focus_completion_event.dart';
 
 class FocusCompletionEventAdapter extends TypeAdapter<FocusCompletionEvent> {
   @override
-  final int typeId = 1;
+  final int typeId = 2;
 
   @override
   FocusCompletionEvent read(BinaryReader reader) {
