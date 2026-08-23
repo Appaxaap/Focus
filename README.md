@@ -28,6 +28,9 @@
 
 ---
 
+> [!NOTE]
+> Some Android APKs in this release are **test versions** and may contain bugs or minor issues. If you experience any problems, please try downloading and installing a **lower version**.
+
 ## About Focus
 
 Focus is an **offline task manager for Android** built around the **Eisenhower Matrix productivity method**.
